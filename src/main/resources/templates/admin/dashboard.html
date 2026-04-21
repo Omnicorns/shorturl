@@ -1,0 +1,2128 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}"/>
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}"/>
+    <title>Admin — Short URL &amp; Catalog</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #fafaf7;
+            --bg-soft: #f2f1ec;
+            --surface: #ffffff;
+            --ink: #17150f;
+            --ink-soft: #3d3a33;
+            --muted: #85817a;
+            --line: #e6e3dc;
+            --line-strong: #d2cec5;
+            --accent: #c2410c;
+            --accent-soft: #fdf2eb;
+            --accent-ink: #7c2d0a;
+            --ok: #166534;
+            --ok-soft: #ecfdf5;
+            --warn: #a16207;
+            --danger: #991b1b;
+            --danger-soft: #fef2f2;
+            --info: #075985;
+            --radius: 6px;
+            --radius-lg: 10px;
+            --shadow-sm: 0 1px 2px rgba(23,21,15,.04);
+            --shadow-md: 0 4px 12px rgba(23,21,15,.06);
+            --shadow-lg: 0 20px 40px rgba(23,21,15,.10);
+
+            --font-display: 'Fraunces', Georgia, serif;
+            --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+            --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+            --topbar-h: 56px;
+            --sidebar-w: 380px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--ink);
+            font-size: 13px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── Topbar ─── */
+        .topbar {
+            height: var(--topbar-h);
+            flex-shrink: 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+        }
+        .brand {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+        .brand-mark {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-style: italic;
+            font-size: 20px;
+            letter-spacing: -.02em;
+        }
+        .brand-mark span { color: var(--accent); }
+        .brand-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 3px 8px;
+            border: 1px solid var(--line-strong);
+            border-radius: 100px;
+        }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .top-stats {
+            display: flex;
+            gap: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+        .top-stats strong { color: var(--ink); font-family: var(--font-body); }
+        .top-stats .sep { color: var(--line-strong); }
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--ink-soft);
+            padding-left: 12px;
+            border-left: 1px solid var(--line);
+            margin-left: 4px;
+        }
+        .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--ink);
+            color: var(--bg);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            display: grid;
+            place-items: center;
+            text-transform: uppercase;
+        }
+
+        /* ─── App layout ─── */
+        .app {
+            flex: 1;
+            display: grid;
+            grid-template-columns: var(--sidebar-w) 1fr;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            background: var(--bg-soft);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .sidebar-tabs {
+            flex-shrink: 0;
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+        }
+        .stab {
+            flex: 1;
+            padding: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            position: relative;
+            transition: color .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .stab:hover { color: var(--ink-soft); }
+        .stab.active { color: var(--ink); }
+        .stab.active::after {
+            content: "";
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            height: 2px;
+            background: var(--accent);
+        }
+        .stab-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 1px 6px;
+            background: var(--bg-soft);
+            border-radius: 100px;
+        }
+        .stab.active .stab-badge {
+            background: var(--accent-soft);
+            color: var(--accent-ink);
+        }
+
+        .sidebar-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px;
+            min-height: 0;
+        }
+        .sidebar-panel { display: none; }
+        .sidebar-panel.active { display: block; animation: fadeIn .15s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .sidebar h2 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -.01em;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sidebar h2 .num {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--muted);
+            background: var(--surface);
+            border: 1px solid var(--line);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .sidebar .section-hint {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 6px;
+            font-family: var(--font-mono);
+        }
+        .sidebar-divider {
+            height: 1px;
+            background: var(--line);
+            margin: 20px 0;
+        }
+
+        /* ─── Forms ─── */
+        .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+        .field:last-child { margin-bottom: 0; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .field label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .field label .req { color: var(--accent); }
+        .field-hint {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: var(--font-mono);
+            font-weight: 400;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="url"],
+        input[type="search"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            font-size: 12px;
+            color: var(--ink);
+            background: var(--surface);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(194,65,12,.12);
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 6px;
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--radius);
+            background: var(--surface);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            cursor: pointer;
+        }
+        input[type="file"]::file-selector-button {
+            border: none;
+            background: var(--ink);
+            color: var(--bg);
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 8px;
+            font-family: var(--font-body);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+
+        /* ─── Buttons ─── */
+        .btn {
+            appearance: none;
+            border: 1px solid transparent;
+            background: transparent;
+            font-family: var(--font-body);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all .15s;
+            line-height: 1;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .btn-primary { background: var(--ink); color: var(--bg); }
+        .btn-primary:hover { background: var(--ink-soft); }
+        .btn-accent { background: var(--accent); color: #fff; }
+        .btn-accent:hover { background: var(--accent-ink); }
+        .btn-ghost { background: var(--surface); color: var(--ink-soft); border-color: var(--line-strong); }
+        .btn-ghost:hover { background: var(--bg-soft); }
+        .btn-danger { background: var(--surface); color: var(--danger); border-color: #fca5a5; }
+        .btn-danger:hover { background: var(--danger-soft); }
+        .btn-sm { padding: 5px 9px; font-size: 11px; }
+        .btn-xs { padding: 3px 7px; font-size: 10px; }
+        .btn-block { width: 100%; }
+        .actions-row {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        /* ─── Content area ─── */
+        .content {
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .content-head {
+            flex-shrink: 0;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            min-height: 52px;
+        }
+        .content-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-soft);
+            padding: 3px;
+            border-radius: var(--radius);
+        }
+        .ctab {
+            background: transparent;
+            border: none;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .15s;
+        }
+        .ctab:hover { color: var(--ink-soft); }
+        .ctab.active {
+            background: var(--surface);
+            color: var(--ink);
+            box-shadow: var(--shadow-sm);
+        }
+        .ctab-badge {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            padding: 1px 5px;
+            background: var(--bg-soft);
+            border-radius: 100px;
+            color: var(--muted);
+        }
+        .ctab.active .ctab-badge { background: var(--accent-soft); color: var(--accent-ink); }
+
+        .content-head-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .search-box input {
+            min-width: 220px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .content-body {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            min-height: 0;
+        }
+        .content-panel {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .content-panel.active { display: flex; animation: fadeIn .15s ease; }
+
+        /* ─── Alerts ─── */
+        .alert {
+            padding: 8px 14px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            margin: 10px 20px 0;
+            border: 1px solid;
+        }
+        .alert-success { background: var(--ok-soft); border-color: #86efac; color: var(--ok); }
+        .alert-error { background: var(--danger-soft); border-color: #fca5a5; color: var(--danger); }
+
+        /* ─── Table ─── */
+        .table-wrap {
+            flex: 1;
+            overflow: auto;
+            min-height: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+        }
+        thead th {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--muted);
+            text-align: left;
+            padding: 10px 16px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            white-space: nowrap;
+        }
+        thead th.th-check { width: 36px; text-align: center; }
+        tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--line);
+            font-size: 12px;
+            vertical-align: middle;
+        }
+        tbody tr { transition: background-color .1s; }
+        tbody tr:hover { background: var(--bg); }
+        tbody tr.selected { background: var(--accent-soft); }
+        .td-check { text-align: center; }
+
+        .code-chip {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+            background: var(--bg-soft);
+            padding: 3px 7px;
+            border-radius: 4px;
+            color: var(--ink);
+            text-decoration: none;
+            border: 1px solid var(--line);
+            white-space: nowrap;
+        }
+        .code-chip:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+
+        .url-cell { max-width: 360px; overflow: hidden; }
+        .url-cell strong {
+            display: block;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 1px;
+            color: var(--ink);
+        }
+        .url-cell .url-link {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+        .url-cell .url-link:hover { color: var(--accent); text-decoration: underline; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            border-radius: 100px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-ok { background: var(--ok-soft); color: var(--ok); }
+        .badge-off { background: var(--bg-soft); color: var(--muted); }
+        .badge-click {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            background: var(--bg-soft);
+            border-radius: 100px;
+            color: var(--ink);
+            text-decoration: none;
+            display: inline-block;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .badge-click:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+        .row-actions {
+            display: flex;
+            gap: 3px;
+            flex-wrap: nowrap;
+        }
+
+        .empty {
+            padding: 50px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-style: italic;
+            font-size: 13px;
+        }
+        .empty-emoji {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+            opacity: .4;
+        }
+
+        /* ─── Table footer ─── */
+        .table-footer {
+            flex-shrink: 0;
+            padding: 8px 20px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface);
+            min-height: 40px;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .page-chip {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 5px 10px;
+            background: var(--bg-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            color: var(--ink-soft);
+            min-width: 54px;
+            text-align: center;
+        }
+
+        /* ─── Bulk selection bar ─── */
+        .bulk-bar {
+            display: none;
+            flex-shrink: 0;
+            padding: 8px 20px;
+            background: var(--accent-soft);
+            border-bottom: 1px solid var(--line);
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .bulk-bar.show { display: flex; }
+        .bulk-info {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-ink);
+            font-family: var(--font-mono);
+        }
+
+        /* ─── Upload sub-tabs dalam sidebar ─── */
+        .upload-sub-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 3px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+        }
+        .upload-sub-tab {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all .15s;
+        }
+        .upload-sub-tab.active {
+            background: var(--bg-soft);
+            color: var(--ink);
+        }
+        .upload-sub-panel { display: none; }
+        .upload-sub-panel.active { display: block; }
+
+        /* ─── Bulk naming ─── */
+        .bulk-naming {
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .bulk-naming.show { display: flex; }
+        .bulk-naming-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .bulk-naming label { font-size: 10px; font-weight: 600; color: var(--ink-soft); }
+        .bulk-file-list {
+            margin-top: 8px;
+            display: grid;
+            gap: 4px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .bulk-file-item {
+            display: grid;
+            grid-template-columns: 20px 1fr auto;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            font-size: 11px;
+        }
+        .bulk-file-idx {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--muted);
+            background: var(--bg-soft);
+            border-radius: 3px;
+            width: 20px;
+            height: 18px;
+            display: grid;
+            place-items: center;
+        }
+        .bulk-file-info { min-width: 0; overflow: hidden; }
+        .bulk-file-original {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bulk-file-resolved {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--ink);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .bulk-file-rename {
+            width: 100%;
+            padding: 3px 6px;
+            font-size: 11px;
+        }
+        .bulk-file-size {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--muted);
+        }
+        .bulk-empty {
+            padding: 14px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--muted);
+            font-style: italic;
+            background: var(--surface);
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--radius);
+        }
+        .bulk-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .bulk-count { font-size: 12px; font-weight: 600; font-family: var(--font-display); }
+        .bulk-hint { font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+        /* ─── Modal ─── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(23,21,15,.55);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+        }
+        .modal-backdrop.show { display: flex; animation: fadeIn .15s; }
+        .modal {
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid var(--line);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .modal-head h3 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: -.01em;
+        }
+        .modal-head p {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+        .modal-close {
+            background: transparent;
+            border: 1px solid var(--line);
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+        .modal-close:hover { background: var(--bg-soft); color: var(--ink); }
+        .modal-body {
+            padding: 16px 18px;
+            overflow-y: auto;
+            display: grid;
+            gap: 12px;
+        }
+        .qr-preview {
+            background: var(--bg-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            position: relative;
+        }
+        .qr-loading {
+            position: absolute;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--muted);
+        }
+        #qrCanvas {
+            width: min(280px, 100%);
+            height: auto;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+        }
+        .url-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .url-actions .btn { flex: 1; min-width: 80px; }
+
+        /* ─── Log drawer ─── */
+        .log-drawer {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: min(520px, 100%);
+            background: var(--surface);
+            border-left: 1px solid var(--line);
+            box-shadow: var(--shadow-lg);
+            z-index: 150;
+            transform: translateX(100%);
+            transition: transform .3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .log-drawer.show { transform: translateX(0); }
+        .log-drawer-head {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+        .log-drawer-head h3 {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .log-drawer-head p {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        .log-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 20px;
+        }
+        .log-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+        }
+        .log-time {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+        .log-meta { font-size: 11px; color: var(--ink-soft); }
+        .log-meta .log-ip {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .log-meta .log-ua {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--muted);
+            word-break: break-all;
+            margin-top: 2px;
+        }
+
+        /* ─── Download progress ─── */
+        .dl-progress {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius-lg);
+            padding: 14px 18px;
+            box-shadow: var(--shadow-lg);
+            z-index: 300;
+            display: none;
+            min-width: 280px;
+            max-width: 360px;
+        }
+        .dl-progress.show { display: block; animation: slideUp .3s ease; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: none; }
+        }
+        .dl-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .dl-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; }
+        .dl-pct { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--accent); }
+        .dl-bar-wrap { height: 4px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+        .dl-bar { height: 100%; background: var(--accent); transition: width .25s; width: 0; }
+        .dl-bar.done { background: var(--ok); }
+        .dl-bar.error { background: var(--danger); }
+        .dl-text { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+        .dl-detail { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); margin-top: 4px; max-height: 50px; overflow: auto; }
+
+        /* ─── Toast ─── */
+        .toast-container {
+            position: fixed;
+            top: 70px; right: 20px;
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: none;
+        }
+        .toast {
+            pointer-events: auto;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: toastIn .25s ease;
+            max-width: 320px;
+            border-left: 3px solid;
+            background: var(--surface);
+            color: var(--ink);
+        }
+        .toast.success { border-color: var(--ok); }
+        .toast.error { border-color: var(--danger); }
+        .toast.info { border-color: var(--info); }
+        .toast.warning { border-color: var(--warn); }
+        .toast.hiding { animation: toastOut .2s ease forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(40px); } }
+
+        /* ─── Mobile ─── */
+        @media (max-width: 900px) {
+            :root { --sidebar-w: 320px; }
+        }
+        @media (max-width: 720px) {
+            .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            .sidebar { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; }
+            .top-stats { display: none; }
+            .search-box input { min-width: 140px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── Topbar ─── -->
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-mark">Atelier<span>/</span>Admin</span>
+        <span class="brand-tag">Short URL &amp; Catalog</span>
+    </div>
+    <div class="top-right">
+        <div class="top-stats">
+            <span>URLs <strong th:text="${totalUrls}">0</strong></span>
+            <span class="sep">·</span>
+            <span>Klik <strong th:text="${totalClicks}">0</strong></span>
+            <span class="sep">·</span>
+            <span>Catalog <strong th:text="${totalCatalogs ?: 0}">0</strong></span>
+        </div>
+        <a href="/" class="btn btn-ghost btn-sm">View site ↗</a>
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
+        </form>
+        <span class="user-chip">
+            <span class="avatar" sec:authentication="name">A</span>
+            <span sec:authentication="name">admin</span>
+        </span>
+    </div>
+</header>
+
+<!-- Flash -->
+<div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+<div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+<!-- ─── App layout ─── -->
+<div class="app">
+
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar">
+        <div class="sidebar-tabs">
+            <button type="button" class="stab active" data-sidebar="create">
+                <span>Create</span>
+            </button>
+            <button type="button" class="stab" data-sidebar="upload">
+                <span>Upload</span>
+            </button>
+        </div>
+
+        <div class="sidebar-body">
+
+            <!-- Create Short URL panel -->
+            <div class="sidebar-panel active" id="sp-create">
+                <h2><span class="num">01</span> Short URL</h2>
+                <form th:action="@{/admin/create}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="field">
+                        <label>URL Asli <span class="req">*</span></label>
+                        <input type="url" name="originalUrl" required
+                               placeholder="https://contoh.com/halaman-panjang">
+                    </div>
+                    <div class="field">
+                        <label>Judul <span class="field-hint">opsional</span></label>
+                        <input type="text" name="title" maxlength="255" placeholder="Artikel Budaya Bali">
+                    </div>
+                    <div class="field">
+                        <label>Custom Code <span class="field-hint">3–16 char</span></label>
+                        <input type="text" name="customCode" pattern="[a-zA-Z0-9_\-]{3,16}" placeholder="my-code">
+                    </div>
+                    <div class="actions-row">
+                        <button type="reset" class="btn btn-ghost btn-sm">Reset</button>
+                        <button type="submit" class="btn btn-accent btn-sm">Buat →</button>
+                    </div>
+                </form>
+
+                <div class="sidebar-divider"></div>
+
+                <h2><span class="num">02</span> Quick Stats</h2>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--font-mono)">
+                    <div style="padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)">
+                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Total URL</div>
+                        <div style="font-family:var(--font-display);font-size:22px;font-weight:600" th:text="${totalUrls}">0</div>
+                    </div>
+                    <div style="padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)">
+                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Total Klik</div>
+                        <div style="font-family:var(--font-display);font-size:22px;font-weight:600" th:text="${totalClicks}">0</div>
+                    </div>
+                    <div style="padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);grid-column:span 2">
+                        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Rata-rata klik/URL</div>
+                        <div style="font-family:var(--font-display);font-size:22px;font-weight:600"
+                             th:text="${totalUrls > 0} ? ${#numbers.formatDecimal(totalClicks * 1.0 / totalUrls, 1, 1)} : '0'">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Catalog panel -->
+            <div class="sidebar-panel" id="sp-upload">
+                <h2><span class="num">01</span> Upload Catalog</h2>
+                <div class="upload-sub-tabs">
+                    <button type="button" class="upload-sub-tab active" data-sub="sub-single">Single</button>
+                    <button type="button" class="upload-sub-tab" data-sub="sub-bulk">Bulk</button>
+                </div>
+
+                <div class="upload-sub-panel active" id="sub-single">
+                    <form id="createCatalogForm">
+                        <div class="field">
+                            <label>File PDF <span class="req">*</span></label>
+                            <input id="createPdfFile" type="file" accept="application/pdf" required>
+                        </div>
+                        <div class="field">
+                            <label>Filename <span class="field-hint">opsional</span></label>
+                            <input type="text" id="createFilename" placeholder="katalog-2026.pdf">
+                        </div>
+                        <div class="field">
+                            <label style="flex-direction:row;align-items:center">
+                                <input type="checkbox" id="createAutoShortUrl" style="margin-right:6px">
+                                Auto-create short URL
+                            </label>
+                        </div>
+                        <div class="actions-row">
+                            <button type="reset" class="btn btn-ghost btn-sm">Reset</button>
+                            <button type="submit" class="btn btn-accent btn-sm">Upload →</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="upload-sub-panel" id="sub-bulk">
+                    <form id="bulkCatalogForm">
+                        <div class="field">
+                            <label>File PDF (multiple) <span class="req">*</span></label>
+                            <input id="bulkPdfFiles" type="file" accept="application/pdf" multiple required>
+                        </div>
+
+                        <div class="bulk-naming" id="bulkNaming">
+                            <div class="bulk-naming-row">
+                                <label>Naming:</label>
+                                <select id="bulkNamingSelect" style="flex:1">
+                                    <option value="original">Nama asli</option>
+                                    <option value="custom">Custom</option>
+                                    <option value="prefix">Prefix+nomor</option>
+                                </select>
+                            </div>
+                            <input type="text" id="bulkPrefixInput" placeholder="Catalog-2026" style="display:none">
+                            <label style="flex-direction:row;align-items:center">
+                                <input type="checkbox" id="bulkAutoShortUrl" style="margin-right:6px">
+                                Auto short URL
+                            </label>
+                        </div>
+
+                        <div class="bulk-summary">
+                            <div>
+                                <div id="bulkFileCount" class="bulk-count">Belum ada file</div>
+                                <div id="bulkFileHint" class="bulk-hint">Ctrl/Shift untuk multi</div>
+                            </div>
+                            <button type="button" class="btn btn-ghost btn-xs" id="clearBulkBtn">Clear</button>
+                        </div>
+
+                        <div id="bulkFileList" class="bulk-file-list">
+                            <div class="bulk-empty">Belum ada file.</div>
+                        </div>
+
+                        <div class="actions-row">
+                            <button type="submit" class="btn btn-accent btn-sm">Upload Bulk →</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- ─── CONTENT ─── -->
+    <section class="content">
+        <div class="content-head">
+            <div class="content-tabs">
+                <button type="button" class="ctab active" data-ctab="urls">
+                    <span>Short URLs</span>
+                    <span class="ctab-badge" th:text="${totalUrls}">0</span>
+                </button>
+                <button type="button" class="ctab" data-ctab="catalogs">
+                    <span>Catalog PDF</span>
+                    <span class="ctab-badge" th:text="${totalCatalogs ?: 0}">0</span>
+                </button>
+            </div>
+
+            <div class="content-head-right">
+                <!-- Search khusus untuk tab aktif -->
+                <div class="search-box" id="searchUrls">
+                    <form th:action="@{/admin}" method="get" style="display:flex;gap:4px">
+                        <input type="search" name="q" th:value="${q}" placeholder="Cari kode, URL, judul…">
+                        <button type="submit" class="btn btn-primary btn-sm">Cari</button>
+                        <a th:if="${q}" th:href="@{/admin}" class="btn btn-ghost btn-sm">×</a>
+                    </form>
+                </div>
+                <div class="search-box" id="searchCatalogs" style="display:none">
+                    <input id="catalogSearchInput" type="search" placeholder="Cari filename…">
+                    <select id="pageSizeSelect" style="padding:6px 8px;font-size:11px">
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <button id="refreshListBtn" class="btn btn-primary btn-sm" type="button" title="Refresh">↻</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-body">
+
+            <!-- ─── Panel: Short URLs ─── -->
+            <div class="content-panel active" id="cp-urls">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Short Code</th>
+                            <th>Tujuan</th>
+                            <th>Klik</th>
+                            <th>Dibuat</th>
+                            <th>Status</th>
+                            <th style="width:280px">Aksi</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="u : ${urls.content}">
+                            <td>
+                                <a th:href="@{'/' + ${u.shortCode}}" target="_blank" class="code-chip"
+                                   th:text="${u.shortCode}">abc123</a>
+                            </td>
+                            <td class="url-cell">
+                                <strong th:if="${u.title}" th:text="${u.title}">Title</strong>
+                                <a th:href="${u.originalUrl}" target="_blank"
+                                   th:text="${u.originalUrl}"
+                                   th:title="${u.originalUrl}" class="url-link">url</a>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0)"
+                                   class="badge-click js-open-log"
+                                   th:data-code="${u.shortCode}"
+                                   th:data-title="${u.title != null ? u.title : u.originalUrl}"
+                                   title="Lihat detail log klik"
+                                   th:text="${u.clickCount}">0</a>
+                            </td>
+                            <td>
+                                <span class="field-hint"
+                                      th:text="${#temporals.format(u.createdAt, 'dd MMM yyyy')}">-</span>
+                            </td>
+                            <td>
+                                <span th:if="${u.active}" class="badge badge-ok">● Aktif</span>
+                                <span th:unless="${u.active}" class="badge badge-off">○ Nonaktif</span>
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <button type="button" class="btn btn-ghost btn-xs js-qr-url"
+                                            th:data-url="${baseUrl + '/' + u.shortCode}"
+                                            th:data-title="${u.title != null ? u.title : u.shortCode}"
+                                            th:data-code="${u.shortCode}">QR</button>
+                                    <button type="button" class="btn btn-ghost btn-xs js-copy-url"
+                                            th:data-url="${baseUrl + '/' + u.shortCode}">Copy</button>
+                                    <button type="button" class="btn btn-ghost btn-xs js-open-log"
+                                            th:data-code="${u.shortCode}"
+                                            th:data-title="${u.title != null ? u.title : u.shortCode}">Log</button>
+                                    <form th:action="@{'/admin/' + ${u.id} + '/toggle'}" method="post" style="display:inline">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-ghost btn-xs"
+                                                th:text="${u.active} ? '⏸' : '▶'">Toggle</button>
+                                    </form>
+                                    <form th:action="@{'/admin/' + ${u.id} + '/delete'}" method="post" style="display:inline"
+                                          onsubmit="return confirm('Hapus short URL ini?');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-danger btn-xs">✕</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${urls.empty}">
+                            <td colspan="6" class="empty">
+                                <span class="empty-emoji">∅</span>
+                                Belum ada short URL. Buat yang pertama di sidebar.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer" th:if="${urls.totalPages > 1}">
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">
+                        Halaman <strong th:text="${urls.number + 1}">1</strong>/<span th:text="${urls.totalPages}">1</span>
+                        · <span th:text="${urls.totalElements}">0</span> total
+                    </span>
+                    <div class="pagination">
+                        <a th:if="${urls.hasPrevious()}"
+                           th:href="@{/admin(page=${urls.number - 1}, q=${q})}"
+                           class="btn btn-ghost btn-xs">← Prev</a>
+                        <span class="page-chip"
+                              th:text="${(urls.number + 1) + '/' + urls.totalPages}">1/1</span>
+                        <a th:if="${urls.hasNext()}"
+                           th:href="@{/admin(page=${urls.number + 1}, q=${q})}"
+                           class="btn btn-ghost btn-xs">Next →</a>
+                    </div>
+                </div>
+                <div class="table-footer" th:unless="${urls.totalPages > 1}">
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)"
+                          th:text="|${urls.totalElements ?: 0} total|">0 total</span>
+                </div>
+            </div>
+
+            <!-- ─── Panel: Catalogs ─── -->
+            <div class="content-panel" id="cp-catalogs">
+                <div class="bulk-bar" id="bulkDownloadBar">
+                    <span class="bulk-info" id="bulkDlInfo">0 dipilih</span>
+                    <button id="selectAllBtn" class="btn btn-ghost btn-xs" type="button">Select all</button>
+                    <button id="deselectAllBtn" class="btn btn-ghost btn-xs" type="button">Deselect</button>
+                    <span style="flex:1"></span>
+                    <button id="bulkDownloadBtn" class="btn btn-accent btn-sm" type="button" disabled>↓ Download QR (.zip)</button>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th class="th-check"><input type="checkbox" id="checkAllHead"></th>
+                            <th style="width:60px">ID</th>
+                            <th>Filename</th>
+                            <th style="width:130px">Content Type</th>
+                            <th style="width:340px">Aksi</th>
+                        </tr>
+                        </thead>
+                        <tbody id="catalogTableBody">
+                        <tr><td colspan="5" class="empty">Memuat data catalog…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer">
+                    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)" id="paginationInfo">Page 1 of 1</span>
+                    <div class="pagination">
+                        <button id="firstPageBtn" class="btn btn-ghost btn-xs" type="button">«</button>
+                        <button id="prevPageBtn" class="btn btn-ghost btn-xs" type="button">‹</button>
+                        <span id="pageChip" class="page-chip">1/1</span>
+                        <button id="nextPageBtn" class="btn btn-ghost btn-xs" type="button">›</button>
+                        <button id="lastPageBtn" class="btn btn-ghost btn-xs" type="button">»</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<!-- ─── QR MODAL ─── -->
+<div id="qrModalBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <div>
+                <h3>QR Code</h3>
+                <p id="qrModalSubtitle">—</p>
+            </div>
+            <button id="closeQrModalBtn" type="button" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="qr-preview">
+                <span class="qr-loading" id="qrLoading">Generating QR…</span>
+                <canvas id="qrCanvas" width="360" height="360"></canvas>
+            </div>
+            <div class="field">
+                <label>URL</label>
+                <input id="qrUrlInput" type="text" readonly>
+            </div>
+            <div class="url-actions">
+                <button id="copyQrUrlBtn" type="button" class="btn btn-ghost btn-sm">Copy URL</button>
+                <button id="openQrUrlBtn" type="button" class="btn btn-ghost btn-sm">Open ↗</button>
+                <button id="downloadQrBtn" type="button" class="btn btn-accent btn-sm">↓ Download PNG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── LOG DRAWER ─── -->
+<aside class="log-drawer" id="logDrawer">
+    <div class="log-drawer-head">
+        <div>
+            <h3 id="logDrawerTitle">Log Akses</h3>
+            <p id="logDrawerSubtitle">—</p>
+        </div>
+        <button class="modal-close" id="closeLogDrawerBtn">×</button>
+    </div>
+    <div class="log-drawer-body" id="logDrawerBody">
+        <div class="empty">Memuat log…</div>
+    </div>
+</aside>
+
+<!-- ─── DOWNLOAD PROGRESS ─── -->
+<div class="dl-progress" id="dlProgress">
+    <div class="dl-head">
+        <div class="dl-title" id="dlTitle">Downloading…</div>
+        <div class="dl-pct" id="dlPct">0%</div>
+    </div>
+    <div class="dl-bar-wrap"><div class="dl-bar" id="dlBar"></div></div>
+    <div class="dl-text" id="dlText">Mempersiapkan…</div>
+    <div class="dl-detail" id="dlDetail"></div>
+</div>
+
+<img id="qrLogo" th:src="@{/logo2.png}" src="/logo2.png" alt="logo" style="display:none" crossorigin="anonymous">
+
+<!-- ─── SCRIPT ─── -->
+<script th:inline="javascript">
+    (function () {
+        'use strict';
+
+        const CATALOG_API = /*[[@{/api/admin/users/catalogs}]]*/ '/api/admin/users/catalogs';
+        const CATALOG_UPLOAD = /*[[@{/api/admin/users/pdf}]]*/ '/api/admin/users/pdf';
+        const CATALOG_BULK = /*[[@{/api/admin/users/pdf/bulk}]]*/ '/api/admin/users/pdf/bulk';
+        const URL_LOGS_API = /*[[@{/admin/logs/data}]]*/ '/admin/logs/data';
+        const BASE_URL = /*[[${baseUrl}]]*/ 'http://localhost:8080';
+
+        const _cTok = document.querySelector('meta[name="_csrf"]');
+        const _cHdr = document.querySelector('meta[name="_csrf_header"]');
+        const CSRF_TOKEN = _cTok ? _cTok.getAttribute('content') : '';
+        const CSRF_HEADER = _cHdr ? _cHdr.getAttribute('content') : 'X-CSRF-TOKEN';
+
+        const QR_PREVIEW_SIZE = 280;
+        const QR_EXPORT_SIZE = 1400;
+
+        const $ = id => document.getElementById(id);
+
+        console.log('[Dashboard] ✓ Script loaded. BASE_URL=', BASE_URL);
+
+        /* ═══ Toast ═══ */
+        const toastContainer = $('toastContainer');
+        function toast(msg, type = 'info', duration = 3000) {
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.textContent = msg;
+            toastContainer.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('hiding');
+                setTimeout(() => el.remove(), 300);
+            }, duration);
+        }
+
+        /* ═══ Utils ═══ */
+        function escapeHtml(v) {
+            return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+        }
+        function toAbsoluteUrl(u) { try { return new URL(u, location.origin).href; } catch { return u; } }
+        function formatSize(b) {
+            if (b == null) return '-';
+            const u = ['B','KB','MB','GB']; let s = b, i = 0;
+            while (s >= 1024 && i < u.length - 1) { s /= 1024; i++; }
+            return `${s.toFixed(s >= 10 || i === 0 ? 0 : 1)} ${u[i]}`;
+        }
+        async function copyText(t) {
+            try { await navigator.clipboard.writeText(t); }
+            catch {
+                const i = document.createElement('input');
+                i.value = t; document.body.appendChild(i); i.select(); document.execCommand('copy'); document.body.removeChild(i);
+            }
+            toast('URL disalin ✓', 'success', 1800);
+        }
+        async function handleJson(res) {
+            const text = await res.text();
+            let data;
+            try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+            if (!res.ok) throw new Error((data && (data.message || data.error)) || text || ('HTTP ' + res.status));
+            return data;
+        }
+        function csrfHeaders() {
+            const h = {};
+            if (CSRF_TOKEN && CSRF_HEADER) h[CSRF_HEADER] = CSRF_TOKEN;
+            return h;
+        }
+
+        /* ═══ Sidebar tabs ═══ */
+        document.querySelectorAll('.stab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.stab').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.sidebar-panel').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                $('sp-' + t.dataset.sidebar).classList.add('active');
+            });
+        });
+
+        /* ═══ Upload sub-tabs ═══ */
+        document.querySelectorAll('.upload-sub-tab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.upload-sub-tab').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.upload-sub-panel').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                $(t.dataset.sub).classList.add('active');
+            });
+        });
+
+        /* ═══ Content tabs (URLs / Catalogs) ═══ */
+        document.querySelectorAll('.ctab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.ctab').forEach(x => x.classList.remove('active'));
+                document.querySelectorAll('.content-panel').forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                $('cp-' + t.dataset.ctab).classList.add('active');
+
+                // Ganti search box sesuai tab
+                $('searchUrls').style.display = t.dataset.ctab === 'urls' ? 'flex' : 'none';
+                $('searchCatalogs').style.display = t.dataset.ctab === 'catalogs' ? 'flex' : 'none';
+
+                // Lazy-load catalog
+                if (t.dataset.ctab === 'catalogs' && !_catalogLoaded) {
+                    _catalogLoaded = true;
+                    loadCatalogs(0);
+                }
+            });
+        });
+
+        /* ═══ Copy URL ═══ */
+        document.addEventListener('click', e => {
+            const b = e.target.closest('.js-copy-url');
+            if (b) {
+                if (!b.dataset.url) { toast('URL kosong', 'error'); return; }
+                copyText(b.dataset.url);
+            }
+        });
+
+        /* ═══ QR library ═══ */
+        let _qrReady = false, _qrLoading = false, _zipReady = false, _zipLoading = false;
+        let _logoImg = null, _logoLoaded = false;
+
+        function loadScriptOnce(src) {
+            return new Promise(resolve => {
+                const ex = document.querySelector(`script[src="${src}"]`);
+                if (ex) {
+                    if (ex.dataset.loaded === '1') return resolve(true);
+                    if (ex.dataset.failed === '1') return resolve(false);
+                    ex.addEventListener('load', () => resolve(true), { once: true });
+                    ex.addEventListener('error', () => resolve(false), { once: true });
+                    return;
+                }
+                const s = document.createElement('script');
+                s.src = src; s.async = true;
+                s.onload = () => { s.dataset.loaded = '1'; resolve(true); };
+                s.onerror = () => { s.dataset.failed = '1'; resolve(false); };
+                document.head.appendChild(s);
+            });
+        }
+        async function ensureQR() {
+            if (_qrReady && window.QRCode) return true;
+            if (_qrLoading) { for (let i = 0; i < 50; i++) { await new Promise(r => setTimeout(r, 100)); if (_qrReady) return true; } return false; }
+            _qrLoading = true;
+            for (const src of ['https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js','https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js','https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js']) {
+                if (await loadScriptOnce(src) && window.QRCode) { _qrReady = true; _qrLoading = false; return true; }
+            }
+            _qrLoading = false; return false;
+        }
+        async function ensureJSZip() {
+            if (_zipReady && typeof JSZip !== 'undefined') return true;
+            if (_zipLoading) { for (let i = 0; i < 50; i++) { await new Promise(r => setTimeout(r, 100)); if (_zipReady) return true; } return false; }
+            _zipLoading = true;
+            for (const src of ['https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js']) {
+                if (await loadScriptOnce(src) && typeof JSZip !== 'undefined') { _zipReady = true; _zipLoading = false; return true; }
+            }
+            _zipLoading = false; return false;
+        }
+        async function ensureLogo() {
+            if (_logoLoaded && _logoImg) return _logoImg;
+            const src = $('qrLogo').src;
+            return new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => { _logoImg = img; _logoLoaded = true; resolve(img); };
+                img.onerror = () => resolve(null);
+                img.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
+            });
+        }
+        ensureQR(); ensureJSZip(); ensureLogo();
+
+        function roundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+            ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+            ctx.closePath();
+        }
+        async function renderQr(url, size) {
+            const c = document.createElement('canvas');
+            c.width = size; c.height = size;
+            const ctx = c.getContext('2d', { alpha: false });
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+            if (await ensureQR()) {
+                await QRCode.toCanvas(c, url, { width: size, margin: 4, errorCorrectionLevel: 'H', color: { dark: '#17150f', light: '#ffffff' } });
+            } else {
+                const fb = Math.min(size, 600);
+                const fu = `https://quickchart.io/qr?size=${fb}&margin=4&ecLevel=H&text=${encodeURIComponent(url)}`;
+                try {
+                    const img = await new Promise((res, rej) => {
+                        const im = new Image(); im.crossOrigin = 'anonymous';
+                        im.onload = () => res(im); im.onerror = rej; im.src = fu;
+                    });
+                    ctx.drawImage(img, 0, 0, size, size);
+                } catch {
+                    ctx.fillStyle = '#991b1b';
+                    ctx.font = `${Math.floor(size*.04)}px IBM Plex Mono`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('QR generation failed', size/2, size/2);
+                }
+            }
+            return c;
+        }
+        async function drawLogo(canvas) {
+            const img = await ensureLogo();
+            if (!img) return;
+            const ctx = canvas.getContext('2d');
+            const s = canvas.width;
+            const bs = Math.floor(s*.18), ls = Math.floor(s*.12);
+            const x = Math.floor((s-bs)/2), y = Math.floor((s-bs)/2), r = Math.floor(s*.022);
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,.12)';
+            ctx.shadowBlur = Math.floor(s*.015);
+            ctx.shadowOffsetY = Math.floor(s*.004);
+            roundRect(ctx, x, y, bs, bs, r); ctx.fill();
+            ctx.shadowColor = 'transparent';
+            ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+            const lx = Math.floor((s-ls)/2), ly = Math.floor((s-ls)/2);
+            ctx.drawImage(img, lx, ly, ls, ls);
+            ctx.restore();
+        }
+        async function generateQrBlob(url) {
+            const c = await renderQr(url, QR_EXPORT_SIZE);
+            await drawLogo(c);
+            return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('toBlob failed')), 'image/png'));
+        }
+
+        /* ═══ QR Modal ═══ */
+        const qrBackdrop = $('qrModalBackdrop');
+        const qrSubtitle = $('qrModalSubtitle');
+        const qrUrlInput = $('qrUrlInput');
+        const qrCanvas = $('qrCanvas');
+        const qrLoading = $('qrLoading');
+        let _qrHighRes = '', _qrCurName = 'qr';
+
+        async function openQrModal({ url, title, filename }) {
+            qrUrlInput.value = url;
+            qrSubtitle.textContent = title || url;
+            _qrCurName = (filename || title || 'qr').replace(/[^\w\-]+/g, '_').replace(/\.pdf$/i, '');
+            qrLoading.textContent = 'Generating QR…';
+            qrLoading.style.display = 'block';
+            qrCanvas.style.opacity = '.3';
+            qrBackdrop.classList.add('show');
+            try {
+                const big = await renderQr(url, QR_EXPORT_SIZE);
+                await drawLogo(big);
+                _qrHighRes = big.toDataURL('image/png');
+                qrCanvas.width = QR_PREVIEW_SIZE;
+                qrCanvas.height = QR_PREVIEW_SIZE;
+                const ctx = qrCanvas.getContext('2d', { alpha: false });
+                ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(big, 0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
+                qrCanvas.style.opacity = '1';
+                qrLoading.style.display = 'none';
+            } catch (e) {
+                qrLoading.textContent = 'Gagal generate QR';
+                toast('Gagal generate: ' + e.message, 'error');
+            }
+        }
+        function closeQrModal() { qrBackdrop.classList.remove('show'); }
+
+        qrBackdrop.addEventListener('click', e => { if (e.target === qrBackdrop) closeQrModal(); });
+        $('closeQrModalBtn').addEventListener('click', closeQrModal);
+        $('copyQrUrlBtn').addEventListener('click', () => qrUrlInput.value && copyText(qrUrlInput.value));
+        $('openQrUrlBtn').addEventListener('click', () => qrUrlInput.value && window.open(qrUrlInput.value, '_blank'));
+        $('downloadQrBtn').addEventListener('click', () => {
+            if (!_qrHighRes) { toast('QR belum ready', 'warning'); return; }
+            const a = document.createElement('a');
+            a.href = _qrHighRes;
+            a.download = `qr_${_qrCurName}.png`;
+            a.click();
+            toast('QR downloaded ✓', 'success', 1800);
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeQrModal(); closeLogDrawer(); }
+        });
+
+        document.addEventListener('click', e => {
+            const b = e.target.closest('.js-qr-url');
+            if (b) {
+                e.preventDefault();
+                if (!b.dataset.url) { toast('URL kosong', 'error'); return; }
+                openQrModal({ url: b.dataset.url, title: b.dataset.title, filename: b.dataset.code });
+            }
+        });
+
+        /* ═══ Log drawer ═══ */
+        const logDrawer = $('logDrawer');
+        const logDrawerBody = $('logDrawerBody');
+        function closeLogDrawer() { logDrawer.classList.remove('show'); }
+
+        function formatLogTime(t) {
+            if (!t) return '-';
+            try {
+                const d = new Date(t);
+                if (isNaN(d.getTime())) return String(t);
+                return d.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch { return String(t); }
+        }
+
+        async function openLogDrawer({ code, title }) {
+            $('logDrawerTitle').textContent = 'Log: ' + code;
+            $('logDrawerSubtitle').textContent = title || code;
+            logDrawerBody.innerHTML = '<div class="empty">Memuat log…</div>';
+            logDrawer.classList.add('show');
+            try {
+                const res = await fetch(`${URL_LOGS_API}?code=${encodeURIComponent(code)}&size=100`, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await handleJson(res);
+                const items = Array.isArray(data) ? data : (data.content || data.logs || []);
+                if (!items.length) {
+                    logDrawerBody.innerHTML = '<div class="empty"><span class="empty-emoji">∅</span>Belum ada akses tercatat.</div>';
+                    return;
+                }
+                logDrawerBody.innerHTML = items.map(l => {
+                    const t = formatLogTime(l.createdAt || l.accessedAt);
+                    const ip = l.ipAddress || l.ip || '-';
+                    const ua = l.userAgent || '';
+                    const ref = l.referer || '';
+                    const loc = [l.city, l.region, l.country].filter(Boolean).join(', ');
+                    const br = [l.browser, l.browserVersion].filter(Boolean).join(' ');
+                    const dv = [l.deviceType, l.operatingSystem].filter(Boolean).join(' • ');
+                    return `<div class="log-item">
+                        <div class="log-time">${escapeHtml(t)}</div>
+                        <div class="log-meta">
+                            <div class="log-ip">${escapeHtml(ip)}</div>
+                            ${loc ? `<div style="font-size:10px;color:var(--ink-soft);margin-top:2px">📍 ${escapeHtml(loc)}${l.isp?` · ${escapeHtml(l.isp)}`:''}</div>` : ''}
+                            ${br || dv ? `<div style="font-size:10px;color:var(--ink-soft);margin-top:2px">${br?'🌐 '+escapeHtml(br):''}${br&&dv?' — ':''}${dv?escapeHtml(dv):''}</div>` : ''}
+                            ${ref ? `<div style="font-size:10px;color:var(--ink-soft);margin-top:2px">← ${escapeHtml(ref)}</div>` : ''}
+                            ${ua ? `<div class="log-ua">${escapeHtml(ua)}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (e) {
+                logDrawerBody.innerHTML = `<div class="empty">Gagal memuat log: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        $('closeLogDrawerBtn').addEventListener('click', closeLogDrawer);
+        document.addEventListener('click', e => {
+            const b = e.target.closest('.js-open-log');
+            if (b) {
+                e.preventDefault();
+                if (!b.dataset.code) { toast('Code kosong', 'error'); return; }
+                openLogDrawer({ code: b.dataset.code, title: b.dataset.title });
+            }
+        });
+
+        /* ═══ Catalog state + rendering ═══ */
+        let currentPage = 0, currentSize = 10, currentKeyword = '';
+        let currentTotalPages = 1, currentTotalElements = 0;
+        let selectedIds = new Set();
+        let _catalogLoaded = false;
+
+        const tableBody = $('catalogTableBody');
+        const searchInput = $('catalogSearchInput');
+        const pageSizeSelect = $('pageSizeSelect');
+        const pageChip = $('pageChip');
+        const paginationInfo = $('paginationInfo');
+        const bulkBar = $('bulkDownloadBar');
+        const bulkDlInfo = $('bulkDlInfo');
+        const bulkDownloadBtn = $('bulkDownloadBtn');
+        const checkAllHead = $('checkAllHead');
+
+        function buildViewerUrl(item) { return toAbsoluteUrl(item.open_in_viewer || ('/catalogue?id=' + item.id)); }
+        function withCacheBuster(url) {
+            try { const u = new URL(url, location.origin); u.searchParams.set('_ts', Date.now()); return u.pathname + u.search; }
+            catch { return url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now(); }
+        }
+        function updateBulkBar() {
+            const c = selectedIds.size;
+            bulkDlInfo.textContent = c > 0 ? `${c} dipilih` : '0 dipilih';
+            bulkDownloadBtn.disabled = c === 0;
+            bulkBar.classList.toggle('show', c > 0);
+            const cbs = tableBody.querySelectorAll('.js-row-check');
+            if (cbs.length) {
+                const all = [...cbs].every(cb => cb.checked);
+                const some = [...cbs].some(cb => cb.checked);
+                checkAllHead.checked = all;
+                checkAllHead.indeterminate = some && !all;
+            } else {
+                checkAllHead.checked = false;
+                checkAllHead.indeterminate = false;
+            }
+        }
+        function toggleSel(id, on) {
+            if (on) selectedIds.add(String(id)); else selectedIds.delete(String(id));
+            const row = tableBody.querySelector(`tr[data-id="${id}"]`);
+            if (row) row.classList.toggle('selected', on);
+            updateBulkBar();
+        }
+        checkAllHead.addEventListener('change', () => {
+            tableBody.querySelectorAll('.js-row-check').forEach(cb => {
+                cb.checked = checkAllHead.checked;
+                toggleSel(cb.dataset.id, checkAllHead.checked);
+            });
+        });
+        $('selectAllBtn').addEventListener('click', () => {
+            tableBody.querySelectorAll('.js-row-check').forEach(cb => { cb.checked = true; toggleSel(cb.dataset.id, true); });
+        });
+        $('deselectAllBtn').addEventListener('click', () => {
+            selectedIds.clear();
+            tableBody.querySelectorAll('.js-row-check').forEach(cb => cb.checked = false);
+            tableBody.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+            updateBulkBar();
+        });
+        document.addEventListener('change', e => {
+            if (e.target.classList.contains('js-row-check')) toggleSel(e.target.dataset.id, e.target.checked);
+        });
+
+        function renderCatalogs(items) {
+            if (!items?.length) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="empty"><span class="empty-emoji">∅</span>Belum ada catalog.</td></tr>';
+                updateBulkBar(); return;
+            }
+            tableBody.innerHTML = items.map(item => {
+                const pdfUrl = withCacheBuster(item.url || (CATALOG_API.replace('/catalogs', '/pdf/') + item.id));
+                const viewerUrl = buildViewerUrl(item);
+                const sel = selectedIds.has(String(item.id));
+                return `<tr data-id="${escapeHtml(item.id)}" class="${sel ? 'selected' : ''}">
+                    <td class="td-check"><input type="checkbox" class="js-row-check" data-id="${escapeHtml(item.id)}" ${sel ? 'checked' : ''}></td>
+                    <td><span class="code-chip" style="cursor:default">${escapeHtml(item.id)}</span></td>
+                    <td class="url-cell">
+                        <strong>${escapeHtml(item.filename ?? '-')}</strong>
+                        <a href="${escapeHtml(viewerUrl)}" target="_blank" class="url-link">${escapeHtml(viewerUrl)}</a>
+                    </td>
+                    <td><span class="field-hint">${escapeHtml(item.contentType ?? 'application/pdf')}</span></td>
+                    <td><div class="row-actions">
+                        <a class="btn btn-ghost btn-xs" href="${escapeHtml(pdfUrl)}" target="_blank">PDF</a>
+                        <a class="btn btn-ghost btn-xs" href="${escapeHtml(viewerUrl)}" target="_blank">Viewer</a>
+                        <button class="btn btn-ghost btn-xs js-copy-cat" type="button" data-url="${escapeHtml(viewerUrl)}">Copy</button>
+                        <button class="btn btn-ghost btn-xs js-qr-cat" type="button"
+                                data-url="${escapeHtml(viewerUrl)}"
+                                data-title="${escapeHtml(item.filename ?? '')}"
+                                data-filename="${escapeHtml(item.filename ?? 'catalog')}">QR</button>
+                        <button class="btn btn-danger btn-xs js-del-cat" type="button" data-id="${escapeHtml(item.id)}">✕</button>
+                    </div></td>
+                </tr>`;
+            }).join('');
+            updateBulkBar();
+        }
+
+        document.addEventListener('click', e => {
+            const cp = e.target.closest('.js-copy-cat');
+            if (cp) copyText(cp.dataset.url);
+            const qr = e.target.closest('.js-qr-cat');
+            if (qr) openQrModal({ url: qr.dataset.url, title: qr.dataset.title, filename: qr.dataset.filename });
+            const del = e.target.closest('.js-del-cat');
+            if (del) handleDeleteCatalog(del.dataset.id);
+        });
+
+        async function handleDeleteCatalog(id) {
+            if (!confirm('Hapus catalog ID ' + id + '?')) return;
+            try {
+                const res = await fetch(CATALOG_API.replace('/catalogs', '') + '/' + encodeURIComponent(id), { method: 'DELETE', headers: csrfHeaders() });
+                await handleJson(res);
+                toast('Catalog dihapus ✓', 'success');
+                loadCatalogs(currentPage);
+            } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+        }
+
+        function updatePagUI() {
+            const safe = Math.max(1, currentTotalPages);
+            const cur = currentPage + 1;
+            pageChip.textContent = `${cur}/${safe}`;
+            paginationInfo.textContent = `Page ${cur} of ${safe} · ${currentTotalElements} total`;
+            $('firstPageBtn').disabled = currentPage <= 0;
+            $('prevPageBtn').disabled = currentPage <= 0;
+            $('nextPageBtn').disabled = currentPage >= safe - 1;
+            $('lastPageBtn').disabled = currentPage >= safe - 1;
+        }
+
+        async function loadCatalogs(page = currentPage) {
+            try {
+                currentPage = page;
+                currentSize = parseInt(pageSizeSelect.value, 10) || 10;
+                currentKeyword = searchInput.value.trim();
+                tableBody.innerHTML = '<tr><td colspan="5" class="empty">Memuat…</td></tr>';
+                const p = new URLSearchParams();
+                p.set('page', currentPage); p.set('size', currentSize);
+                if (currentKeyword) p.set('q', currentKeyword);
+                const res = await fetch(`${CATALOG_API}?${p}`, { cache: 'no-store' });
+                if (res.status === 404) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="empty">Endpoint catalog belum tersedia.</td></tr>';
+                    updatePagUI(); return;
+                }
+                const data = await handleJson(res);
+                if (Array.isArray(data)) {
+                    currentTotalElements = data.length;
+                    currentTotalPages = Math.max(1, Math.ceil(data.length / currentSize));
+                    if (currentPage >= currentTotalPages) currentPage = currentTotalPages - 1;
+                    if (currentPage < 0) currentPage = 0;
+                    renderCatalogs(data.slice(currentPage * currentSize, (currentPage + 1) * currentSize));
+                    updatePagUI();
+                    return;
+                }
+                const items = Array.isArray(data.content) ? data.content : [];
+                currentTotalElements = Number(data.totalElements ?? items.length);
+                currentTotalPages = Math.max(1, Number(data.totalPages ?? 1));
+                currentPage = Number(data.page ?? 0);
+                renderCatalogs(items);
+                updatePagUI();
+            } catch (e) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        $('refreshListBtn').addEventListener('click', () => loadCatalogs(currentPage));
+        pageSizeSelect.addEventListener('change', () => { currentPage = 0; loadCatalogs(0); });
+        let _searchTimer;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(_searchTimer);
+            _searchTimer = setTimeout(() => { currentPage = 0; loadCatalogs(0); }, 350);
+        });
+        $('firstPageBtn').addEventListener('click', () => loadCatalogs(0));
+        $('prevPageBtn').addEventListener('click', () => loadCatalogs(Math.max(0, currentPage - 1)));
+        $('nextPageBtn').addEventListener('click', () => loadCatalogs(Math.min(currentTotalPages - 1, currentPage + 1)));
+        $('lastPageBtn').addEventListener('click', () => loadCatalogs(Math.max(0, currentTotalPages - 1)));
+
+        /* ═══ Bulk download QR ═══ */
+        const dlProgress = $('dlProgress');
+        const dlTitle = $('dlTitle'), dlPct = $('dlPct'), dlBar = $('dlBar'), dlText = $('dlText'), dlDetail = $('dlDetail');
+        function showProgress(v) { if (v) { dlProgress.classList.add('show'); dlBar.className = 'dl-bar'; } else dlProgress.classList.remove('show'); }
+        function updProgress(done, total, cur = '') {
+            const pct = total ? Math.round(done / total * 100) : 0;
+            dlBar.style.width = pct + '%';
+            dlPct.textContent = pct + '%';
+            dlText.textContent = `${done} / ${total} QR selesai`;
+            if (cur) dlDetail.textContent = `→ ${cur}`;
+        }
+
+        bulkDownloadBtn.addEventListener('click', async () => {
+            if (!selectedIds.size) return;
+            const [qrOk, zipOk] = await Promise.all([ensureQR(), ensureJSZip()]);
+            if (!zipOk) { toast('JSZip gagal dimuat', 'error', 5000); return; }
+            if (!qrOk) toast('QR pakai fallback API', 'warning');
+
+            const ids = [...selectedIds];
+            const total = ids.length;
+            let done = 0, failed = 0;
+            const failedItems = [];
+
+            dlTitle.textContent = `Generating ${total} QR…`;
+            dlDetail.textContent = '';
+            showProgress(true);
+            updProgress(0, total);
+            bulkDownloadBtn.disabled = true;
+
+            const zip = new JSZip();
+            const folder = zip.folder('qr-catalogs');
+
+            for (const id of ids) {
+                let fname = `catalog_${id}`;
+                try {
+                    const row = tableBody.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        const strong = row.querySelector('.url-cell strong');
+                        if (strong && strong.textContent.trim()) fname = strong.textContent.trim().replace(/\.pdf$/i, '');
+                    }
+                    const safe = fname.replace(/[^\w\-]+/g, '_');
+                    updProgress(done, total, safe);
+                    const viewerUrl = toAbsoluteUrl('/catalogue?id=' + id);
+                    let blob = null;
+                    for (let attempt = 1; attempt <= 2; attempt++) {
+                        try { blob = await generateQrBlob(viewerUrl); break; }
+                        catch (e) { if (attempt === 2) throw e; await new Promise(r => setTimeout(r, 200)); }
+                    }
+                    if (blob) folder.file(`qr_${safe}.png`, blob);
+                } catch (e) {
+                    failed++; failedItems.push(fname);
+                }
+                done++;
+                updProgress(done, total);
+                if (done % 5 === 0) await new Promise(r => setTimeout(r, 10));
+            }
+
+            dlTitle.textContent = 'Membuat ZIP…';
+            try {
+                const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } }, meta => {
+                    const p = Math.round(meta.percent);
+                    dlBar.style.width = p + '%';
+                    dlPct.textContent = p + '%';
+                    dlText.textContent = 'Compressing…';
+                });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(zipBlob);
+                a.download = `qr-catalogs-${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a); a.click();
+                setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+                dlBar.classList.add(failed ? 'error' : 'done');
+                dlTitle.textContent = 'Download selesai';
+                const ok = total - failed;
+                let msg = `${ok} QR berhasil.`;
+                if (failed) { msg += ` ${failed} gagal.`; dlDetail.textContent = 'Gagal: ' + failedItems.join(', '); }
+                dlText.textContent = msg;
+                toast(msg, failed ? 'warning' : 'success', 4000);
+            } catch (e) {
+                dlBar.classList.add('error');
+                dlTitle.textContent = 'Gagal ZIP';
+                toast('Gagal ZIP: ' + e.message, 'error', 5000);
+            }
+            bulkDownloadBtn.disabled = false;
+            setTimeout(() => showProgress(false), failed ? 8000 : 4000);
+        });
+
+        /* ═══ Create short URL for catalog ═══ */
+        async function createShortUrlForCatalog(catalogId, title) {
+            try {
+                const fd = new FormData();
+                fd.append('originalUrl', toAbsoluteUrl('/catalogue?id=' + catalogId));
+                if (title) fd.append('title', title);
+                const res = await fetch('/admin/create', { method: 'POST', headers: csrfHeaders(), body: fd });
+                return res.ok;
+            } catch { return false; }
+        }
+
+        $('createCatalogForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            try {
+                const f = $('createPdfFile').files[0];
+                if (!f) throw new Error('File belum dipilih');
+                const customName = $('createFilename').value.trim();
+                const autoSU = $('createAutoShortUrl').checked;
+                const fd = new FormData();
+                fd.append('file', f);
+                if (customName) fd.append('filename', customName);
+                const res = await fetch(CATALOG_UPLOAD, { method: 'POST', headers: csrfHeaders(), body: fd });
+                const data = await handleJson(res);
+                if (autoSU && data.id) {
+                    const ok = await createShortUrlForCatalog(data.id, data.filename || f.name);
+                    toast(ok ? 'Catalog + Short URL ✓' : 'Catalog OK, short URL gagal', ok ? 'success' : 'warning');
+                } else {
+                    toast('Catalog berhasil ✓', 'success');
+                }
+                e.target.reset();
+                if (_catalogLoaded) loadCatalogs(0);
+            } catch (err) { toast('Gagal: ' + err.message, 'error'); }
+        });
+
+        /* ═══ Bulk upload ═══ */
+        const bulkFiles = $('bulkPdfFiles');
+        const bulkNamingEl = $('bulkNaming');
+        const bulkNamingSelect = $('bulkNamingSelect');
+        const bulkPrefixInput = $('bulkPrefixInput');
+        const bulkFileCount = $('bulkFileCount');
+        const bulkFileHint = $('bulkFileHint');
+        const bulkFileList = $('bulkFileList');
+        let bulkCustomNames = {};
+
+        function getBulkName(idx, orig) {
+            const mode = bulkNamingSelect.value;
+            if (mode === 'custom') {
+                const c = bulkCustomNames[idx];
+                if (c && c.trim()) {
+                    let n = c.trim();
+                    if (!n.toLowerCase().endsWith('.pdf')) n += '.pdf';
+                    return n;
+                }
+                return orig;
+            }
+            if (mode === 'prefix') {
+                const p = bulkPrefixInput.value.trim() || 'Catalog';
+                return `${p}-${String(idx + 1).padStart(3, '0')}.pdf`;
+            }
+            return orig;
+        }
+
+        function renderBulk() {
+            const files = [...(bulkFiles.files || [])];
+            if (!files.length) {
+                bulkNamingEl.classList.remove('show');
+                bulkFileCount.textContent = 'Belum ada file';
+                bulkFileHint.textContent = 'Ctrl/Shift untuk multi';
+                bulkFileList.innerHTML = '<div class="bulk-empty">Belum ada file.</div>';
+                bulkCustomNames = {};
+                return;
+            }
+            bulkNamingEl.classList.add('show');
+            bulkFileCount.textContent = `${files.length} file`;
+            bulkFileHint.textContent = 'Siap upload';
+            const mode = bulkNamingSelect.value;
+            bulkFileList.innerHTML = files.map((f, i) => {
+                const dn = getBulkName(i, f.name);
+                const isCustom = mode === 'custom';
+                return `<div class="bulk-file-item">
+                    <div class="bulk-file-idx">${i + 1}</div>
+                    <div class="bulk-file-info">
+                        <div class="bulk-file-original" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+                        ${isCustom ? `<input type="text" class="bulk-file-rename js-bulk-rename" data-idx="${i}" placeholder="Nama baru" value="${escapeHtml(bulkCustomNames[i] || '')}">` : `<div class="bulk-file-resolved">→ ${escapeHtml(dn)}</div>`}
+                    </div>
+                    <div class="bulk-file-size">${formatSize(f.size)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        bulkNamingSelect.addEventListener('change', () => {
+            bulkPrefixInput.style.display = bulkNamingSelect.value === 'prefix' ? 'block' : 'none';
+            renderBulk();
+        });
+        bulkPrefixInput.addEventListener('input', () => { if (bulkNamingSelect.value === 'prefix') renderBulk(); });
+        document.addEventListener('input', e => {
+            if (e.target.classList.contains('js-bulk-rename')) {
+                bulkCustomNames[+e.target.dataset.idx] = e.target.value;
+            }
+        });
+        bulkFiles.addEventListener('change', () => { bulkCustomNames = {}; renderBulk(); });
+        $('clearBulkBtn').addEventListener('click', () => { bulkFiles.value = ''; bulkCustomNames = {}; renderBulk(); });
+
+        $('bulkCatalogForm').addEventListener('submit', async e => {
+            e.preventDefault();
+            try {
+                const files = bulkFiles.files;
+                if (!files?.length) throw new Error('Belum ada file');
+                const autoSU = $('bulkAutoShortUrl').checked;
+                const fd = new FormData();
+                const names = [];
+                for (let i = 0; i < files.length; i++) {
+                    fd.append('files', files[i]);
+                    names.push(getBulkName(i, files[i].name));
+                }
+                names.forEach(n => fd.append('filenames', n));
+                const res = await fetch(CATALOG_BULK, { method: 'POST', headers: csrfHeaders(), body: fd });
+                const data = await handleJson(res);
+                let suMsg = '';
+                if (autoSU && Array.isArray(data.created)) {
+                    let suOk = 0, suFail = 0;
+                    for (const c of data.created) {
+                        const ok = await createShortUrlForCatalog(c.id, c.filename);
+                        ok ? suOk++ : suFail++;
+                    }
+                    suMsg = ` · SU ${suOk} ok, ${suFail} gagal`;
+                }
+                toast(`Upload: ${data.success ?? 0} ok, ${data.failed ?? 0} gagal${suMsg}`, (data.failed > 0) ? 'warning' : 'success', 4000);
+                e.target.reset();
+                bulkCustomNames = {};
+                renderBulk();
+                if (_catalogLoaded) loadCatalogs(0);
+            } catch (err) { toast('Gagal: ' + err.message, 'error', 4000); }
+        });
+
+        /* ═══ Init ═══ */
+        renderBulk();
+
+    })();
+</script>
+
+</body>
+</html>

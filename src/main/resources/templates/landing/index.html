@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nusantara Link — Persingkat Tautan, Lestarikan Budaya</title>
+    <link rel="stylesheet" th:href="@{/css/landing.css}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a href="/" class="brand">
+            <span class="brand-icon">ᬚ</span>
+            <span>Nusantara<span class="brand-link">Link</span></span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#shortener">Persingkat</a></li>
+            <li><a href="#budaya">Budaya</a></li>
+            <li><a href="#fitur">Fitur</a></li>
+            <li><a th:href="@{/login}" class="btn-login">Admin</a></li>
+        </ul>
+    </div>
+</nav>
+
+<header class="hero" id="shortener">
+    <div class="container hero-inner">
+        <div class="hero-text">
+            <span class="eyebrow">Pemendek Tautan Nusantara</span>
+            <h1>Persingkat Tautanmu,<br><span class="accent">Sebarkan Budayamu</span></h1>
+            <p>Ubah tautan panjang menjadi pendek, mudah dibagikan,
+               dan tetap berwawasan kebudayaan Indonesia.</p>
+
+            <form th:action="@{/shorten}" method="post" class="shortener-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="input-row">
+                    <input type="text" name="originalUrl" required
+                           th:value="${lastInput}"
+                           placeholder="Tempel tautan panjangmu di sini..."
+                           class="url-input">
+                    <button type="submit" class="btn-shorten">Persingkat</button>
+                </div>
+                <div class="input-row custom-row">
+                    <span class="prefix" th:text="${baseUrl} + '/'">localhost:8080/</span>
+                    <input type="text" name="customCode" pattern="[a-zA-Z0-9_\-]{3,16}"
+                           placeholder="custom-code (opsional, 3-16 karakter)"
+                           class="custom-input">
+                </div>
+            </form>
+
+            <div class="result-box" th:if="${shortUrl}">
+                <div class="result-label">✓ Tautan berhasil dibuat!</div>
+                <div class="result-url">
+                    <a th:href="${shortUrl}" th:text="${shortUrl}" target="_blank">short url</a>
+                    <button type="button" class="copy-btn" th:attr="data-url=${shortUrl}">
+                        Salin
+                    </button>
+                </div>
+                <div class="result-original">
+                    <small>Menuju: <span th:text="${originalUrl}">original</span></small>
+                </div>
+            </div>
+
+            <div class="error-box" th:if="${error}" th:text="${error}"></div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-num" th:text="${totalUrls}">0</span>
+                    <span class="stat-label">Tautan Dibuat</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num" th:text="${totalClicks}">0</span>
+                    <span class="stat-label">Total Klik</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num">17.508</span>
+                    <span class="stat-label">Pulau Terhubung</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-deco">
+            <div class="batik-pattern"></div>
+        </div>
+    </div>
+</header>
+
+<section id="fitur" class="section">
+    <div class="container">
+        <div class="section-head">
+            <span class="eyebrow">Kenapa Nusantara Link?</span>
+            <h2>Cepat, Sederhana, Bermakna</h2>
+        </div>
+        <div class="grid-3">
+            <article class="card feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Instan</h3>
+                <p>Tempel tautan, tekan tombol, tautan pendek langsung tersedia.
+                   Tanpa pendaftaran, tanpa ribet.</p>
+            </article>
+            <article class="card feature">
+                <div class="feature-icon">🎨</div>
+                <h3>Custom Code</h3>
+                <p>Tentukan sendiri kode tautanmu — cocok untuk kampanye,
+                   promosi acara budaya, atau tautan personal.</p>
+            </article>
+            <article class="card feature">
+                <div class="feature-icon">📊</div>
+                <h3>Pelacakan Klik</h3>
+                <p>Setiap klik tercatat otomatis. Ingin dashboard analitik
+                   lengkap? Hubungi admin untuk akses penuh.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section id="budaya" class="section section-alt">
+    <div class="container">
+        <div class="section-head">
+            <span class="eyebrow">Inspirasi Nusantara</span>
+            <h2>Warisan Budaya Indonesia</h2>
+            <p>Gunakan Nusantara Link untuk menyebarkan tautan edukasi, artikel,
+               dan konten kebudayaan Indonesia.</p>
+        </div>
+        <div class="grid-3">
+            <article class="card">
+                <div class="card-tag">UNESCO</div>
+                <h3>Batik</h3>
+                <p>Teknik pewarnaan kain khas Indonesia yang diakui sebagai Warisan
+                   Budaya Takbenda Dunia pada tahun 2009.</p>
+            </article>
+            <article class="card">
+                <div class="card-tag">Aceh</div>
+                <h3>Tari Saman</h3>
+                <p>Tarian tradisional dengan gerakan cepat dan serempak yang juga
+                   terdaftar di UNESCO sebagai warisan dunia.</p>
+            </article>
+            <article class="card">
+                <div class="card-tag">Sumatera Barat</div>
+                <h3>Rendang</h3>
+                <p>Masakan daging berbumbu rempah yang pernah dinobatkan sebagai
+                   makanan terenak di dunia oleh CNN.</p>
+            </article>
+            <article class="card">
+                <div class="card-tag">Bali</div>
+                <h3>Tari Kecak</h3>
+                <p>Pertunjukan sakral yang diiringi paduan suara "cak" dari puluhan
+                   penari, menggambarkan kisah epos Ramayana.</p>
+            </article>
+            <article class="card">
+                <div class="card-tag">Sumatera</div>
+                <h3>Songket</h3>
+                <p>Kain tenun dengan benang emas atau perak yang dulunya hanya
+                   dikenakan kalangan kerajaan Melayu dan Minangkabau.</p>
+            </article>
+            <article class="card">
+                <div class="card-tag">Papua</div>
+                <h3>Honai</h3>
+                <p>Rumah adat suku Dani berbentuk bulat dengan atap jerami kerucut,
+                   dirancang menahan dinginnya pegunungan Papua.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <blockquote>
+            "Kebudayaan adalah bahasa yang paling jujur
+            untuk memperkenalkan bangsa kepada dunia."
+        </blockquote>
+        <a href="#shortener" class="btn-primary-cta">Mulai Persingkat Tautan</a>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2026 Nusantara Link · Merayakan Warisan Budaya Indonesia</p>
+        <p class="small">
+            <a th:href="@{/login}">Admin Panel</a>
+        </p>
+    </div>
+</footer>
+
+<script>
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('copy-btn')) {
+        const url = e.target.getAttribute('data-url');
+        navigator.clipboard.writeText(url).then(() => {
+            const original = e.target.textContent;
+            e.target.textContent = '✓ Tersalin';
+            setTimeout(() => { e.target.textContent = original; }, 1500);
+        });
+    }
+});
+
+if (document.querySelector('.result-box') || document.querySelector('.error-box')) {
+    document.getElementById('shortener').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

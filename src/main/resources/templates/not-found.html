@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tautan Tidak Ditemukan</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #FAF3E0; color: #2C1810;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0; text-align: center;
+        }
+        .box {
+            background: white; padding: 50px 40px;
+            border-radius: 12px; max-width: 420px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        }
+        h1 { font-size: 80px; color: #C73E1D; margin: 0; line-height: 1; }
+        h2 { color: #5c2d0c; margin: 8px 0 16px; }
+        code {
+            background: #F5EBD5; padding: 3px 10px; border-radius: 4px;
+            color: #8B4513; font-size: 14px;
+        }
+        p { color: #5c4a3d; margin: 16px 0; }
+        a {
+            display: inline-block; margin-top: 12px;
+            background: #5c2d0c; color: #FAF3E0;
+            padding: 10px 22px; border-radius: 6px;
+            text-decoration: none; font-size: 14px;
+        }
+        a:hover { background: #C73E1D; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>404</h1>
+        <h2>Tautan Tidak Ditemukan</h2>
+        <p>Kode <code th:text="${code}">xxx</code> tidak terdaftar atau sudah dinonaktifkan.</p>
+        <a href="/">Kembali ke Beranda</a>
+    </div>
+</body>
+</html>
