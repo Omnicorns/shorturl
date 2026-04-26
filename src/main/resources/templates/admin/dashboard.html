@@ -43,7 +43,7 @@
             --font-body: 'IBM Plex Sans', system-ui, sans-serif;
             --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-            --topbar-h: 56px;
+            --topbar-h: 64px;
             --sidebar-w: 380px;
         }
 
@@ -74,26 +74,36 @@
         }
         .brand {
             display: flex;
-            align-items: baseline;
-            gap: 12px;
+            align-items: center;
+            gap: 14px;
+            min-width: 310px;
         }
-        .brand-mark {
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-style: italic;
-            font-size: 20px;
-            letter-spacing: -.02em;
+        .brand-logo-link {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            text-decoration: none;
         }
-        .brand-mark span { color: var(--accent); }
+        .brand-logo {
+            height: 46px;
+            width: auto;
+            max-width: 190px;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 10px rgba(23,21,15,.08));
+        }
         .brand-tag {
             font-family: var(--font-mono);
             font-size: 10px;
             letter-spacing: .08em;
             text-transform: uppercase;
             color: var(--muted);
-            padding: 3px 8px;
+            padding: 5px 10px;
             border: 1px solid var(--line-strong);
             border-radius: 100px;
+            background: #fff;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
         }
         .top-right {
             display: flex;
@@ -1145,6 +1155,10 @@
         @media (max-width: 720px) {
             .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
             .sidebar { border-right: none; border-bottom: 1px solid var(--line); max-height: 40vh; }
+            .topbar { padding: 0 12px; gap: 10px; }
+            .brand { min-width: 0; gap: 8px; }
+            .brand-logo { height: 38px; max-width: 150px; }
+            .brand-tag { display: none; }
             .top-stats { display: none; }
             .search-box input { min-width: 140px; }
         }
@@ -1157,7 +1171,9 @@
 <!-- ─── Topbar ─── -->
 <header class="topbar">
     <div class="brand">
-        <span class="brand-mark">Atelier<span>/</span>Admin</span>
+        <a href="/" class="brand-logo-link" aria-label="Sarinah Admin">
+            <img th:src="@{/img.png}" src="/img.png" alt="Sarinah Untuk Indonesia" class="brand-logo">
+        </a>
         <span class="brand-tag">Short URL &amp; Catalog</span>
     </div>
     <div class="top-right">
@@ -1168,10 +1184,10 @@
             <span class="sep">·</span>
             <span>Catalog <strong th:text="${totalCatalogs ?: 0}">0</strong></span>
         </div>
-        <a href="/" class="btn btn-ghost btn-sm">View site ↗</a>
+        <a href="/" class="btn btn-ghost btn-sm">Lihat Site ↗</a>
         <form th:action="@{/logout}" method="post" style="display:inline">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
+            <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
         </form>
         <span class="user-chip">
             <span class="avatar" sec:authentication="name">A</span>

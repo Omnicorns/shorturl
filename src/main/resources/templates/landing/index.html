@@ -9,7 +9,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Dancing+Script:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root{
@@ -125,32 +125,24 @@
           grid-template-columns:auto 1fr auto;
           align-items:center;
           gap:40px;
-          padding:28px 0;
+          padding:22px 0;
         }
 
         .brand{
-          display:flex;
-          flex-direction:column;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
           line-height:1;
+          padding:4px 0;
         }
 
-        .brand-logo{
-          font-family:'Dancing Script', cursive;
-          font-weight:700;
-          font-size:42px;
-          color:var(--red);
-          letter-spacing:.01em;
-          line-height:.9;
-        }
-
-        .brand-tag{
-          font-size:10px;
-          letter-spacing:.24em;
-          text-transform:uppercase;
-          color:var(--gold);
-          margin-top:5px;
-          padding-left:36px;
-          font-weight:700;
+        .brand-img{
+          height:66px;
+          width:auto;
+          max-width:230px;
+          display:block;
+          object-fit:contain;
+          filter:drop-shadow(0 8px 14px rgba(33,24,23,.08));
         }
 
         .nav-links{
@@ -162,7 +154,7 @@
 
         .nav-links a{
           font-size:15px;
-          font-weight:600;
+          font-weight:700;
           color:#332724;
           position:relative;
           padding:6px 2px;
@@ -205,7 +197,7 @@
           background:#fff;
           border-radius:12px;
           font-size:14px;
-          font-weight:700;
+          font-weight:800;
           transition:.2s ease;
           box-shadow:0 12px 28px rgba(33,24,23,.07);
         }
@@ -229,7 +221,7 @@
           padding:10px 12px;
           border-radius:10px;
           font-size:13px;
-          font-weight:600;
+          font-weight:700;
           color:#3a2d29;
           transition:.2s ease;
         }
@@ -247,7 +239,7 @@
         /* HERO */
         .hero{
           text-align:center;
-          padding:56px 0 28px;
+          padding:54px 0 28px;
           position:relative;
         }
 
@@ -300,7 +292,7 @@
           gap:10px;
           padding:14px 28px;
           font-size:15px;
-          font-weight:700;
+          font-weight:800;
           color:#76685c;
           background:var(--cream-2);
           border-top-left-radius:16px;
@@ -375,7 +367,7 @@
         .field-label{
           display:block;
           font-size:14px;
-          font-weight:700;
+          font-weight:800;
           color:var(--ink);
           margin-bottom:10px;
         }
@@ -678,6 +670,7 @@
           .nav{
             grid-template-columns:auto auto;
             gap:16px;
+            padding:18px 0;
           }
 
           .nav-links{
@@ -688,13 +681,9 @@
             display:none;
           }
 
-          .brand-logo{
-            font-size:36px;
-          }
-
-          .brand-tag{
-            padding-left:28px;
-            font-size:9px;
+          .brand-img{
+            height:50px;
+            max-width:180px;
           }
 
           .hero{
@@ -811,9 +800,8 @@
 <div class="shell">
 
     <nav class="nav">
-        <a href="/" class="brand">
-            <span class="brand-logo">Sarinah</span>
-            <span class="brand-tag">Untuk Indonesia</span>
+        <a href="/" class="brand" aria-label="Sarinah Untuk Indonesia">
+            <img src="img.png" alt="Sarinah Untuk Indonesia" class="brand-img">
         </a>
 
         <ul class="nav-links">
@@ -907,14 +895,14 @@
                 <div class="sample">
                     <span class="sample-label">Contoh hasil short link</span>
                     <span class="sample-pill">
-              https://surl.co.id/SarinahForSEAGames2025
-              <button class="copy-btn" type="button" id="copyBtn" aria-label="Salin">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2"/>
-                  <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
-                </svg>
-              </button>
-            </span>
+                        https://surl.co.id/SarinahForSEAGames2025
+                        <button class="copy-btn" type="button" id="copyBtn" aria-label="Salin">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+                            </svg>
+                        </button>
+                    </span>
                 </div>
             </div>
 
@@ -1044,13 +1032,13 @@
     </div>
 
     <div class="trust">
-      <span>
-        <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 2 4 5v7c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V5z"/>
-          <path d="m9 12 2 2 4-4"/>
-        </svg>
-        Aman
-      </span>
+        <span>
+            <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 2 4 5v7c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V5z"/>
+                <path d="m9 12 2 2 4-4"/>
+            </svg>
+            Aman
+        </span>
         <span class="trust-dot"></span>
         <span>Terpercaya</span>
         <span class="trust-dot"></span>
@@ -1075,7 +1063,7 @@
     if (copyBtn) {
       copyBtn.addEventListener('click', async () => {
         try {
-          await navigator.clipboard.writeText('https://surl.co.id/event-jakarta');
+          await navigator.clipboard.writeText('https://surl.co.id/SarinahForSEAGames2025');
 
           const original = copyBtn.innerHTML;
 
