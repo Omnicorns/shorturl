@@ -3,6 +3,7 @@ package com.app.shorturl.controller;
 import com.app.shorturl.model.ShortUrl;
 import com.app.shorturl.repository.ClickLogRepository;
 import com.app.shorturl.service.ShortUrlService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -30,15 +31,19 @@ public class AdminController {
     public String dashboard(@RequestParam(required = false) String q,
                             @RequestParam(defaultValue = "0") int page,
                             @RequestParam(defaultValue = "10") int size,
+                            HttpServletRequest request,           // ← tambah ini
                             Model model) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
         Page<ShortUrl> urls = service.list(q, pageable);
+
+        // Resolve baseUrl dari request (akan baca X-Forwarded-* dari Nginx)
+        String resolvedBaseUrl = resolveBaseUrl(request);
 
         model.addAttribute("urls", urls);
         model.addAttribute("q", q);
         model.addAttribute("totalUrls", service.totalUrls());
         model.addAttribute("totalClicks", service.totalClicks());
-        model.addAttribute("baseUrl", baseUrl);
+        model.addAttribute("baseUrl", resolvedBaseUrl);            // ← ganti ini
         return "admin/dashboard";
     }
 
@@ -92,5 +97,21 @@ public class AdminController {
                 "totalClicks", service.totalClicks(),
                 "totalLogs", clickLogRepository.count()
         );
+    }
+    private String resolveBaseUrl(HttpServletRequest request) {
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            return baseUrl.replaceAll("/+$", "");
+        }
+        String scheme = request.getScheme();           // http / https (otomatis dari X-Forwarded-Proto)
+        String host = request.getServerName();         // surl.co.id (dari X-Forwarded-Host / Host)
+        int port = request.getServerPort();            // 443 / 80 / 8020
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(scheme).append("://").append(host);
+        // hanya append port kalau bukan default
+        if (!(("http".equals(scheme) && port == 80) || ("https".equals(scheme) && port == 443))) {
+            sb.append(":").append(port);
+        }
+        return sb.toString();
     }
 }
