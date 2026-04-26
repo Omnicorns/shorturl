@@ -3,6 +3,8 @@ package com.app.shorturl.service;
 import com.app.shorturl.model.ClickLog;
 import com.app.shorturl.repository.ClickLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.basjes.parse.useragent.UserAgent;
@@ -33,14 +35,40 @@ public class ClickLogService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
+     * DTO snapshot — dibangun di thread Tomcat (sebelum request di-recycle),
+     * lalu dikirim ke method async. Tidak boleh hold reference ke
+     * HttpServletRequest karena Tomcat me-recycle object itu setelah response selesai.
+     */
+    @Getter
+    @Builder
+    public static class RequestSnapshot {
+        private String ipAddress;
+        private String userAgent;
+        private String referer;
+    }
+
+    /**
+     * Helper: extract semua header yang dibutuhkan SEBELUM lempar ke async.
+     * Panggil method ini dari controller di thread Tomcat.
+     */
+    public static RequestSnapshot snapshot(HttpServletRequest request) {
+        return RequestSnapshot.builder()
+                .ipAddress(extractClientIp(request))
+                .userAgent(request.getHeader("User-Agent"))
+                .referer(request.getHeader("Referer"))
+                .build();
+    }
+
+    /**
      * Simpan log async supaya tidak blocking redirect ke URL tujuan.
+     * Method ini HANYA terima primitive + DTO — TIDAK BOLEH terima HttpServletRequest.
      */
     @Async("logExecutor")
-    public void logClick(Long shortUrlId, String shortCode, HttpServletRequest request) {
+    public void logClick(Long shortUrlId, String shortCode, RequestSnapshot snap) {
         try {
-            String ip = extractClientIp(request);
-            String userAgent = request.getHeader("User-Agent");
-            String referer = request.getHeader("Referer");
+            String ip = snap.getIpAddress();
+            String userAgent = snap.getUserAgent();
+            String referer = snap.getReferer();
 
             ClickLog.ClickLogBuilder builder = ClickLog.builder()
                     .shortUrlId(shortUrlId)
@@ -65,14 +93,26 @@ public class ClickLogService {
         }
     }
 
+    /**
+     * @deprecated Gunakan {@link #logClick(Long, String, RequestSnapshot)}.
+     * Method ini disimpan untuk backward-compat — internally konversi ke snapshot
+     * tapi HARUS dipanggil dari thread Tomcat (bukan dari async lain).
+     */
+    @Deprecated
+    public void logClick(Long shortUrlId, String shortCode, HttpServletRequest request) {
+        // PENTING: snapshot dilakukan di thread caller (Tomcat), bukan di thread async
+        RequestSnapshot snap = snapshot(request);
+        logClick(shortUrlId, shortCode, snap);
+    }
+
     private void parseUserAgent(String ua, ClickLog.ClickLogBuilder builder) {
         try {
             UserAgent agent = uaAnalyzer.parse(ua);
             builder.browser(safe(agent.getValue(UserAgent.AGENT_NAME)))
-                   .browserVersion(safe(agent.getValue(UserAgent.AGENT_VERSION_MAJOR)))
-                   .operatingSystem(safe(agent.getValue(UserAgent.OPERATING_SYSTEM_NAME_VERSION)))
-                   .deviceType(safe(agent.getValue(UserAgent.DEVICE_CLASS)))
-                   .deviceBrand(safe(agent.getValue(UserAgent.DEVICE_BRAND)));
+                    .browserVersion(safe(agent.getValue(UserAgent.AGENT_VERSION_MAJOR)))
+                    .operatingSystem(safe(agent.getValue(UserAgent.OPERATING_SYSTEM_NAME_VERSION)))
+                    .deviceType(safe(agent.getValue(UserAgent.DEVICE_CLASS)))
+                    .deviceBrand(safe(agent.getValue(UserAgent.DEVICE_BRAND)));
         } catch (Exception e) {
             log.debug("UA parse gagal: {}", e.getMessage());
         }
@@ -80,7 +120,6 @@ public class ClickLogService {
 
     private void enrichWithGeolocation(String ip, ClickLog.ClickLogBuilder builder) {
         try {
-            // ip-api.com gratis untuk non-komersial, 45 req/menit
             String url = "http://ip-api.com/json/" + ip
                     + "?fields=status,country,countryCode,regionName,city,isp";
             @SuppressWarnings("unchecked")
@@ -88,10 +127,10 @@ public class ClickLogService {
 
             if (resp != null && "success".equals(resp.get("status"))) {
                 builder.country(str(resp.get("country")))
-                       .countryCode(str(resp.get("countryCode")))
-                       .region(str(resp.get("regionName")))
-                       .city(str(resp.get("city")))
-                       .isp(truncate(str(resp.get("isp")), 80));
+                        .countryCode(str(resp.get("countryCode")))
+                        .region(str(resp.get("regionName")))
+                        .city(str(resp.get("city")))
+                        .isp(truncate(str(resp.get("isp")), 80));
             }
         } catch (Exception e) {
             log.debug("Geolocation gagal untuk {}: {}", ip, e.getMessage());
@@ -99,21 +138,20 @@ public class ClickLogService {
     }
 
     /**
-     * Ambil IP asli client dengan mempertimbangkan proxy/load balancer.
+     * Ambil IP asli client. STATIC karena dipanggil dari snapshot() yang static.
      */
-    private String extractClientIp(HttpServletRequest request) {
+    private static String extractClientIp(HttpServletRequest request) {
         String[] headers = {
-            "X-Forwarded-For",
-            "X-Real-IP",
-            "CF-Connecting-IP",      // Cloudflare
-            "True-Client-IP",
-            "Proxy-Client-IP",
-            "WL-Proxy-Client-IP"
+                "X-Forwarded-For",
+                "X-Real-IP",
+                "CF-Connecting-IP",
+                "True-Client-IP",
+                "Proxy-Client-IP",
+                "WL-Proxy-Client-IP"
         };
         for (String header : headers) {
             String value = request.getHeader(header);
             if (value != null && !value.isBlank() && !"unknown".equalsIgnoreCase(value)) {
-                // X-Forwarded-For bisa berisi multiple IP, ambil yang pertama
                 return value.split(",")[0].trim();
             }
         }
@@ -122,14 +160,14 @@ public class ClickLogService {
 
     private boolean isPrivateIp(String ip) {
         return ip.startsWith("10.")
-            || ip.startsWith("192.168.")
-            || ip.startsWith("172.16.") || ip.startsWith("172.17.")
-            || ip.startsWith("172.18.") || ip.startsWith("172.19.")
-            || ip.startsWith("172.2") || ip.startsWith("172.30.") || ip.startsWith("172.31.")
-            || ip.equals("127.0.0.1")
-            || ip.equals("0:0:0:0:0:0:0:1")
-            || ip.equals("::1")
-            || ip.startsWith("0:0:0:0");
+                || ip.startsWith("192.168.")
+                || ip.startsWith("172.16.") || ip.startsWith("172.17.")
+                || ip.startsWith("172.18.") || ip.startsWith("172.19.")
+                || ip.startsWith("172.2") || ip.startsWith("172.30.") || ip.startsWith("172.31.")
+                || ip.equals("127.0.0.1")
+                || ip.equals("0:0:0:0:0:0:0:1")
+                || ip.equals("::1")
+                || ip.startsWith("0:0:0:0");
     }
 
     private String truncate(String s, int max) {
