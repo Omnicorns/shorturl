@@ -1,201 +1,1098 @@
 <!DOCTYPE html>
-<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nusantara Link — Persingkat Tautan, Lestarikan Budaya</title>
-    <link rel="stylesheet" th:href="@{/css/landing.css}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sarinah — Kelola Short Link & Catalog</title>
+    <meta name="description" content="Platform internal Sarinah untuk membuat, mengelola, dan membagikan short URL serta katalog." />
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Dancing+Script:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root{
+          --bg:#fffaf3;
+          --bg-soft:#ffffff;
+          --cream:#f7efe1;
+          --cream-2:#efe2cc;
+
+          --ink:#211817;
+          --muted:#6f6258;
+          --line:rgba(33,24,23,.12);
+
+          --red:#c73846;
+          --red-deep:#9c2631;
+          --red-soft:#fff1f3;
+          --gold:#d4a84b;
+        }
+
+        *,*::before,*::after{
+          box-sizing:border-box;
+          margin:0;
+          padding:0;
+        }
+
+        html{
+          scroll-behavior:smooth;
+        }
+
+        body{
+          font-family:'Inter', sans-serif;
+          color:var(--ink);
+          background:
+            radial-gradient(circle at top left, rgba(199,56,70,.08), transparent 34%),
+            radial-gradient(circle at bottom right, rgba(212,168,75,.12), transparent 38%),
+            linear-gradient(180deg, #ffffff 0%, #fffaf3 58%, #ffffff 100%);
+          min-height:100vh;
+          position:relative;
+          overflow-x:hidden;
+          -webkit-font-smoothing:antialiased;
+        }
+
+        a{
+          color:inherit;
+          text-decoration:none;
+        }
+
+        button{
+          font:inherit;
+          border:0;
+          background:none;
+          cursor:pointer;
+          color:inherit;
+        }
+
+        .backdrop{
+          position:fixed;
+          inset:0;
+          z-index:0;
+          pointer-events:none;
+          overflow:hidden;
+        }
+
+        .ornament-left{
+          position:absolute;
+          top:155px;
+          left:-95px;
+          width:340px;
+          height:340px;
+          opacity:.14;
+        }
+
+        .ornament-right{
+          position:absolute;
+          top:260px;
+          right:58px;
+          opacity:.18;
+        }
+
+        .curves-left{
+          position:absolute;
+          bottom:-40px;
+          left:-60px;
+          width:390px;
+          opacity:.16;
+        }
+
+        .curves-right{
+          position:absolute;
+          bottom:-60px;
+          right:-40px;
+          width:430px;
+          opacity:.16;
+        }
+
+        .dots-bl{
+          position:absolute;
+          bottom:62px;
+          left:64px;
+          opacity:.22;
+        }
+
+        .shell{
+          position:relative;
+          z-index:1;
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 40px;
+        }
+
+        /* NAV */
+        .nav{
+          display:grid;
+          grid-template-columns:auto 1fr auto;
+          align-items:center;
+          gap:40px;
+          padding:28px 0;
+        }
+
+        .brand{
+          display:flex;
+          flex-direction:column;
+          line-height:1;
+        }
+
+        .brand-logo{
+          font-family:'Dancing Script', cursive;
+          font-weight:700;
+          font-size:42px;
+          color:var(--red);
+          letter-spacing:.01em;
+          line-height:.9;
+        }
+
+        .brand-tag{
+          font-size:10px;
+          letter-spacing:.24em;
+          text-transform:uppercase;
+          color:var(--gold);
+          margin-top:5px;
+          padding-left:36px;
+          font-weight:700;
+        }
+
+        .nav-links{
+          display:flex;
+          justify-content:center;
+          gap:44px;
+          list-style:none;
+        }
+
+        .nav-links a{
+          font-size:15px;
+          font-weight:600;
+          color:#332724;
+          position:relative;
+          padding:6px 2px;
+          transition:.2s ease;
+        }
+
+        .nav-links a.active{
+          color:var(--red);
+        }
+
+        .nav-links a.active::after{
+          content:"";
+          position:absolute;
+          left:50%;
+          bottom:-2px;
+          transform:translateX(-50%);
+          width:30px;
+          height:2px;
+          background:var(--red);
+          border-radius:2px;
+        }
+
+        .nav-links a:not(.active):hover{
+          color:var(--red);
+        }
+
+        .nav-actions{
+          display:flex;
+          align-items:center;
+          gap:14px;
+        }
+
+        .btn-masuk{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          padding:12px 20px;
+          border:1.5px solid var(--red);
+          color:#2a201d;
+          background:#fff;
+          border-radius:12px;
+          font-size:14px;
+          font-weight:700;
+          transition:.2s ease;
+          box-shadow:0 12px 28px rgba(33,24,23,.07);
+        }
+
+        .btn-masuk:hover{
+          background:var(--red-soft);
+          transform:translateY(-1px);
+          box-shadow:0 16px 34px rgba(199,56,70,.12);
+        }
+
+        .btn-masuk svg{
+          width:16px;
+          height:16px;
+          color:var(--red);
+        }
+
+        .lang{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:10px 12px;
+          border-radius:10px;
+          font-size:13px;
+          font-weight:600;
+          color:#3a2d29;
+          transition:.2s ease;
+        }
+
+        .lang:hover{
+          background:rgba(199,56,70,.08);
+        }
+
+        .lang svg{
+          width:14px;
+          height:14px;
+          opacity:.72;
+        }
+
+        /* HERO */
+        .hero{
+          text-align:center;
+          padding:56px 0 28px;
+          position:relative;
+        }
+
+        h1.display{
+          font-family:'Cormorant Garamond', serif;
+          font-weight:700;
+          font-size:clamp(42px, 5.5vw, 76px);
+          line-height:1.05;
+          letter-spacing:-.015em;
+          color:var(--ink);
+          margin-bottom:22px;
+        }
+
+        h1.display em{
+          font-style:italic;
+          font-weight:500;
+          color:var(--red);
+        }
+
+        .lede{
+          font-size:16px;
+          line-height:1.75;
+          color:var(--muted);
+          max-width:720px;
+          margin:0 auto;
+          font-weight:500;
+        }
+
+        /* PANEL */
+        .panel-wrap{
+          margin-top:40px;
+          position:relative;
+          display:grid;
+          grid-template-columns:1.55fr 1fr;
+          gap:20px;
+          align-items:stretch;
+        }
+
+        .tabs{
+          position:absolute;
+          top:-46px;
+          left:0;
+          display:flex;
+          z-index:2;
+        }
+
+        .tab{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          padding:14px 28px;
+          font-size:15px;
+          font-weight:700;
+          color:#76685c;
+          background:var(--cream-2);
+          border-top-left-radius:16px;
+          border-top-right-radius:16px;
+          cursor:pointer;
+          transition:.2s ease;
+          position:relative;
+          box-shadow:0 -8px 22px rgba(33,24,23,.05);
+        }
+
+        .tab:first-child{
+          margin-right:-8px;
+        }
+
+        .tab svg{
+          width:18px;
+          height:18px;
+        }
+
+        .tab.active{
+          background:#fff;
+          color:var(--ink);
+          z-index:2;
+        }
+
+        .tab.active svg{
+          color:var(--red);
+        }
+
+        .tab.active::after{
+          content:"";
+          position:absolute;
+          left:24px;
+          right:24px;
+          bottom:6px;
+          height:2px;
+          background:var(--red);
+          border-radius:2px;
+        }
+
+        .tab:not(.active):hover{
+          color:var(--ink);
+        }
+
+        .panel{
+          background:#fff;
+          border:1px solid rgba(33,24,23,.08);
+          border-radius:18px;
+          padding:40px 44px 36px;
+          box-shadow:0 24px 60px -32px rgba(33,24,23,.42);
+          color:var(--ink);
+          position:relative;
+        }
+
+        .panel-title{
+          font-family:'Cormorant Garamond', serif;
+          font-size:34px;
+          font-weight:700;
+          letter-spacing:-.01em;
+          margin-bottom:8px;
+          color:var(--ink);
+        }
+
+        .panel-sub{
+          font-size:14px;
+          color:var(--muted);
+          line-height:1.65;
+          margin-bottom:28px;
+          font-weight:500;
+        }
+
+        .field-label{
+          display:block;
+          font-size:14px;
+          font-weight:700;
+          color:var(--ink);
+          margin-bottom:10px;
+        }
+
+        .input-wrap{
+          position:relative;
+          margin-bottom:22px;
+        }
+
+        .input-wrap .icon{
+          position:absolute;
+          left:18px;
+          top:50%;
+          transform:translateY(-50%);
+          width:18px;
+          height:18px;
+          color:var(--muted);
+          opacity:.72;
+        }
+
+        .input-wrap input{
+          width:100%;
+          font-family:'Inter', sans-serif;
+          font-size:15px;
+          color:var(--ink);
+          background:#fff;
+          border:1px solid rgba(33,24,23,.18);
+          padding:16px 18px 16px 50px;
+          border-radius:12px;
+          outline:none;
+          transition:.15s ease;
+        }
+
+        .input-wrap input::placeholder{
+          color:rgba(33,24,23,.38);
+        }
+
+        .input-wrap input:focus{
+          border-color:var(--red);
+          box-shadow:0 0 0 4px rgba(199,56,70,.12);
+        }
+
+        .submit{
+          width:100%;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:14px;
+          padding:17px 20px;
+          background:var(--red);
+          color:#fff;
+          border-radius:12px;
+          font-size:15px;
+          font-weight:800;
+          transition:.2s ease;
+          box-shadow:0 12px 26px -8px rgba(199,56,70,.55);
+        }
+
+        .submit:hover{
+          background:var(--red-deep);
+          transform:translateY(-1px);
+          box-shadow:0 16px 34px -8px rgba(199,56,70,.6);
+        }
+
+        .submit svg{
+          width:18px;
+          height:18px;
+        }
+
+        .divider{
+          height:1px;
+          background:var(--line);
+          margin:28px 0 20px;
+        }
+
+        .sample{
+          display:flex;
+          align-items:center;
+          gap:16px;
+          flex-wrap:wrap;
+        }
+
+        .sample-label{
+          font-size:13px;
+          color:var(--muted);
+          font-weight:500;
+        }
+
+        .sample-pill{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          padding:10px 14px;
+          background:#fff;
+          border:1px solid rgba(33,24,23,.16);
+          border-radius:10px;
+          font-weight:800;
+          font-size:14px;
+          color:var(--ink);
+          box-shadow:0 8px 18px rgba(33,24,23,.05);
+        }
+
+        .copy-btn{
+          display:inline-flex;
+          padding:4px;
+          color:var(--muted);
+          border-radius:4px;
+          transition:.2s ease;
+          cursor:pointer;
+        }
+
+        .copy-btn:hover{
+          color:var(--red);
+          background:rgba(199,56,70,.08);
+        }
+
+        .copy-btn svg{
+          width:16px;
+          height:16px;
+        }
+
+        /* CATALOG */
+        .catalog-view{
+          display:none;
+        }
+
+        .panel[data-tab="catalog"] .shortlink-view{
+          display:none;
+        }
+
+        .panel[data-tab="catalog"] .catalog-view{
+          display:block;
+        }
+
+        .catalog-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:14px;
+          margin-bottom:22px;
+        }
+
+        .catalog-card{
+          background:#fff;
+          border:1px solid rgba(33,24,23,.14);
+          border-radius:14px;
+          padding:18px;
+          cursor:pointer;
+          transition:.2s ease;
+          box-shadow:0 8px 20px rgba(33,24,23,.04);
+        }
+
+        .catalog-card:hover{
+          border-color:var(--red);
+          transform:translateY(-2px);
+          box-shadow:0 14px 28px rgba(199,56,70,.10);
+        }
+
+        .catalog-card-head{
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:10px;
+        }
+
+        .catalog-icon{
+          width:36px;
+          height:36px;
+          border-radius:10px;
+          background:rgba(199,56,70,.08);
+          color:var(--red);
+          display:grid;
+          place-items:center;
+        }
+
+        .catalog-icon svg{
+          width:18px;
+          height:18px;
+        }
+
+        .catalog-tag-mini{
+          font-size:10px;
+          font-weight:800;
+          letter-spacing:.1em;
+          text-transform:uppercase;
+          color:var(--muted);
+        }
+
+        .catalog-name{
+          font-family:'Cormorant Garamond', serif;
+          font-weight:700;
+          font-size:20px;
+          color:var(--ink);
+          line-height:1.2;
+          margin-bottom:4px;
+        }
+
+        .catalog-meta{
+          font-size:12px;
+          color:var(--muted);
+          font-weight:500;
+        }
+
+        /* FEATURES */
+        .features-card{
+          background:#fff;
+          border:1px solid rgba(33,24,23,.08);
+          border-radius:18px;
+          padding:28px 28px 24px;
+          display:grid;
+          gap:10px;
+          box-shadow:0 24px 60px -32px rgba(33,24,23,.42);
+          align-self:stretch;
+        }
+
+        .feat{
+          display:grid;
+          grid-template-columns:52px 1fr;
+          gap:16px;
+          padding:16px 4px;
+          border-bottom:1px solid var(--line);
+          align-items:start;
+        }
+
+        .feat:last-child{
+          border-bottom:0;
+        }
+
+        .feat-icon{
+          width:48px;
+          height:48px;
+          border-radius:12px;
+          background:rgba(199,56,70,.08);
+          color:var(--red);
+          display:grid;
+          place-items:center;
+        }
+
+        .feat-icon svg{
+          width:22px;
+          height:22px;
+        }
+
+        .feat-title{
+          font-weight:800;
+          font-size:16px;
+          color:var(--ink);
+          margin-bottom:4px;
+        }
+
+        .feat-body{
+          font-size:13px;
+          color:var(--muted);
+          line-height:1.6;
+          font-weight:500;
+        }
+
+        .trust{
+          margin:48px 0 60px;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          gap:28px;
+          font-family:'Cormorant Garamond', serif;
+          font-size:19px;
+          color:var(--muted);
+          flex-wrap:wrap;
+          font-weight:700;
+        }
+
+        .trust-dot{
+          width:5px;
+          height:5px;
+          background:var(--red);
+          border-radius:50%;
+        }
+
+        .shield-icon{
+          color:var(--gold);
+          width:24px;
+          height:24px;
+          margin-right:4px;
+          vertical-align:middle;
+        }
+
+        @media (max-width:1040px){
+          .panel-wrap{
+            grid-template-columns:1fr;
+          }
+
+          .tabs{
+            top:-42px;
+          }
+        }
+
+        @media (max-width:760px){
+          .shell{
+            padding:0 20px;
+          }
+
+          .nav{
+            grid-template-columns:auto auto;
+            gap:16px;
+          }
+
+          .nav-links{
+            display:none;
+          }
+
+          .lang{
+            display:none;
+          }
+
+          .brand-logo{
+            font-size:36px;
+          }
+
+          .brand-tag{
+            padding-left:28px;
+            font-size:9px;
+          }
+
+          .hero{
+            padding:32px 0 20px;
+          }
+
+          h1.display{
+            font-size:42px;
+          }
+
+          .panel{
+            padding:28px 22px;
+          }
+
+          .panel-title{
+            font-size:28px;
+          }
+
+          .catalog-grid{
+            grid-template-columns:1fr;
+          }
+
+          .tabs{
+            left:10px;
+          }
+
+          .tab{
+            padding:12px 18px;
+            font-size:13px;
+          }
+
+          .features-card{
+            padding:20px;
+          }
+
+          .trust{
+            font-size:16px;
+            gap:14px;
+          }
+        }
+    </style>
 </head>
+
 <body>
 
-<nav class="navbar">
-    <div class="container nav-inner">
+<div class="backdrop">
+    <svg class="ornament-left" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c73846" stroke-width="1">
+        <g transform="translate(170 170)">
+            <circle r="120" opacity=".4"/>
+            <circle r="90" opacity=".5"/>
+            <circle r="60" opacity=".6"/>
+            <circle r="30" opacity=".8"/>
+            <ellipse cx="0" cy="-90" rx="18" ry="50" opacity=".5"/>
+            <ellipse cx="0" cy="90" rx="18" ry="50" opacity=".5"/>
+            <ellipse cx="-90" cy="0" rx="50" ry="18" opacity=".5"/>
+            <ellipse cx="90" cy="0" rx="50" ry="18" opacity=".5"/>
+            <g transform="rotate(45)">
+                <ellipse cx="0" cy="-90" rx="14" ry="44" opacity=".4"/>
+                <ellipse cx="0" cy="90" rx="14" ry="44" opacity=".4"/>
+                <ellipse cx="-90" cy="0" rx="44" ry="14" opacity=".4"/>
+                <ellipse cx="90" cy="0" rx="44" ry="14" opacity=".4"/>
+            </g>
+            <g opacity=".5">
+                <circle cx="0" cy="-120" r="4"/>
+                <circle cx="0" cy="120" r="4"/>
+                <circle cx="-120" cy="0" r="4"/>
+                <circle cx="120" cy="0" r="4"/>
+                <circle cx="-85" cy="-85" r="3"/>
+                <circle cx="85" cy="-85" r="3"/>
+                <circle cx="-85" cy="85" r="3"/>
+                <circle cx="85" cy="85" r="3"/>
+            </g>
+        </g>
+    </svg>
+
+    <svg class="ornament-right" width="180" height="120" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#c73846" opacity=".55">
+            <g>
+                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
+            </g>
+            <g transform="translate(0 20)">
+                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
+            </g>
+            <g transform="translate(0 40)">
+                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
+            </g>
+            <g transform="translate(0 60)">
+                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
+            </g>
+        </g>
+    </svg>
+
+    <svg class="curves-left" viewBox="0 0 380 280" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c73846" stroke-width="1">
+        <path d="M -40 280 C 80 200, 180 160, 340 40" opacity=".7"/>
+        <path d="M -40 260 C 80 180, 180 140, 340 20" opacity=".5"/>
+        <path d="M -40 240 C 80 160, 180 120, 340 0" opacity=".35"/>
+    </svg>
+
+    <svg class="curves-right" viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c73846" stroke-width="1">
+        <path d="M 420 320 C 300 240, 200 180, 40 60" opacity=".7"/>
+        <path d="M 420 300 C 300 220, 200 160, 40 40" opacity=".5"/>
+        <path d="M 420 280 C 300 200, 200 140, 40 20" opacity=".35"/>
+    </svg>
+
+    <svg class="dots-bl" width="100" height="70" viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">
+        <g fill="#c73846" opacity=".6">
+            <circle cx="5" cy="5" r="2"/><circle cx="25" cy="5" r="2"/><circle cx="45" cy="5" r="2"/><circle cx="65" cy="5" r="2"/><circle cx="85" cy="5" r="2"/>
+            <circle cx="5" cy="25" r="2"/><circle cx="25" cy="25" r="2"/><circle cx="45" cy="25" r="2"/><circle cx="65" cy="25" r="2"/><circle cx="85" cy="25" r="2"/>
+            <circle cx="5" cy="45" r="2"/><circle cx="25" cy="45" r="2"/><circle cx="45" cy="45" r="2"/><circle cx="65" cy="45" r="2"/><circle cx="85" cy="45" r="2"/>
+        </g>
+    </svg>
+</div>
+
+<div class="shell">
+
+    <nav class="nav">
         <a href="/" class="brand">
-            <span class="brand-icon">ᬚ</span>
-            <span>Nusantara<span class="brand-link">Link</span></span>
+            <span class="brand-logo">Sarinah</span>
+            <span class="brand-tag">Untuk Indonesia</span>
         </a>
+
         <ul class="nav-links">
-            <li><a href="#shortener">Persingkat</a></li>
-            <li><a href="#budaya">Budaya</a></li>
-            <li><a href="#fitur">Fitur</a></li>
-            <li><a th:href="@{/login}" class="btn-login">Admin</a></li>
+            <li><a href="#" class="active">Beranda</a></li>
+            <li><a href="#layanan">Layanan</a></li>
+            <li><a href="#panduan">Panduan</a></li>
+            <li><a href="#tentang">Tentang</a></li>
         </ul>
-    </div>
-</nav>
 
-<header class="hero" id="shortener">
-    <div class="container hero-inner">
-        <div class="hero-text">
-            <span class="eyebrow">Pemendek Tautan Nusantara</span>
-            <h1>Persingkat Tautanmu,<br><span class="accent">Sebarkan Budayamu</span></h1>
-            <p>Ubah tautan panjang menjadi pendek, mudah dibagikan,
-               dan tetap berwawasan kebudayaan Indonesia.</p>
+        <div class="nav-actions">
+            <a href="/login" class="btn-masuk">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Masuk Admin
+            </a>
 
-            <form th:action="@{/shorten}" method="post" class="shortener-form">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <div class="input-row">
-                    <input type="text" name="originalUrl" required
-                           th:value="${lastInput}"
-                           placeholder="Tempel tautan panjangmu di sini..."
-                           class="url-input">
-                    <button type="submit" class="btn-shorten">Persingkat</button>
-                </div>
-                <div class="input-row custom-row">
-                    <span class="prefix" th:text="${baseUrl} + '/'">localhost:8080/</span>
-                    <input type="text" name="customCode" pattern="[a-zA-Z0-9_\-]{3,16}"
-                           placeholder="custom-code (opsional, 3-16 karakter)"
-                           class="custom-input">
-                </div>
-            </form>
-
-            <div class="result-box" th:if="${shortUrl}">
-                <div class="result-label">✓ Tautan berhasil dibuat!</div>
-                <div class="result-url">
-                    <a th:href="${shortUrl}" th:text="${shortUrl}" target="_blank">short url</a>
-                    <button type="button" class="copy-btn" th:attr="data-url=${shortUrl}">
-                        Salin
-                    </button>
-                </div>
-                <div class="result-original">
-                    <small>Menuju: <span th:text="${originalUrl}">original</span></small>
-                </div>
-            </div>
-
-            <div class="error-box" th:if="${error}" th:text="${error}"></div>
-
-            <div class="hero-stats">
-                <div class="stat">
-                    <span class="stat-num" th:text="${totalUrls}">0</span>
-                    <span class="stat-label">Tautan Dibuat</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-num" th:text="${totalClicks}">0</span>
-                    <span class="stat-label">Total Klik</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-num">17.508</span>
-                    <span class="stat-label">Pulau Terhubung</span>
-                </div>
-            </div>
+            <a href="#" class="lang">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>
+                </svg>
+                ID
+                <svg viewBox="0 0 12 12" fill="currentColor">
+                    <path d="M6 8L2 4h8z"/>
+                </svg>
+            </a>
         </div>
-        <div class="hero-deco">
-            <div class="batik-pattern"></div>
-        </div>
-    </div>
-</header>
+    </nav>
 
-<section id="fitur" class="section">
-    <div class="container">
-        <div class="section-head">
-            <span class="eyebrow">Kenapa Nusantara Link?</span>
-            <h2>Cepat, Sederhana, Bermakna</h2>
-        </div>
-        <div class="grid-3">
-            <article class="card feature">
-                <div class="feature-icon">⚡</div>
-                <h3>Instan</h3>
-                <p>Tempel tautan, tekan tombol, tautan pendek langsung tersedia.
-                   Tanpa pendaftaran, tanpa ribet.</p>
-            </article>
-            <article class="card feature">
-                <div class="feature-icon">🎨</div>
-                <h3>Custom Code</h3>
-                <p>Tentukan sendiri kode tautanmu — cocok untuk kampanye,
-                   promosi acara budaya, atau tautan personal.</p>
-            </article>
-            <article class="card feature">
-                <div class="feature-icon">📊</div>
-                <h3>Pelacakan Klik</h3>
-                <p>Setiap klik tercatat otomatis. Ingin dashboard analitik
-                   lengkap? Hubungi admin untuk akses penuh.</p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section id="budaya" class="section section-alt">
-    <div class="container">
-        <div class="section-head">
-            <span class="eyebrow">Inspirasi Nusantara</span>
-            <h2>Warisan Budaya Indonesia</h2>
-            <p>Gunakan Nusantara Link untuk menyebarkan tautan edukasi, artikel,
-               dan konten kebudayaan Indonesia.</p>
-        </div>
-        <div class="grid-3">
-            <article class="card">
-                <div class="card-tag">UNESCO</div>
-                <h3>Batik</h3>
-                <p>Teknik pewarnaan kain khas Indonesia yang diakui sebagai Warisan
-                   Budaya Takbenda Dunia pada tahun 2009.</p>
-            </article>
-            <article class="card">
-                <div class="card-tag">Aceh</div>
-                <h3>Tari Saman</h3>
-                <p>Tarian tradisional dengan gerakan cepat dan serempak yang juga
-                   terdaftar di UNESCO sebagai warisan dunia.</p>
-            </article>
-            <article class="card">
-                <div class="card-tag">Sumatera Barat</div>
-                <h3>Rendang</h3>
-                <p>Masakan daging berbumbu rempah yang pernah dinobatkan sebagai
-                   makanan terenak di dunia oleh CNN.</p>
-            </article>
-            <article class="card">
-                <div class="card-tag">Bali</div>
-                <h3>Tari Kecak</h3>
-                <p>Pertunjukan sakral yang diiringi paduan suara "cak" dari puluhan
-                   penari, menggambarkan kisah epos Ramayana.</p>
-            </article>
-            <article class="card">
-                <div class="card-tag">Sumatera</div>
-                <h3>Songket</h3>
-                <p>Kain tenun dengan benang emas atau perak yang dulunya hanya
-                   dikenakan kalangan kerajaan Melayu dan Minangkabau.</p>
-            </article>
-            <article class="card">
-                <div class="card-tag">Papua</div>
-                <h3>Honai</h3>
-                <p>Rumah adat suku Dani berbentuk bulat dengan atap jerami kerucut,
-                   dirancang menahan dinginnya pegunungan Papua.</p>
-            </article>
-        </div>
-    </div>
-</section>
-
-<section class="cta">
-    <div class="container">
-        <blockquote>
-            "Kebudayaan adalah bahasa yang paling jujur
-            untuk memperkenalkan bangsa kepada dunia."
-        </blockquote>
-        <a href="#shortener" class="btn-primary-cta">Mulai Persingkat Tautan</a>
-    </div>
-</section>
-
-<footer class="footer">
-    <div class="container">
-        <p>&copy; 2026 Nusantara Link · Merayakan Warisan Budaya Indonesia</p>
-        <p class="small">
-            <a th:href="@{/login}">Admin Panel</a>
+    <section class="hero">
+        <h1 class="display">
+            Kelola <em>Short Link</em> &amp; Catalog Sarinah
+        </h1>
+        <p class="lede">
+            Platform internal untuk membuat, mengelola, dan membagikan short URL serta katalog secara aman, rapi, dan mudah dipantau.
         </p>
+    </section>
+
+    <div class="panel-wrap">
+
+        <div class="tabs" role="tablist">
+            <button class="tab active" data-target="shortlink" role="tab">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/>
+                    <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>
+                </svg>
+                Short Link
+            </button>
+
+            <button class="tab" data-target="catalog" role="tab">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="3" height="3"/>
+                    <rect x="18" y="18" width="3" height="3"/>
+                </svg>
+                Catalog
+            </button>
+        </div>
+
+        <div class="panel" id="panel" data-tab="shortlink">
+
+            <div class="shortlink-view">
+                <h2 class="panel-title">Buat tautan singkat</h2>
+                <p class="panel-sub">
+                    Gunakan untuk membagikan katalog, event, promosi, atau informasi internal Sarinah.
+                </p>
+
+                <label class="field-label" for="urlInput">Masukkan URL tujuan</label>
+
+                <div class="input-wrap">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>
+                    </svg>
+                    <input id="urlInput" type="url" placeholder="https://sarinah.co.id/contoh-halaman" />
+                </div>
+
+                <a href="/login" class="submit">
+                    Buat Short Link
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                </a>
+
+                <div class="divider"></div>
+
+                <div class="sample">
+                    <span class="sample-label">Contoh hasil short link</span>
+                    <span class="sample-pill">
+              https://surl.co.id/SarinahForSEAGames2025
+              <button class="copy-btn" type="button" id="copyBtn" aria-label="Salin">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/>
+                  <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+                </svg>
+              </button>
+            </span>
+                </div>
+            </div>
+
+            <div class="catalog-view">
+                <h2 class="panel-title">Jelajahi katalog</h2>
+                <p class="panel-sub">
+                    Kumpulan halaman katalog yang sedang aktif di seluruh tenant dan event Sarinah.
+                </p>
+
+                <div class="catalog-grid">
+                    <div class="catalog-card">
+                        <div class="catalog-card-head">
+                            <div class="catalog-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
+                                </svg>
+                            </div>
+                            <span class="catalog-tag-mini">Fashion</span>
+                        </div>
+                        <div class="catalog-name">Batik Signature</div>
+                        <div class="catalog-meta">24 item · Koleksi Kemilau</div>
+                    </div>
+
+                    <div class="catalog-card">
+                        <div class="catalog-card-head">
+                            <div class="catalog-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <span class="catalog-tag-mini">Event</span>
+                        </div>
+                        <div class="catalog-name">Pekan Kreatif</div>
+                        <div class="catalog-meta">12 item · edisi terbatas</div>
+                    </div>
+
+                    <div class="catalog-card">
+                        <div class="catalog-card-head">
+                            <div class="catalog-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M8 2v20M16 2v20M2 12h20M2 6h20M2 18h20"/>
+                                </svg>
+                            </div>
+                            <span class="catalog-tag-mini">Tenant</span>
+                        </div>
+                        <div class="catalog-name">Kulineran Lt. 4</div>
+                        <div class="catalog-meta">18 tenant · F&amp;B</div>
+                    </div>
+
+                    <div class="catalog-card">
+                        <div class="catalog-card-head">
+                            <div class="catalog-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M12 6v6l4 2"/>
+                                </svg>
+                            </div>
+                            <span class="catalog-tag-mini">Promo</span>
+                        </div>
+                        <div class="catalog-name">Midnight Sale</div>
+                        <div class="catalog-meta">Aktif · berakhir 30 Apr</div>
+                    </div>
+                </div>
+
+                <a href="/login" class="submit">
+                    Masuk untuk mengelola
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M5 12h14M13 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </div>
+
+        </div>
+
+        <aside class="features-card">
+            <div class="feat">
+                <div class="feat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <circle cx="4" cy="6" r="1" fill="currentColor"/>
+                        <circle cx="4" cy="12" r="1" fill="currentColor"/>
+                        <circle cx="4" cy="18" r="1" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="feat-title">Akses lebih rapi</div>
+                    <div class="feat-body">
+                        URL panjang menjadi lebih ringkas, mudah dibagikan dan diingat.
+                    </div>
+                </div>
+            </div>
+
+            <div class="feat">
+                <div class="feat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 18h3"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="feat-title">Catalog terpusat</div>
+                    <div class="feat-body">
+                        Setiap tautan dapat diarahkan ke halaman katalog secara instan.
+                    </div>
+                </div>
+            </div>
+
+            <div class="feat">
+                <div class="feat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M3 20V10M9 20V4M15 20v-8M21 20V14"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="feat-title">Monitoring klik</div>
+                    <div class="feat-body">
+                        Pantau jumlah klik, perangkat, dan lokasi secara real-time.
+                    </div>
+                </div>
+            </div>
+        </aside>
+
     </div>
-</footer>
+
+    <div class="trust">
+      <span>
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2 4 5v7c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V5z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        Aman
+      </span>
+        <span class="trust-dot"></span>
+        <span>Terpercaya</span>
+        <span class="trust-dot"></span>
+        <span>Mudah</span>
+    </div>
+
+</div>
 
 <script>
-document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('copy-btn')) {
-        const url = e.target.getAttribute('data-url');
-        navigator.clipboard.writeText(url).then(() => {
-            const original = e.target.textContent;
-            e.target.textContent = '✓ Tersalin';
-            setTimeout(() => { e.target.textContent = original; }, 1500);
-        });
-    }
-});
+    const panel = document.getElementById('panel');
 
-if (document.querySelector('.result-box') || document.querySelector('.error-box')) {
-    document.getElementById('shortener').scrollIntoView({ behavior: 'smooth' });
-}
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        panel.dataset.tab = tab.dataset.target;
+      });
+    });
+
+    const copyBtn = document.getElementById('copyBtn');
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText('https://surl.co.id/event-jakarta');
+
+          const original = copyBtn.innerHTML;
+
+          copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0c9b60" stroke-width="2.5" stroke-linecap="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          `;
+
+          setTimeout(() => {
+            copyBtn.innerHTML = original;
+          }, 1400);
+        } catch(e) {
+          alert('Gagal menyalin link');
+        }
+      });
+    }
 </script>
 
 </body>

@@ -4,6 +4,7 @@ package com.app.shorturl.controller;
 import com.app.shorturl.model.PdfDocs;
 import com.app.shorturl.projection.PdfDocSummary;
 import com.app.shorturl.repository.PdfDocRepository;
+import com.app.shorturl.repository.ShortUrlRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
@@ -27,8 +28,22 @@ public class UserImportApi {
 
 
     private final PdfDocRepository pdfDocRepository;
+    private final ShortUrlRepository shortUrlRepository;
 
     // Import CSV (multipart/form-data)
+
+    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10 MB
+
+    private void validateSize(MultipartFile file) {
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.PAYLOAD_TOO_LARGE,
+                    String.format("File '%s' terlalu besar (%.2f MB). Maksimal 10 MB.",
+                            file.getOriginalFilename(),
+                            file.getSize() / 1024.0 / 1024.0)
+            );
+        }
+    }
 
 
     @PostMapping(value = "/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,6 +51,7 @@ public class UserImportApi {
         if (file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File kosong");
         if (!Objects.equals(file.getContentType(), "application/pdf"))
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Harus PDF");
+        validateSize(file);
 
         PdfDocs doc = new PdfDocs();
         doc.setFilename(file.getOriginalFilename());
@@ -110,6 +126,11 @@ public class UserImportApi {
         if (files.size() > 100) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Maksimum 100 file per unggahan");
         }
+        // Validasi size satu per satu — fail-fast: berhenti di file pertama yang oversize
+        for (MultipartFile f : files) {
+            validateSize(f);
+        }
+
 
         List<Map<String, Object>> items = new ArrayList<>();
         int success = 0, failed = 0;
@@ -229,7 +250,7 @@ public class UserImportApi {
     }
 
 
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/pdf/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String,Object> updatePdf(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file,
@@ -242,6 +263,7 @@ public class UserImportApi {
         if (!isPdf(file)) {
             throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Harus PDF");
         }
+        validateSize(file);
 
         PdfDocs doc = pdfDocRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dokumen tidak ditemukan"));
@@ -264,6 +286,21 @@ public class UserImportApi {
                 "open_in_viewer", "/catalogue?id=" + doc.getId(),
                 "status", "UPDATED"
         );
+    }
+
+
+    @GetMapping(value = "/click-counts", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> clickCounts() {
+        return shortUrlRepository.findAll().stream()
+                .map(u -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("shortCode", u.getShortCode());
+                    m.put("clickCount", u.getClickCount());
+                    m.put("active", u.getActive());
+                    return m;
+                })
+                .toList();
     }
 
 
