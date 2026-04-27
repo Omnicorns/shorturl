@@ -34,11 +34,6 @@ public class ClickLogService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * DTO snapshot — dibangun di thread Tomcat (sebelum request di-recycle),
-     * lalu dikirim ke method async. Tidak boleh hold reference ke
-     * HttpServletRequest karena Tomcat me-recycle object itu setelah response selesai.
-     */
     @Getter
     @Builder
     public static class RequestSnapshot {
@@ -47,10 +42,6 @@ public class ClickLogService {
         private String referer;
     }
 
-    /**
-     * Helper: extract semua header yang dibutuhkan SEBELUM lempar ke async.
-     * Panggil method ini dari controller di thread Tomcat.
-     */
     public static RequestSnapshot snapshot(HttpServletRequest request) {
         return RequestSnapshot.builder()
                 .ipAddress(extractClientIp(request))
@@ -60,47 +51,62 @@ public class ClickLogService {
     }
 
     /**
-     * Simpan log async supaya tidak blocking redirect ke URL tujuan.
-     * Method ini HANYA terima primitive + DTO — TIDAK BOLEH terima HttpServletRequest.
+     * Build ClickLog dari snapshot — extract logic supaya bisa dipakai
+     * baik dari method async maupun synchronous.
+     */
+    private ClickLog buildClickLog(Long shortUrlId, String shortCode, RequestSnapshot snap) {
+        String ip = snap.getIpAddress();
+        String userAgent = snap.getUserAgent();
+        String referer = snap.getReferer();
+
+        ClickLog.ClickLogBuilder builder = ClickLog.builder()
+                .shortUrlId(shortUrlId)
+                .shortCode(shortCode)
+                .ipAddress(ip)
+                .userAgent(truncate(userAgent, 500))
+                .referer(truncate(referer, 500));
+
+        if (userAgent != null && !userAgent.isBlank()) {
+            parseUserAgent(userAgent, builder);
+        }
+
+        if (geolocationEnabled && ip != null && !isPrivateIp(ip)) {
+            enrichWithGeolocation(ip, builder);
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * Async version — untuk redirect biasa, tidak butuh ID kembali.
      */
     @Async("logExecutor")
     public void logClick(Long shortUrlId, String shortCode, RequestSnapshot snap) {
         try {
-            String ip = snap.getIpAddress();
-            String userAgent = snap.getUserAgent();
-            String referer = snap.getReferer();
-
-            ClickLog.ClickLogBuilder builder = ClickLog.builder()
-                    .shortUrlId(shortUrlId)
-                    .shortCode(shortCode)
-                    .ipAddress(ip)
-                    .userAgent(truncate(userAgent, 500))
-                    .referer(truncate(referer, 500));
-
-            // Parse User-Agent
-            if (userAgent != null && !userAgent.isBlank()) {
-                parseUserAgent(userAgent, builder);
-            }
-
-            // Geolocation
-            if (geolocationEnabled && ip != null && !isPrivateIp(ip)) {
-                enrichWithGeolocation(ip, builder);
-            }
-
-            clickLogRepository.save(builder.build());
+            clickLogRepository.save(buildClickLog(shortUrlId, shortCode, snap));
         } catch (Exception e) {
             log.warn("Gagal log click untuk {}: {}", shortCode, e.getMessage());
         }
     }
 
     /**
-     * @deprecated Gunakan {@link #logClick(Long, String, RequestSnapshot)}.
-     * Method ini disimpan untuk backward-compat — internally konversi ke snapshot
-     * tapi HARUS dipanggil dari thread Tomcat (bukan dari async lain).
+     * Synchronous version — untuk halaman preview, di mana kita butuh ID-nya
+     * supaya bisa di-update belakangan dari sisi browser (IP tracking).
+     *
+     * Return null kalau gagal save.
      */
+    public Long logClickAndReturnId(Long shortUrlId, String shortCode, RequestSnapshot snap) {
+        try {
+            ClickLog saved = clickLogRepository.save(buildClickLog(shortUrlId, shortCode, snap));
+            return saved.getId();
+        } catch (Exception e) {
+            log.warn("Gagal log click sync untuk {}: {}", shortCode, e.getMessage());
+            return null;
+        }
+    }
+
     @Deprecated
     public void logClick(Long shortUrlId, String shortCode, HttpServletRequest request) {
-        // PENTING: snapshot dilakukan di thread caller (Tomcat), bukan di thread async
         RequestSnapshot snap = snapshot(request);
         logClick(shortUrlId, shortCode, snap);
     }
@@ -137,17 +143,10 @@ public class ClickLogService {
         }
     }
 
-    /**
-     * Ambil IP asli client. STATIC karena dipanggil dari snapshot() yang static.
-     */
     private static String extractClientIp(HttpServletRequest request) {
         String[] headers = {
-                "X-Forwarded-For",
-                "X-Real-IP",
-                "CF-Connecting-IP",
-                "True-Client-IP",
-                "Proxy-Client-IP",
-                "WL-Proxy-Client-IP"
+                "X-Forwarded-For", "X-Real-IP", "CF-Connecting-IP",
+                "True-Client-IP", "Proxy-Client-IP", "WL-Proxy-Client-IP"
         };
         for (String header : headers) {
             String value = request.getHeader(header);
@@ -163,7 +162,8 @@ public class ClickLogService {
                 || ip.startsWith("192.168.")
                 || ip.startsWith("172.16.") || ip.startsWith("172.17.")
                 || ip.startsWith("172.18.") || ip.startsWith("172.19.")
-                || ip.startsWith("172.2") || ip.startsWith("172.30.") || ip.startsWith("172.31.")
+                || ip.startsWith("172.2")   || ip.startsWith("172.30.")
+                || ip.startsWith("172.31.")
                 || ip.equals("127.0.0.1")
                 || ip.equals("0:0:0:0:0:0:0:1")
                 || ip.equals("::1")
