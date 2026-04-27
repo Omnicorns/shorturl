@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Sarinah — Kelola Short Link & Catalog</title>
     <meta name="description" content="Platform internal Sarinah untuk membuat, mengelola, dan membagikan short URL serta katalog." />
     <meta name="robots" content="noindex,nofollow" />
@@ -26,6 +26,12 @@
           --red-deep:#9c2631;
           --red-soft:#fff1f3;
           --gold:#d4a84b;
+
+          /* Skala adaptif berdasar viewport — kunci utama no-scroll */
+          --vh: 1vh;
+          --scale-y: clamp(0.78, calc(100vh / 900), 1);
+          --pad-y: clamp(8px, 1.4vh, 22px);
+          --gap-y: clamp(8px, 1.6vh, 24px);
         }
 
         *,*::before,*::after{
@@ -34,8 +40,9 @@
           padding:0;
         }
 
-        html{
-          scroll-behavior:smooth;
+        html, body{
+          height:100%;
+          overflow:hidden; /* hard no-scroll */
         }
 
         body{
@@ -45,25 +52,16 @@
             radial-gradient(circle at top left, rgba(199,56,70,.08), transparent 34%),
             radial-gradient(circle at bottom right, rgba(212,168,75,.12), transparent 38%),
             linear-gradient(180deg, #ffffff 0%, #fffaf3 58%, #ffffff 100%);
-          min-height:100vh;
           position:relative;
-          overflow-x:hidden;
           -webkit-font-smoothing:antialiased;
+          display:flex;
+          flex-direction:column;
         }
 
-        a{
-          color:inherit;
-          text-decoration:none;
-        }
+        a{ color:inherit; text-decoration:none; }
+        button{ font:inherit; border:0; background:none; cursor:pointer; color:inherit; }
 
-        button{
-          font:inherit;
-          border:0;
-          background:none;
-          cursor:pointer;
-          color:inherit;
-        }
-
+        /* BACKDROP — di-shrink di viewport pendek */
         .backdrop{
           position:fixed;
           inset:0;
@@ -74,49 +72,52 @@
 
         .ornament-left{
           position:absolute;
-          top:155px;
-          left:-95px;
-          width:340px;
-          height:340px;
-          opacity:.14;
+          top:9vh;
+          left:-7vw;
+          width:clamp(180px, 24vw, 340px);
+          height:auto;
+          opacity:.12;
         }
-
         .ornament-right{
           position:absolute;
-          top:260px;
-          right:58px;
-          opacity:.18;
+          top:18vh;
+          right:4vw;
+          width:clamp(110px, 14vw, 180px);
+          height:auto;
+          opacity:.16;
         }
-
         .curves-left{
           position:absolute;
-          bottom:-40px;
-          left:-60px;
-          width:390px;
-          opacity:.16;
+          bottom:-3vh;
+          left:-4vw;
+          width:clamp(220px, 28vw, 390px);
+          opacity:.14;
         }
-
         .curves-right{
           position:absolute;
-          bottom:-60px;
-          right:-40px;
-          width:430px;
-          opacity:.16;
+          bottom:-4vh;
+          right:-3vw;
+          width:clamp(240px, 30vw, 430px);
+          opacity:.14;
         }
-
         .dots-bl{
           position:absolute;
-          bottom:62px;
-          left:64px;
-          opacity:.22;
+          bottom:5vh;
+          left:4vw;
+          width:clamp(60px, 7vw, 100px);
+          opacity:.2;
         }
 
         .shell{
           position:relative;
           z-index:1;
+          width:100%;
           max-width:1280px;
           margin:0 auto;
-          padding:0 40px;
+          padding:0 clamp(16px, 3vw, 40px);
+          height:100%;
+          display:flex;
+          flex-direction:column;
         }
 
         /* NAV */
@@ -124,20 +125,13 @@
           display:grid;
           grid-template-columns:auto 1fr auto;
           align-items:center;
-          gap:40px;
-          padding:22px 0;
-        }
-
-        .brand{
-          display:inline-flex;
-          align-items:center;
-          justify-content:center;
-          line-height:1;
-          padding:4px 0;
+          gap:clamp(16px, 3vw, 40px);
+          padding:clamp(10px, 1.6vh, 22px) 0;
+          flex-shrink:0;
         }
 
         .brand-img{
-          height:66px;
+          height:clamp(40px, 6.5vh, 66px);
           width:auto;
           max-width:230px;
           display:block;
@@ -148,69 +142,57 @@
         .nav-links{
           display:flex;
           justify-content:center;
-          gap:44px;
+          gap:clamp(20px, 3vw, 44px);
           list-style:none;
         }
 
         .nav-links a{
-          font-size:15px;
+          font-size:clamp(13px, 1vw, 15px);
           font-weight:700;
           color:#332724;
           position:relative;
           padding:6px 2px;
           transition:.2s ease;
         }
-
-        .nav-links a.active{
-          color:var(--red);
-        }
-
+        .nav-links a.active{ color:var(--red); }
         .nav-links a.active::after{
-          content:"";
-          position:absolute;
-          left:50%;
-          bottom:-2px;
+          content:""; position:absolute;
+          left:50%; bottom:-2px;
           transform:translateX(-50%);
-          width:30px;
-          height:2px;
+          width:30px; height:2px;
           background:var(--red);
           border-radius:2px;
         }
-
-        .nav-links a:not(.active):hover{
-          color:var(--red);
-        }
+        .nav-links a:not(.active):hover{ color:var(--red); }
 
         .nav-actions{
           display:flex;
           align-items:center;
-          gap:14px;
+          gap:clamp(8px, 1vw, 14px);
         }
 
         .btn-masuk{
           display:inline-flex;
           align-items:center;
-          gap:10px;
-          padding:12px 20px;
+          gap:8px;
+          padding:clamp(8px, 1.2vh, 12px) clamp(12px, 1.4vw, 20px);
           border:1.5px solid var(--red);
           color:#2a201d;
           background:#fff;
           border-radius:12px;
-          font-size:14px;
+          font-size:clamp(12px, .95vw, 14px);
           font-weight:800;
           transition:.2s ease;
           box-shadow:0 12px 28px rgba(33,24,23,.07);
+          white-space:nowrap;
         }
-
         .btn-masuk:hover{
           background:var(--red-soft);
           transform:translateY(-1px);
           box-shadow:0 16px 34px rgba(199,56,70,.12);
         }
-
         .btn-masuk svg{
-          width:16px;
-          height:16px;
+          width:14px; height:14px;
           color:var(--red);
         }
 
@@ -218,39 +200,31 @@
           display:inline-flex;
           align-items:center;
           gap:6px;
-          padding:10px 12px;
+          padding:clamp(6px, 1vh, 10px) 12px;
           border-radius:10px;
-          font-size:13px;
+          font-size:clamp(11px, .9vw, 13px);
           font-weight:700;
           color:#3a2d29;
           transition:.2s ease;
         }
-
-        .lang:hover{
-          background:rgba(199,56,70,.08);
-        }
-
-        .lang svg{
-          width:14px;
-          height:14px;
-          opacity:.72;
-        }
+        .lang:hover{ background:rgba(199,56,70,.08); }
+        .lang svg{ width:14px; height:14px; opacity:.72; }
 
         /* HERO */
         .hero{
           text-align:center;
-          padding:54px 0 28px;
-          position:relative;
+          padding:clamp(12px, 2.4vh, 32px) 0 clamp(8px, 1.4vh, 18px);
+          flex-shrink:0;
         }
 
         h1.display{
           font-family:'Cormorant Garamond', serif;
           font-weight:700;
-          font-size:clamp(42px, 5.5vw, 76px);
+          font-size:clamp(28px, 5.2vw, 64px);
           line-height:1.05;
           letter-spacing:-.015em;
           color:var(--ink);
-          margin-bottom:22px;
+          margin-bottom:clamp(8px, 1.2vh, 16px);
         }
 
         h1.display em{
@@ -260,151 +234,134 @@
         }
 
         .lede{
-          font-size:16px;
-          line-height:1.75;
+          font-size:clamp(12px, 1vw, 15px);
+          line-height:1.55;
           color:var(--muted);
-          max-width:720px;
+          max-width:680px;
           margin:0 auto;
           font-weight:500;
         }
 
-        /* PANEL */
+        /* PANEL WRAP — flex:1 supaya isi kolom panel & features rebut sisa tinggi */
         .panel-wrap{
-          margin-top:40px;
+          margin-top:clamp(28px, 4vh, 48px);
           position:relative;
           display:grid;
-          grid-template-columns:1.55fr 1fr;
-          gap:20px;
+          grid-template-columns:1.5fr 1fr;
+          gap:clamp(12px, 1.4vw, 20px);
           align-items:stretch;
+          flex:1;
+          min-height:0;
         }
 
         .tabs{
           position:absolute;
-          top:-46px;
+          top:calc(-1 * clamp(34px, 4.6vh, 46px));
           left:0;
           display:flex;
           z-index:2;
+          height:clamp(34px, 4.6vh, 46px);
         }
 
         .tab{
           display:inline-flex;
           align-items:center;
-          gap:10px;
-          padding:14px 28px;
-          font-size:15px;
+          gap:8px;
+          padding:0 clamp(16px, 2vw, 28px);
+          font-size:clamp(12px, 1vw, 15px);
           font-weight:800;
           color:#76685c;
           background:var(--cream-2);
-          border-top-left-radius:16px;
-          border-top-right-radius:16px;
+          border-top-left-radius:14px;
+          border-top-right-radius:14px;
           cursor:pointer;
           transition:.2s ease;
           position:relative;
           box-shadow:0 -8px 22px rgba(33,24,23,.05);
         }
-
-        .tab:first-child{
-          margin-right:-8px;
-        }
-
-        .tab svg{
-          width:18px;
-          height:18px;
-        }
-
+        .tab:first-child{ margin-right:-8px; }
+        .tab svg{ width:16px; height:16px; }
         .tab.active{
           background:#fff;
           color:var(--ink);
           z-index:2;
         }
-
-        .tab.active svg{
-          color:var(--red);
-        }
-
+        .tab.active svg{ color:var(--red); }
         .tab.active::after{
           content:"";
           position:absolute;
-          left:24px;
-          right:24px;
-          bottom:6px;
+          left:18px; right:18px; bottom:6px;
           height:2px;
           background:var(--red);
           border-radius:2px;
         }
-
-        .tab:not(.active):hover{
-          color:var(--ink);
-        }
+        .tab:not(.active):hover{ color:var(--ink); }
 
         .panel{
           background:#fff;
           border:1px solid rgba(33,24,23,.08);
           border-radius:18px;
-          padding:40px 44px 36px;
+          padding:clamp(18px, 2.6vh, 36px) clamp(20px, 2.6vw, 44px);
           box-shadow:0 24px 60px -32px rgba(33,24,23,.42);
           color:var(--ink);
           position:relative;
+          display:flex;
+          flex-direction:column;
+          min-height:0;
+          overflow:hidden;
         }
 
         .panel-title{
           font-family:'Cormorant Garamond', serif;
-          font-size:34px;
+          font-size:clamp(22px, 2.6vw, 34px);
           font-weight:700;
           letter-spacing:-.01em;
-          margin-bottom:8px;
+          margin-bottom:6px;
           color:var(--ink);
         }
 
         .panel-sub{
-          font-size:14px;
+          font-size:clamp(12px, .95vw, 14px);
           color:var(--muted);
-          line-height:1.65;
-          margin-bottom:28px;
+          line-height:1.55;
+          margin-bottom:clamp(14px, 2vh, 26px);
           font-weight:500;
         }
 
         .field-label{
           display:block;
-          font-size:14px;
+          font-size:clamp(12px, .95vw, 14px);
           font-weight:800;
           color:var(--ink);
-          margin-bottom:10px;
+          margin-bottom:8px;
         }
 
         .input-wrap{
           position:relative;
-          margin-bottom:22px;
+          margin-bottom:clamp(12px, 1.8vh, 22px);
         }
-
         .input-wrap .icon{
           position:absolute;
-          left:18px;
+          left:16px;
           top:50%;
           transform:translateY(-50%);
-          width:18px;
-          height:18px;
+          width:18px; height:18px;
           color:var(--muted);
           opacity:.72;
         }
-
         .input-wrap input{
           width:100%;
           font-family:'Inter', sans-serif;
-          font-size:15px;
+          font-size:clamp(13px, 1vw, 15px);
           color:var(--ink);
           background:#fff;
           border:1px solid rgba(33,24,23,.18);
-          padding:16px 18px 16px 50px;
+          padding:clamp(11px, 1.6vh, 16px) 18px clamp(11px, 1.6vh, 16px) 46px;
           border-radius:12px;
           outline:none;
           transition:.15s ease;
         }
-
-        .input-wrap input::placeholder{
-          color:rgba(33,24,23,.38);
-        }
-
+        .input-wrap input::placeholder{ color:rgba(33,24,23,.38); }
         .input-wrap input:focus{
           border-color:var(--red);
           box-shadow:0 0 0 4px rgba(199,56,70,.12);
@@ -415,59 +372,56 @@
           display:inline-flex;
           align-items:center;
           justify-content:center;
-          gap:14px;
-          padding:17px 20px;
+          gap:12px;
+          padding:clamp(12px, 1.8vh, 17px) 20px;
           background:var(--red);
           color:#fff;
           border-radius:12px;
-          font-size:15px;
+          font-size:clamp(13px, 1vw, 15px);
           font-weight:800;
           transition:.2s ease;
           box-shadow:0 12px 26px -8px rgba(199,56,70,.55);
         }
-
         .submit:hover{
           background:var(--red-deep);
           transform:translateY(-1px);
           box-shadow:0 16px 34px -8px rgba(199,56,70,.6);
         }
-
-        .submit svg{
-          width:18px;
-          height:18px;
-        }
+        .submit svg{ width:18px; height:18px; }
 
         .divider{
           height:1px;
           background:var(--line);
-          margin:28px 0 20px;
+          margin:clamp(14px, 2vh, 24px) 0 clamp(10px, 1.6vh, 18px);
         }
 
         .sample{
           display:flex;
           align-items:center;
-          gap:16px;
+          gap:14px;
           flex-wrap:wrap;
         }
-
         .sample-label{
-          font-size:13px;
+          font-size:clamp(11px, .9vw, 13px);
           color:var(--muted);
           font-weight:500;
         }
-
         .sample-pill{
           display:inline-flex;
           align-items:center;
           gap:10px;
-          padding:10px 14px;
+          padding:8px 12px;
           background:#fff;
           border:1px solid rgba(33,24,23,.16);
           border-radius:10px;
           font-weight:800;
-          font-size:14px;
+          font-size:clamp(11px, .92vw, 14px);
           color:var(--ink);
           box-shadow:0 8px 18px rgba(33,24,23,.05);
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
         }
 
         .copy-btn{
@@ -476,96 +430,84 @@
           color:var(--muted);
           border-radius:4px;
           transition:.2s ease;
-          cursor:pointer;
+          flex-shrink:0;
         }
-
         .copy-btn:hover{
           color:var(--red);
           background:rgba(199,56,70,.08);
         }
+        .copy-btn svg{ width:14px; height:14px; }
 
-        .copy-btn svg{
-          width:16px;
-          height:16px;
-        }
-
-        /* CATALOG */
-        .catalog-view{
-          display:none;
-        }
-
-        .panel[data-tab="catalog"] .shortlink-view{
-          display:none;
-        }
-
+        /* CATALOG view */
+        .catalog-view{ display:none; }
+        .panel[data-tab="catalog"] .shortlink-view{ display:none; }
         .panel[data-tab="catalog"] .catalog-view{
-          display:block;
+          display:flex;
+          flex-direction:column;
+          flex:1;
+          min-height:0;
         }
 
         .catalog-grid{
           display:grid;
           grid-template-columns:1fr 1fr;
-          gap:14px;
-          margin-bottom:22px;
+          gap:clamp(8px, 1.2vh, 14px);
+          margin-bottom:clamp(12px, 1.6vh, 20px);
+          flex:1;
+          min-height:0;
         }
 
         .catalog-card{
           background:#fff;
           border:1px solid rgba(33,24,23,.14);
           border-radius:14px;
-          padding:18px;
+          padding:clamp(10px, 1.4vh, 16px);
           cursor:pointer;
           transition:.2s ease;
           box-shadow:0 8px 20px rgba(33,24,23,.04);
+          display:flex;
+          flex-direction:column;
+          justify-content:space-between;
+          min-height:0;
         }
-
         .catalog-card:hover{
           border-color:var(--red);
           transform:translateY(-2px);
           box-shadow:0 14px 28px rgba(199,56,70,.10);
         }
-
         .catalog-card-head{
           display:flex;
           justify-content:space-between;
           align-items:center;
-          margin-bottom:10px;
+          margin-bottom:8px;
         }
-
         .catalog-icon{
-          width:36px;
-          height:36px;
-          border-radius:10px;
+          width:clamp(28px, 3.4vh, 36px);
+          height:clamp(28px, 3.4vh, 36px);
+          border-radius:9px;
           background:rgba(199,56,70,.08);
           color:var(--red);
           display:grid;
           place-items:center;
         }
-
-        .catalog-icon svg{
-          width:18px;
-          height:18px;
-        }
-
+        .catalog-icon svg{ width:16px; height:16px; }
         .catalog-tag-mini{
-          font-size:10px;
+          font-size:9px;
           font-weight:800;
           letter-spacing:.1em;
           text-transform:uppercase;
           color:var(--muted);
         }
-
         .catalog-name{
           font-family:'Cormorant Garamond', serif;
           font-weight:700;
-          font-size:20px;
+          font-size:clamp(15px, 1.4vw, 20px);
           color:var(--ink);
           line-height:1.2;
-          margin-bottom:4px;
+          margin-bottom:2px;
         }
-
         .catalog-meta{
-          font-size:12px;
+          font-size:clamp(10px, .8vw, 12px);
           color:var(--muted);
           font-weight:500;
         }
@@ -575,161 +517,251 @@
           background:#fff;
           border:1px solid rgba(33,24,23,.08);
           border-radius:18px;
-          padding:28px 28px 24px;
-          display:grid;
-          gap:10px;
+          padding:clamp(14px, 2vh, 24px) clamp(16px, 2vw, 28px);
+          display:flex;
+          flex-direction:column;
+          justify-content:space-around;
+          gap:clamp(4px, .6vh, 10px);
           box-shadow:0 24px 60px -32px rgba(33,24,23,.42);
           align-self:stretch;
+          min-height:0;
         }
 
         .feat{
           display:grid;
-          grid-template-columns:52px 1fr;
-          gap:16px;
-          padding:16px 4px;
+          grid-template-columns:clamp(38px, 4.6vh, 52px) 1fr;
+          gap:clamp(10px, 1vw, 16px);
+          padding:clamp(8px, 1.2vh, 14px) 4px;
           border-bottom:1px solid var(--line);
-          align-items:start;
+          align-items:center;
         }
-
-        .feat:last-child{
-          border-bottom:0;
-        }
+        .feat:last-child{ border-bottom:0; }
 
         .feat-icon{
-          width:48px;
-          height:48px;
-          border-radius:12px;
+          width:clamp(36px, 4.4vh, 48px);
+          height:clamp(36px, 4.4vh, 48px);
+          border-radius:11px;
           background:rgba(199,56,70,.08);
           color:var(--red);
           display:grid;
           place-items:center;
         }
-
-        .feat-icon svg{
-          width:22px;
-          height:22px;
-        }
+        .feat-icon svg{ width:20px; height:20px; }
 
         .feat-title{
           font-weight:800;
-          font-size:16px;
+          font-size:clamp(13px, 1.05vw, 16px);
           color:var(--ink);
-          margin-bottom:4px;
+          margin-bottom:2px;
         }
-
         .feat-body{
-          font-size:13px;
+          font-size:clamp(11px, .9vw, 13px);
           color:var(--muted);
-          line-height:1.6;
+          line-height:1.45;
           font-weight:500;
         }
 
         .trust{
-          margin:48px 0 60px;
+          margin:clamp(12px, 2vh, 24px) 0 clamp(10px, 1.6vh, 20px);
           display:flex;
           justify-content:center;
           align-items:center;
-          gap:28px;
+          gap:clamp(14px, 2vw, 28px);
           font-family:'Cormorant Garamond', serif;
-          font-size:19px;
+          font-size:clamp(14px, 1.3vw, 19px);
           color:var(--muted);
           flex-wrap:wrap;
           font-weight:700;
+          flex-shrink:0;
         }
-
         .trust-dot{
-          width:5px;
-          height:5px;
+          width:5px; height:5px;
           background:var(--red);
           border-radius:50%;
         }
-
         .shield-icon{
           color:var(--gold);
-          width:24px;
-          height:24px;
+          width:20px; height:20px;
           margin-right:4px;
           vertical-align:middle;
         }
 
-        @media (max-width:1040px){
+        /* ============ TABLET ============ */
+        @media (max-width:960px){
           .panel-wrap{
-            grid-template-columns:1fr;
+            grid-template-columns:1.4fr 1fr;
           }
-
-          .tabs{
-            top:-42px;
-          }
+          h1.display{ font-size:clamp(26px, 4.6vw, 44px); }
         }
 
-        @media (max-width:760px){
+        /* ============ MOBILE — kunci no-scroll ============ */
+        @media (max-width:720px){
+          html, body{ overflow:hidden; }
+
           .shell{
-            padding:0 20px;
+            padding:0 16px;
           }
 
           .nav{
             grid-template-columns:auto auto;
-            gap:16px;
-            padding:18px 0;
+            gap:12px;
+            padding:10px 0;
           }
-
-          .nav-links{
-            display:none;
+          .nav-links{ display:none; }
+          .lang{ display:none; }
+          .brand-img{ height:clamp(34px, 5vh, 44px); }
+          .btn-masuk{
+            padding:8px 14px;
+            font-size:12px;
           }
-
-          .lang{
-            display:none;
-          }
-
-          .brand-img{
-            height:50px;
-            max-width:180px;
-          }
+          .btn-masuk svg{ width:13px; height:13px; }
 
           .hero{
-            padding:32px 0 20px;
+            padding:clamp(8px, 1.6vh, 16px) 0 clamp(6px, 1vh, 12px);
           }
-
           h1.display{
-            font-size:42px;
+            font-size:clamp(24px, 6.8vw, 34px);
+            margin-bottom:6px;
+          }
+          .lede{
+            font-size:clamp(11px, 3vw, 13px);
+            line-height:1.45;
+            max-width:92%;
           }
 
-          .panel{
-            padding:28px 22px;
-          }
-
-          .panel-title{
-            font-size:28px;
-          }
-
-          .catalog-grid{
+          .panel-wrap{
             grid-template-columns:1fr;
+            grid-template-rows:1fr auto;
+            gap:10px;
+            margin-top:clamp(28px, 4vh, 36px);
           }
 
           .tabs{
-            left:10px;
+            left:0;
+            top:calc(-1 * clamp(30px, 4vh, 38px));
+            height:clamp(30px, 4vh, 38px);
           }
-
           .tab{
-            padding:12px 18px;
+            padding:0 14px;
+            font-size:12px;
+          }
+          .tab svg{ width:14px; height:14px; }
+
+          .panel{
+            padding:16px 18px;
+            border-radius:14px;
+          }
+          .panel-title{ font-size:clamp(18px, 5vw, 24px); }
+          .panel-sub{
+            font-size:11.5px;
+            margin-bottom:10px;
+            line-height:1.4;
+          }
+          .field-label{ font-size:11.5px; margin-bottom:6px; }
+          .input-wrap{ margin-bottom:10px; }
+          .input-wrap input{
+            font-size:13px;
+            padding:11px 14px 11px 42px;
+          }
+          .input-wrap .icon{ left:14px; width:16px; height:16px; }
+          .submit{
+            padding:12px 16px;
             font-size:13px;
           }
-
-          .features-card{
-            padding:20px;
+          .submit svg{ width:16px; height:16px; }
+          .divider{ margin:10px 0 8px; }
+          .sample{ gap:8px; }
+          .sample-label{ font-size:11px; width:100%; }
+          .sample-pill{
+            font-size:11px;
+            padding:7px 10px;
+            max-width:100%;
           }
+
+          /* Catalog mobile: 2x2 tetap, tapi compact */
+          .catalog-grid{
+            gap:8px;
+            margin-bottom:10px;
+          }
+          .catalog-card{ padding:10px; }
+          .catalog-name{ font-size:15px; }
+          .catalog-meta{ font-size:10px; }
+          .catalog-icon{ width:28px; height:28px; }
+          .catalog-icon svg{ width:14px; height:14px; }
+
+          /* FEATURES jadi horizontal compact di mobile */
+          .features-card{
+            padding:10px 12px;
+            border-radius:14px;
+            flex-direction:row;
+            justify-content:space-between;
+            gap:6px;
+            overflow:hidden;
+          }
+          .feat{
+            grid-template-columns:1fr;
+            gap:4px;
+            padding:4px;
+            border-bottom:0;
+            border-right:1px solid var(--line);
+            text-align:center;
+            justify-items:center;
+            flex:1;
+            min-width:0;
+          }
+          .feat:last-child{ border-right:0; }
+          .feat-icon{
+            width:30px; height:30px;
+            border-radius:8px;
+          }
+          .feat-icon svg{ width:15px; height:15px; }
+          .feat-title{
+            font-size:11px;
+            margin-bottom:0;
+            line-height:1.2;
+          }
+          .feat-body{ display:none; }
 
           .trust{
-            font-size:16px;
-            gap:14px;
+            margin:8px 0 8px;
+            font-size:13px;
+            gap:10px;
           }
+          .shield-icon{ width:16px; height:16px; }
+        }
+
+        /* Layar pendek (laptop pendek / landscape phone) */
+        @media (max-height:680px) and (min-width:721px){
+          .hero{ padding:8px 0 4px; }
+          h1.display{ font-size:clamp(22px, 3.6vw, 36px); margin-bottom:4px; }
+          .lede{ font-size:11.5px; line-height:1.4; }
+          .panel-wrap{ margin-top:30px; }
+          .tabs{ top:-32px; height:32px; }
+          .tab{ padding:0 14px; font-size:12px; }
+          .panel{ padding:14px 22px; }
+          .panel-title{ font-size:20px; }
+          .panel-sub{ font-size:11.5px; margin-bottom:10px; }
+          .input-wrap{ margin-bottom:10px; }
+          .input-wrap input{ padding:10px 14px 10px 42px; font-size:13px; }
+          .submit{ padding:11px 16px; font-size:13px; }
+          .divider{ margin:10px 0 8px; }
+          .feat{ padding:6px 4px; }
+          .feat-title{ font-size:12.5px; }
+          .feat-body{ font-size:11px; line-height:1.35; }
+          .trust{ margin:8px 0; font-size:14px; }
+        }
+
+        /* Landscape mobile khusus */
+        @media (max-height:480px) and (orientation:landscape){
+          .hero{ display:none; }
+          .panel-wrap{ margin-top:30px; }
         }
     </style>
 </head>
 
 <body>
 
-<div class="backdrop">
+<div class="backdrop" aria-hidden="true">
     <svg class="ornament-left" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c73846" stroke-width="1">
         <g transform="translate(170 170)">
             <circle r="120" opacity=".4"/>
@@ -746,33 +778,14 @@
                 <ellipse cx="-90" cy="0" rx="44" ry="14" opacity=".4"/>
                 <ellipse cx="90" cy="0" rx="44" ry="14" opacity=".4"/>
             </g>
-            <g opacity=".5">
-                <circle cx="0" cy="-120" r="4"/>
-                <circle cx="0" cy="120" r="4"/>
-                <circle cx="-120" cy="0" r="4"/>
-                <circle cx="120" cy="0" r="4"/>
-                <circle cx="-85" cy="-85" r="3"/>
-                <circle cx="85" cy="-85" r="3"/>
-                <circle cx="-85" cy="85" r="3"/>
-                <circle cx="85" cy="85" r="3"/>
-            </g>
         </g>
     </svg>
 
-    <svg class="ornament-right" width="180" height="120" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
+    <svg class="ornament-right" width="180" height="80" viewBox="0 0 180 80" xmlns="http://www.w3.org/2000/svg">
         <g fill="#c73846" opacity=".55">
-            <g>
-                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
-            </g>
-            <g transform="translate(0 20)">
-                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
-            </g>
-            <g transform="translate(0 40)">
-                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
-            </g>
-            <g transform="translate(0 60)">
-                <circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/>
-            </g>
+            <g><circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/></g>
+            <g transform="translate(0 20)"><circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/></g>
+            <g transform="translate(0 40)"><circle cx="0" cy="0" r="2"/><circle cx="20" cy="0" r="2"/><circle cx="40" cy="0" r="2"/><circle cx="60" cy="0" r="2"/><circle cx="80" cy="0" r="2"/><circle cx="100" cy="0" r="2"/><circle cx="120" cy="0" r="2"/><circle cx="140" cy="0" r="2"/><circle cx="160" cy="0" r="2"/></g>
         </g>
     </svg>
 
@@ -801,7 +814,7 @@
 
     <nav class="nav">
         <a href="/" class="brand" aria-label="Sarinah Untuk Indonesia">
-            <img src="img.png" alt="Sarinah Untuk Indonesia" class="brand-img">
+            <img src="img.png" alt="Sarinah Untuk Indonesia" class="brand-img" onerror="this.style.display='none'">
         </a>
 
         <ul class="nav-links">
@@ -991,9 +1004,7 @@
                 </div>
                 <div>
                     <div class="feat-title">Akses lebih rapi</div>
-                    <div class="feat-body">
-                        URL panjang menjadi lebih ringkas, mudah dibagikan dan diingat.
-                    </div>
+                    <div class="feat-body">URL panjang menjadi lebih ringkas, mudah dibagikan dan diingat.</div>
                 </div>
             </div>
 
@@ -1008,9 +1019,7 @@
                 </div>
                 <div>
                     <div class="feat-title">Catalog terpusat</div>
-                    <div class="feat-body">
-                        Setiap tautan dapat diarahkan ke halaman katalog secara instan.
-                    </div>
+                    <div class="feat-body">Setiap tautan dapat diarahkan ke halaman katalog secara instan.</div>
                 </div>
             </div>
 
@@ -1022,9 +1031,7 @@
                 </div>
                 <div>
                     <div class="feat-title">Monitoring klik</div>
-                    <div class="feat-body">
-                        Pantau jumlah klik, perangkat, dan lokasi secara real-time.
-                    </div>
+                    <div class="feat-body">Pantau jumlah klik, perangkat, dan lokasi secara real-time.</div>
                 </div>
             </div>
         </aside>
@@ -1048,6 +1055,22 @@
 </div>
 
 <script>
+    /* Atasi quirk mobile browser (URL bar dinamis) dgn --vh real */
+    function setVH(){
+      document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+    }
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+
+    /* Pastikan body benar2 lock height ke innerHeight (Safari iOS) */
+    function lockHeight(){
+      document.body.style.height = window.innerHeight + 'px';
+    }
+    lockHeight();
+    window.addEventListener('resize', lockHeight);
+    window.addEventListener('orientationchange', lockHeight);
+
     const panel = document.getElementById('panel');
 
     document.querySelectorAll('.tab').forEach(tab => {
@@ -1059,26 +1082,17 @@
     });
 
     const copyBtn = document.getElementById('copyBtn');
-
     if (copyBtn) {
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText('https://surl.co.id/SarinahForSEAGames2025');
-
           const original = copyBtn.innerHTML;
-
           copyBtn.innerHTML = `
             <svg viewBox="0 0 24 24" fill="none" stroke="#0c9b60" stroke-width="2.5" stroke-linecap="round">
               <path d="M20 6L9 17l-5-5"/>
-            </svg>
-          `;
-
-          setTimeout(() => {
-            copyBtn.innerHTML = original;
-          }, 1400);
-        } catch(e) {
-          alert('Gagal menyalin link');
-        }
+            </svg>`;
+          setTimeout(() => { copyBtn.innerHTML = original; }, 1400);
+        } catch(e) { alert('Gagal menyalin link'); }
       });
     }
 </script>
