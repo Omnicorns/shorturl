@@ -32,7 +32,7 @@ public class UserImportApi {
 
     // Import CSV (multipart/form-data)
 
-    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10 MB
+    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024; // 10 MB
 
     private void validateSize(MultipartFile file) {
         if (file.getSize() > MAX_FILE_SIZE) {
