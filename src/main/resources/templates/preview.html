@@ -173,7 +173,6 @@
         .ig-link:hover{ background:#000; }
         .ig-link svg{ width:11px; height:11px; }
 
-        /* Wrapper untuk embed IG asli — scrollable dalam container, BUKAN body */
         .ig-embed-area{
           flex:1;
           min-height:0;
@@ -190,7 +189,6 @@
           border-radius:3px;
         }
 
-        /* Override Instagram blockquote default supaya muat container kita */
         .ig-embed-area .instagram-media{
           margin:0 auto 10px !important;
           min-width:0 !important;
@@ -199,7 +197,6 @@
         }
         .ig-embed-area .instagram-media:last-child{ margin-bottom:0 !important; }
 
-        /* Skeleton state — sebelum embed.js ter-load */
         .ig-skeleton{
           display:flex;
           flex-direction:column;
@@ -218,7 +215,6 @@
           100%{background-position:-200% 0}
         }
 
-        /* Banner Sarinah Club */
         .club-banner{
           position:relative;
           background:linear-gradient(120deg, var(--red) 0%, var(--red-deep) 55%, #6b1a23 100%);
@@ -311,13 +307,15 @@
         .club-cta svg{ width:12px; height:12px; }
 
         /* ============================================================== */
-        /* SISI KANAN — STRUKTUR LAMA DIPERTAHANKAN, hanya pakai clamp     */
+        /* SISI KANAN — diperbaiki, card auto-fit konten + tombol terpaku  */
         /* ============================================================== */
         .preview-col{
           display:flex;
           flex-direction:column;
           gap:clamp(8px,1.2vh,10px);
           min-height:0;
+          /* tombol & countdown nempel di bawah, card di atas */
+          justify-content:flex-start;
         }
 
         .preview-caption{
@@ -327,13 +325,19 @@
           flex-shrink:0;
         }
 
+        /*
+          KEY FIX: card hanya selebar konten (auto-fit), bukan flex:1.
+          Kalau viewport tinggi → ada ruang kosong di bawah (digantikan margin auto).
+          Kalau viewport pendek → card scroll internal (overflow:auto + min-height:0).
+          flex:0 1 auto = boleh shrink, tapi tidak melar mengisi ruang.
+        */
         .preview-card{
           background:var(--card);
           border:1px solid var(--line);
           border-radius:var(--radius-lg);
           padding:clamp(14px,2vh,20px) clamp(16px,2vw,24px);
           box-shadow:0 1px 3px rgba(22,34,58,.04);
-          flex:1;
+          flex:0 1 auto;
           min-height:0;
           overflow:auto;
           display:flex;
@@ -405,6 +409,12 @@
         .learn-more a{color:#1a56d3;font-weight:500}
         .learn-more a:hover{text-decoration:underline}
 
+        /* spacer fleksibel — mendorong tombol/countdown ke bawah */
+        .preview-spacer{
+          flex:1 1 auto;
+          min-height:0;
+        }
+
         .continue-btn{
           display:flex;
           align-items:center;
@@ -458,23 +468,60 @@
         /* ============================================================== */
         /* RESPONSIVE                                                     */
         /* ============================================================== */
+
+        /* TABLET dan bawah: stack vertikal, prioritaskan preview di atas */
         @media (max-width:960px){
+          /* aktifkan scroll halaman karena konten panjang */
+          body{
+            overflow:auto;
+            height:auto;
+            min-height:100vh;
+          }
+
           .wrap{
             grid-template-columns:1fr;
-            grid-template-rows:1.1fr 1fr;
-            gap:12px;
-            padding:12px 16px;
+            grid-template-rows:auto auto;
+            gap:16px;
+            padding:14px 16px 20px;
+            min-height:0;
+            flex:none;
           }
+
+          /* Urutan: PREVIEW dulu (yg user butuh), baru IG/club */
+          .preview-col{
+            order:1;
+            gap:10px;
+          }
+          .feature{
+            order:2;
+            gap:12px;
+          }
+
+          .preview-card{
+            overflow:visible;
+            flex:none;
+          }
+          .preview-spacer{ display:none; }
+
+          /* IG embed: kasih tinggi maksimum supaya tidak ambil seluruh layar */
+          .ig-card{
+            flex:none;
+            height:auto;
+          }
+          .ig-embed-area{
+            max-height:480px;
+          }
+
           .header-inner{padding:8px 16px}
-          .preview-card{ overflow:auto; }
         }
 
+        /* MOBILE */
         @media (max-width:560px){
           .header-inner{padding:8px 14px}
           .brand-img{height:36px}
           .wrap{
-            padding:10px 12px;
-            gap:10px;
+            padding:12px 12px 18px;
+            gap:12px;
           }
           .preview-card{ padding:14px 16px; }
           .dest-url{ font-size:15px; margin-bottom:8px; }
@@ -482,15 +529,16 @@
           .rule{ margin:10px 0; }
           .check-item{ font-size:12px; padding:6px 0; }
           .continue-btn{ height:46px; font-size:14px; }
+
           .ig-head{ padding:10px 12px; gap:8px; }
           .ig-avatar{ width:30px; height:30px; }
-          .ig-avatar > div{ font-size:14px; }
           .ig-handle{ font-size:12px; }
           .ig-handle svg{ width:11px; height:11px; }
           .ig-sub{ font-size:10px; }
           .ig-link{ padding:5px 9px; font-size:10px; }
-          .ig-embed-area{ padding:8px; }
-          .club-banner{ padding:10px 12px; gap:10px; border-radius:12px; }
+          .ig-embed-area{ padding:8px; max-height:420px; }
+
+          .club-banner{ padding:12px 14px; gap:10px; border-radius:12px; }
           .club-icon{ width:36px; height:36px; }
           .club-icon svg{ width:17px; height:17px; }
           .club-title{ font-size:18px; }
@@ -499,20 +547,57 @@
           .club-cta{ padding:8px 12px; font-size:11px; }
         }
 
-        /* Layar pendek (laptop pendek): supaya tetap 1 viewport */
+        /* Layar pendek desktop (laptop pendek <720px tinggi) */
         @media (max-height:720px) and (min-width:961px){
           .preview-card{ overflow:auto; }
           .dest-notes p:nth-child(2){ display:none; }
         }
 
         /* Landscape phone */
-        @media (max-height:480px) and (orientation:landscape){
+        @media (max-height:480px) and (orientation:landscape) and (max-width:960px){
+          body{ overflow:hidden; height:100vh; }
           .wrap{
             grid-template-columns:1fr 1fr;
             grid-template-rows:1fr;
             gap:10px;
+            padding:8px 12px;
+            flex:1;
           }
+          .preview-col{ order:1; }
+          .feature{ order:2; }
+          .preview-card{ overflow:auto; flex:0 1 auto; }
+          .preview-spacer{ display:block; }
+          .ig-embed-area{ max-height:none; }
+          .ig-card{ flex:1; }
+          .dest-notes p:nth-child(2){ display:none; }
         }
+
+        .club-icon{
+  width:clamp(38px,4.8vh,50px);
+  height:clamp(38px,4.8vh,50px);
+  background:rgba(255,255,255,.15);
+  border:1.5px solid rgba(255,255,255,.3);
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  flex-shrink:0;
+  position:relative;
+  z-index:1;
+  overflow:hidden;          /* TAMBAHAN: supaya gambar tidak nongol keluar border */
+}
+.club-icon svg{
+  width:clamp(18px,2.4vh,24px);
+  height:clamp(18px,2.4vh,24px);
+  color:var(--gold);
+}
+.club-icon img{             /* TAMBAHAN BARU */
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:10px;
+  display:block;
+}
+
     </style>
 </head>
 <body>
@@ -560,14 +645,10 @@
             </div>
 
             <div class="ig-embed-area" id="igEmbedArea">
-                <!-- Skeleton placeholder, akan diganti oleh embed.js Instagram -->
                 <div class="ig-skeleton" id="igSkeleton">
                     <div class="ig-skeleton-tile"></div>
                 </div>
 
-                <!-- Post Instagram TERBARU @sarinahindonesia (April 2026) -->
-
-                <!-- Konser Aldi Taher di Anjungan Sarinah, 11 April 2026 -->
                 <blockquote class="instagram-media"
                             data-instgrm-captioned
                             data-instgrm-permalink="https://www.instagram.com/p/DXN9TnLkaGW/"
@@ -575,7 +656,6 @@
                             style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
                 </blockquote>
 
-                <!-- Konser Souljah Anjungan Sarinah, 10 April 2026 -->
                 <blockquote class="instagram-media"
                             data-instgrm-captioned
                             data-instgrm-permalink="https://www.instagram.com/p/DXKK6Ucj8MJ/"
@@ -583,7 +663,6 @@
                             style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
                 </blockquote>
 
-                <!-- Anjungan Sarinah Thamrin schedule April 2026 -->
                 <blockquote class="instagram-media"
                             data-instgrm-captioned
                             data-instgrm-permalink="https://www.instagram.com/p/DWoLwRdAXm4/"
@@ -591,7 +670,6 @@
                             style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
                 </blockquote>
 
-                <!-- 17 April 2026 (Juicy Luicy Malam Anti Worry) -->
                 <blockquote class="instagram-media"
                             data-instgrm-captioned
                             data-instgrm-permalink="https://www.instagram.com/p/DXK05Zskysm/"
@@ -599,7 +677,6 @@
                             style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
                 </blockquote>
 
-                <!-- 2026 highlight -->
                 <blockquote class="instagram-media"
                             data-instgrm-captioned
                             data-instgrm-permalink="https://www.instagram.com/p/DXW7KlblEbh/"
@@ -609,12 +686,9 @@
             </div>
         </div>
 
-        <!-- Banner Sarinah Club register -->
         <a href="https://www.sarinahclub.id/register" target="_blank" rel="noopener" class="club-banner">
             <div class="club-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l2.4 5 5.6.8-4 4 1 5.6L12 15l-5 2.4 1-5.6-4-4 5.6-.8z"/>
-                </svg>
+                <img th:src="@{/sarinah_club.jpeg}" src="/sarinah_club.jpeg" alt="Sarinah Club">
             </div>
             <div class="club-text">
                 <div class="club-title">Sarinah Club <small>Daftar member &amp; nikmati promo eksklusif</small></div>
@@ -631,7 +705,7 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- SISI KANAN: STRUKTUR ASLI — TIDAK DIUBAH (kecuali clamp font)  -->
+    <!-- SISI KANAN                                                     -->
     <!-- ============================================================== -->
     <section class="preview-col">
         <div class="preview-caption">Berikut pratinjau tujuan Anda</div>
@@ -683,6 +757,9 @@
             </p>
         </article>
 
+        <!-- spacer mendorong tombol ke bawah saat layar tinggi -->
+        <div class="preview-spacer"></div>
+
         <a th:href="@{/{code}/go(code=${shortCode})}" class="continue-btn" id="continueBtn">
             Lanjutkan ke tujuan
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -701,7 +778,6 @@
 
 </main>
 
-<!-- Instagram embed loader (resmi). Async + processing ulang ketika DOM siap. -->
 <script async src="https://www.instagram.com/embed.js"></script>
 
 <script th:inline="javascript">
@@ -718,40 +794,29 @@
         fullUrl.textContent = originalUrl || '-';
       }
 
-      // ====================================================================
-      // INSTAGRAM EMBED — paksa proses ulang setelah embed.js siap
-      // ====================================================================
       function processIgEmbeds() {
         if (window.instgrm && window.instgrm.Embeds && typeof window.instgrm.Embeds.process === 'function') {
           window.instgrm.Embeds.process();
-          // sembunyikan skeleton setelah sebentar (embed.js akan replace blockquote)
           setTimeout(function(){
             const sk = document.getElementById('igSkeleton');
             if (sk) sk.style.display = 'none';
           }, 1200);
         } else {
-          // embed.js belum ready, coba lagi
           setTimeout(processIgEmbeds, 300);
         }
       }
-      // Jalankan setelah DOM ready
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', processIgEmbeds);
       } else {
         processIgEmbeds();
       }
 
-      // ====================================================================
-      // IP TRACKING — TIDAK DIUBAH
-      // ====================================================================
       let ipSent = false;
 
       function sendIpData(payload) {
         if (ipSent) return;
         ipSent = true;
-
         const body = JSON.stringify(payload);
-
         if (navigator.sendBeacon) {
           const blob = new Blob([body], {type: 'application/json'});
           navigator.sendBeacon('/api/track-ip', blob);
@@ -767,7 +832,6 @@
 
       function trackIp() {
         if (!trackId) return;
-
         fetch('https://ipapi.co/json/', { mode: 'cors' })
           .then(function(r) { return r.ok ? r.json() : null; })
           .then(function(data) {
@@ -801,9 +865,6 @@
 
       trackIp();
 
-      // ====================================================================
-      // COUNTDOWN — TIDAK DIUBAH
-      // ====================================================================
       const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
       let seconds = 10;
       let timeoutId = null;
