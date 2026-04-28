@@ -7,7 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -33,7 +33,6 @@
             --warn-soft: rgba(192,138,26,.12);
 
             --radius-lg: 18px;
-            --radius-md: 12px;
             --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
@@ -43,29 +42,28 @@
             padding: 0;
         }
 
-        html {
+        html,
+        body {
             width: 100%;
-            min-height: 100%;
-            overflow-x: hidden;
+            height: 100svh;
+            min-height: 100svh;
+            overflow: hidden;
+        }
+
+        @supports (height: 100dvh) {
+            html,
+            body {
+                height: 100dvh;
+                min-height: 100dvh;
+            }
         }
 
         body {
-            width: 100%;
-            min-height: 100vh;
-            min-height: 100svh;
             background: var(--bg);
             color: var(--text);
             font-family: var(--font);
             -webkit-font-smoothing: antialiased;
             line-height: 1.5;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        @supports (min-height: 100dvh) {
-            body {
-                min-height: 100dvh;
-            }
         }
 
         a {
@@ -78,31 +76,35 @@
         }
 
         .page {
-            min-height: 100vh;
-            min-height: 100svh;
+            width: 100%;
+            height: 100svh;
+            min-height: 0;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        @supports (min-height: 100dvh) {
+        @supports (height: 100dvh) {
             .page {
-                min-height: 100dvh;
+                height: 100dvh;
             }
         }
 
         .header {
-            border-bottom: 1px solid var(--line-soft);
-            background: rgba(255,255,255,.92);
-            backdrop-filter: blur(14px);
             flex: 0 0 auto;
+            background: rgba(255,255,255,.95);
+            border-bottom: 1px solid var(--line-soft);
+            backdrop-filter: blur(14px);
+            z-index: 10;
         }
 
         .header-inner {
             max-width: 1240px;
             margin: 0 auto;
-            padding: 8px 24px;
+            padding: 7px 22px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
         }
 
         .brand {
@@ -112,7 +114,7 @@
         }
 
         .brand-img {
-            height: clamp(30px, 4.5vh, 48px);
+            height: clamp(28px, 4vh, 46px);
             width: auto;
             display: block;
             object-fit: contain;
@@ -122,26 +124,37 @@
             max-width: 1240px;
             width: 100%;
             margin: 0 auto;
-            padding: clamp(10px, 1.8vh, 22px) clamp(12px, 2.4vw, 32px);
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
+
+            padding: clamp(9px, 1.5vh, 18px) clamp(12px, 2.4vw, 32px);
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: clamp(12px, 2vw, 28px);
             align-items: stretch;
-            flex: 1 1 auto;
+        }
+
+        .feature,
+        .preview-col,
+        .ig-card,
+        .ig-embed-area,
+        .preview-card {
+            min-height: 0;
         }
 
         .feature {
-            display: flex;
-            flex-direction: column;
-            gap: clamp(10px, 1.4vh, 14px);
-            min-width: 0;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: clamp(8px, 1.2vh, 13px);
+            overflow: hidden;
         }
 
         .preview-col {
             display: flex;
             flex-direction: column;
-            gap: clamp(8px, 1.2vh, 12px);
-            min-width: 0;
+            gap: clamp(7px, 1vh, 11px);
+            overflow: hidden;
         }
 
         .ig-card {
@@ -152,18 +165,16 @@
             box-shadow: 0 16px 40px rgba(22,34,58,.08);
             display: flex;
             flex-direction: column;
-            min-height: 0;
-            flex: 1 1 auto;
         }
 
         .ig-head {
+            flex: 0 0 auto;
             display: flex;
             align-items: center;
             gap: 9px;
-            padding: clamp(9px, 1.2vh, 13px) clamp(10px, 1.4vw, 16px);
+            padding: clamp(8px, 1.1vh, 12px) clamp(10px, 1.4vw, 16px);
             border-bottom: 1px solid var(--line-soft);
             background: #fff;
-            flex: 0 0 auto;
         }
 
         .ig-avatar {
@@ -193,7 +204,7 @@
 
         .ig-handle {
             font-size: clamp(12px, 1.3vh, 14px);
-            font-weight: 800;
+            font-weight: 900;
             color: var(--text);
             display: flex;
             align-items: center;
@@ -228,7 +239,7 @@
             color: #fff;
             border-radius: 10px;
             font-size: clamp(10px, 1vh, 12px);
-            font-weight: 800;
+            font-weight: 900;
             flex: 0 0 auto;
             transition: .2s;
         }
@@ -245,28 +256,32 @@
 
         .ig-embed-area {
             flex: 1 1 auto;
-            min-height: 0;
+            overflow: hidden;
             padding: clamp(6px, 1vh, 10px);
             background: #fafafa;
         }
 
         .ig-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 6px;
+            width: 100%;
             height: 100%;
             min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            overflow: hidden;
         }
 
         .ig-tile {
             position: relative;
-            aspect-ratio: 1 / 1;
             overflow: hidden;
-            border-radius: 10px;
+            border-radius: 11px;
             display: block;
             cursor: pointer;
             background: linear-gradient(135deg, #feda75 0%, #fa7e1e 35%, #d62976 70%, #4f5bd5 100%);
             transition: transform .2s ease, box-shadow .2s ease;
+            min-height: 0;
+            height: 100%;
         }
 
         .ig-tile:hover {
@@ -286,7 +301,7 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.10), rgba(0,0,0,.04));
+            background: linear-gradient(to top, rgba(0,0,0,.58), rgba(0,0,0,.10), rgba(0,0,0,.04));
         }
 
         .ig-tile-img.no-image::after {
@@ -322,7 +337,7 @@
         .ig-tile-overlay span {
             max-width: 100%;
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 800;
             line-height: 1.15;
             text-shadow: 0 1px 5px rgba(0,0,0,.6);
             display: -webkit-box;
@@ -333,7 +348,7 @@
 
         .ig-loading {
             grid-column: 1 / -1;
-            min-height: 220px;
+            grid-row: 1 / -1;
             border-radius: 14px;
             background: #fff;
             border: 1px dashed rgba(22,34,58,.16);
@@ -350,13 +365,12 @@
             background: linear-gradient(120deg, var(--red) 0%, var(--red-deep) 55%, #6b1a23 100%);
             color: #fff;
             border-radius: var(--radius-lg);
-            padding: clamp(9px, 1.4vh, 16px) clamp(12px, 1.6vw, 20px);
+            padding: clamp(8px, 1.3vh, 15px) clamp(12px, 1.6vw, 20px);
             display: flex;
             align-items: center;
             gap: clamp(8px, 1.2vw, 14px);
             overflow: hidden;
             box-shadow: 0 12px 28px -14px rgba(199,56,70,.75);
-            flex: 0 0 auto;
         }
 
         .club-banner::before {
@@ -412,7 +426,7 @@
         .club-title small {
             font-family: var(--font);
             font-style: normal;
-            font-weight: 800;
+            font-weight: 900;
             font-size: clamp(10px, 1.1vh, 13px);
             color: #fff;
             opacity: .95;
@@ -468,11 +482,12 @@
             background: rgba(255,255,255,.96);
             border: 1px solid var(--line);
             border-radius: var(--radius-lg);
-            padding: clamp(12px, 1.7vh, 22px) clamp(14px, 1.7vw, 24px);
+            padding: clamp(11px, 1.6vh, 21px) clamp(14px, 1.7vw, 24px);
             box-shadow: 0 16px 40px rgba(22,34,58,.08);
             display: flex;
             flex-direction: column;
             flex: 0 0 auto;
+            overflow: hidden;
         }
 
         .dest-label {
@@ -483,7 +498,7 @@
 
         .dest-url {
             font-size: clamp(14px, 1.75vh, 20px);
-            font-weight: 800;
+            font-weight: 900;
             color: var(--text);
             letter-spacing: -.01em;
             margin-bottom: clamp(7px, .9vh, 12px);
@@ -510,7 +525,7 @@
 
         .check-title {
             font-size: clamp(12px, 1.25vh, 15px);
-            font-weight: 800;
+            font-weight: 900;
             color: var(--text);
             margin-bottom: clamp(5px, .7vh, 8px);
         }
@@ -577,12 +592,12 @@
 
         .learn-more a {
             color: #1a56d3;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .preview-spacer {
             flex: 1 1 auto;
-            min-height: 8px;
+            min-height: 0;
         }
 
         .continue-btn {
@@ -591,12 +606,13 @@
             justify-content: center;
             gap: 9px;
             width: 100%;
+            height: clamp(42px, 5.2vh, 54px);
             min-height: clamp(42px, 5.2vh, 54px);
             border-radius: 13px;
             background: var(--navy);
             color: #fff;
             font-size: clamp(13px, 1.4vh, 16px);
-            font-weight: 800;
+            font-weight: 900;
             letter-spacing: -.01em;
             transition: background .2s, transform .15s, box-shadow .2s;
             box-shadow: 0 8px 22px rgba(20,36,69,.2);
@@ -623,7 +639,7 @@
         }
 
         .countdown strong {
-            font-weight: 700;
+            font-weight: 800;
             font-style: normal;
             color: var(--text-soft);
         }
@@ -637,26 +653,7 @@
 
         .back-link a {
             color: #1a56d3;
-            font-weight: 700;
-        }
-
-        @media (min-width: 961px) and (min-height: 760px) {
-            body {
-                overflow-y: hidden;
-            }
-
-            .wrap {
-                min-height: 0;
-            }
-
-            .ig-grid {
-                grid-template-rows: repeat(2, minmax(0, 1fr));
-            }
-
-            .ig-tile {
-                aspect-ratio: auto;
-                height: 100%;
-            }
+            font-weight: 800;
         }
 
         @media (max-height: 720px) and (min-width: 961px) {
@@ -674,66 +671,62 @@
             }
         }
 
+        /* =========================
+           TABLET & MOBILE
+           ========================= */
         @media (max-width: 960px) {
-            .page {
-                min-height: 100svh;
-            }
-
             .header-inner {
-                padding: 6px 14px;
+                padding: 5px 14px;
             }
 
             .brand-img {
-                height: 30px;
+                height: 28px;
             }
 
             .wrap {
                 grid-template-columns: 1fr;
-                gap: 10px;
-                padding: 10px;
-                align-items: start;
+                grid-template-rows: auto minmax(0, 1fr);
+                gap: 8px;
+                padding: 8px;
+                align-items: stretch;
             }
 
             .preview-col {
                 order: 1;
-                gap: 7px;
+                gap: 6px;
+                overflow: hidden;
             }
 
             .feature {
                 order: 2;
-                gap: 8px;
+                grid-template-rows: minmax(0, 1fr);
+                gap: 0;
+                overflow: hidden;
             }
 
             .preview-caption,
-            .preview-spacer {
-                display: none;
+            .preview-spacer,
+            .dest-label,
+            .dest-notes,
+            .learn-more,
+            .countdown,
+            .club-banner {
+                display: none !important;
             }
 
             .preview-card {
-                padding: 10px 12px;
+                padding: 9px 10px;
                 border-radius: 15px;
-            }
-
-            .dest-label {
-                display: none;
             }
 
             .dest-url {
                 font-size: 13px;
-                margin-bottom: 6px;
+                line-height: 1.2;
+                margin-bottom: 7px;
                 display: -webkit-box;
-                -webkit-line-clamp: 2;
+                -webkit-line-clamp: 1;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
-            }
-
-            .dest-notes {
-                font-size: 10.5px;
-                line-height: 1.35;
-            }
-
-            .dest-notes p:nth-child(2) {
-                display: none;
             }
 
             .rule {
@@ -741,16 +734,16 @@
             }
 
             .check-title {
-                font-size: 11.5px;
+                font-size: 11px;
                 margin-bottom: 3px;
             }
 
             .check-item {
                 grid-template-columns: 18px 1fr;
                 gap: 7px;
-                padding: 3px 0;
-                font-size: 10.5px;
-                line-height: 1.25;
+                padding: 2px 0;
+                font-size: 10px;
+                line-height: 1.22;
             }
 
             .check-icon {
@@ -763,57 +756,145 @@
                 height: 9px;
             }
 
-            .learn-more {
-                display: none;
-            }
-
             .continue-btn {
-                min-height: 39px;
-                border-radius: 11px;
-                font-size: 12.5px;
-            }
-
-            .countdown {
-                font-size: 10px;
-                line-height: 1.2;
+                height: 38px;
+                min-height: 38px;
+                border-radius: 12px;
+                font-size: 13px;
             }
 
             .back-link {
                 font-size: 10px;
-                line-height: 1.2;
+                line-height: 1.1;
             }
 
             .ig-card {
-                border-radius: 15px;
+                height: 100%;
+                border-radius: 16px;
             }
 
             .ig-head {
-                padding: 7px 9px;
-                gap: 7px;
+                min-height: 44px;
+                padding: 7px 10px;
             }
 
             .ig-avatar {
-                width: 27px;
-                height: 27px;
+                width: 28px;
+                height: 28px;
             }
 
             .ig-handle {
-                font-size: 11.5px;
-            }
-
-            .ig-handle svg {
-                width: 11px;
-                height: 11px;
+                font-size: 12px;
             }
 
             .ig-sub {
-                font-size: 9px;
+                display: none !important;
+            }
+
+            .ig-link {
+                padding: 6px 9px;
+                font-size: 10px;
+                border-radius: 9px;
+            }
+
+            .ig-embed-area {
+                padding: 6px;
+            }
+
+            .ig-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+                grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+                gap: 5px;
+                height: 100% !important;
+            }
+
+            .ig-tile {
+                height: 100% !important;
+                aspect-ratio: auto !important;
+                border-radius: 10px;
+            }
+
+            .ig-tile-overlay {
+                padding: 5px 3px;
+            }
+
+            .ig-tile-overlay svg {
+                width: 13px;
+                height: 13px;
+            }
+
+            .ig-tile-overlay span {
+                font-size: 8.5px;
+                line-height: 1.1;
+                -webkit-line-clamp: 1;
+            }
+
+            .ig-loading {
+                min-height: 0;
+                height: 100%;
+            }
+        }
+
+        /* Android pendek */
+        @media (max-width: 430px) and (max-height: 700px) {
+            .header-inner {
+                padding: 4px 12px;
+            }
+
+            .brand-img {
+                height: 24px;
+            }
+
+            .wrap {
+                padding: 6px;
+                gap: 5px;
+            }
+
+            .preview-card {
+                padding: 8px 9px;
+            }
+
+            .dest-url {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .rule {
+                margin: 5px 0;
+            }
+
+            .check-title {
+                font-size: 10.5px;
+            }
+
+            .check-item {
+                font-size: 9.5px;
+                padding: 1.5px 0;
+            }
+
+            .continue-btn {
+                height: 36px;
+                min-height: 36px;
+                font-size: 12.5px;
+            }
+
+            .back-link {
+                display: none !important;
+            }
+
+            .ig-head {
+                min-height: 40px;
+                padding: 6px 8px;
+            }
+
+            .ig-avatar {
+                width: 25px;
+                height: 25px;
             }
 
             .ig-link {
                 padding: 5px 8px;
                 font-size: 9px;
-                border-radius: 8px;
             }
 
             .ig-embed-area {
@@ -821,136 +902,29 @@
             }
 
             .ig-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 5px;
-                height: auto;
-            }
-
-            .ig-tile {
-                aspect-ratio: 1 / 1;
-                border-radius: 9px;
-            }
-
-            .ig-tile-overlay {
-                padding: 6px 4px;
-            }
-
-            .ig-tile-overlay svg {
-                width: 14px;
-                height: 14px;
-            }
-
-            .ig-tile-overlay span {
-                font-size: 8.5px;
-            }
-
-            .club-banner {
-                padding: 7px 9px;
-                gap: 8px;
-                border-radius: 13px;
-            }
-
-            .club-banner::before {
-                display: none;
-            }
-
-            .club-icon {
-                width: 31px;
-                height: 31px;
-                border-radius: 9px;
-            }
-
-            .club-title {
-                font-size: 14px;
-            }
-
-            .club-title small {
-                font-size: 9px;
-            }
-
-            .club-sub {
-                display: none;
-            }
-
-            .club-cta {
-                padding: 6px 9px;
-                font-size: 9.5px;
-                border-radius: 8px;
-            }
-        }
-
-        @media (max-width: 430px) {
-            .header {
-                display: none;
-            }
-
-            .wrap {
-                padding: 8px;
-                gap: 8px;
-            }
-
-            .preview-card {
-                padding: 9px 10px;
-            }
-
-            .dest-url {
-                font-size: 12.5px;
-            }
-
-            .dest-notes {
-                display: none;
-            }
-
-            .check-title {
-                font-size: 11px;
-            }
-
-            .check-item {
-                font-size: 10px;
-                padding: 2.5px 0;
-            }
-
-            .continue-btn {
-                min-height: 38px;
-            }
-
-            .countdown {
-                display: none;
-            }
-
-            .ig-sub {
-                display: none;
-            }
-
-            .club-title small {
-                display: none;
-            }
-        }
-
-        @media (max-width: 360px) {
-            .ig-grid {
-                grid-template-columns: 1fr 1fr;
                 gap: 4px;
             }
 
-            .check-item {
-                font-size: 9.5px;
-            }
-
-            .club-cta {
-                padding-inline: 8px;
+            .ig-tile-overlay span {
+                font-size: 8px;
             }
         }
 
+        /* Landscape HP */
         @media (max-height: 480px) and (orientation: landscape) {
-            .header {
-                display: none;
+            .header-inner {
+                padding: 3px 12px;
+            }
+
+            .brand-img {
+                height: 22px;
             }
 
             .wrap {
-                grid-template-columns: .9fr 1.1fr;
+                grid-template-columns: .85fr 1.15fr;
+                grid-template-rows: 1fr;
                 gap: 8px;
-                padding: 7px 10px;
+                padding: 6px 10px;
             }
 
             .preview-col {
@@ -961,17 +935,13 @@
                 order: 2;
             }
 
-            .club-banner,
+            .back-link,
+            .countdown,
             .dest-notes,
             .learn-more,
             .preview-caption,
-            .back-link,
-            .countdown {
+            .club-banner {
                 display: none !important;
-            }
-
-            .ig-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
         }
     </style>
@@ -983,7 +953,10 @@
     <header class="header">
         <div class="header-inner">
             <a href="/" class="brand" aria-label="Sarinah Untuk Indonesia">
-                <img th:src="@{/img.png}" src="/img.png" alt="Sarinah Untuk Indonesia" class="brand-img">
+                <img th:src="@{/img.png}"
+                     src="/img.png"
+                     alt="Sarinah Untuk Indonesia"
+                     class="brand-img">
             </a>
         </div>
     </header>
@@ -995,10 +968,11 @@
             <div class="ig-card">
                 <div class="ig-head">
                     <div class="ig-avatar">
-                        <img src="https://logowik.com/content/uploads/images/sarinah5240.logowik.com.webp"
+                        <img th:src="@{/img.png}"
+                             src="/img.png"
                              alt="Sarinah Indonesia"
                              loading="lazy"
-                             onerror="this.onerror=null;this.src='https://seeklogo.com/images/S/sarinah-logo-71D3CB6B85-seeklogo.com.png';">
+                             onerror="this.onerror=null;this.src='https://logowik.com/content/uploads/images/sarinah5240.logowik.com.webp';">
                     </div>
 
                     <div class="ig-meta">
@@ -1036,8 +1010,11 @@
 
             <a href="https://www.sarinahclub.id/register" target="_blank" rel="noopener" class="club-banner">
                 <div class="club-icon" aria-hidden="true">
-                    <img th:src="@{/sarinah_club.jpeg}" src="/sarinah_club.jpeg" alt="Sarinah Club">
+                    <img th:src="@{/sarinah_club.jpeg}"
+                         src="/sarinah_club.jpeg"
+                         alt="Sarinah Club">
                 </div>
+
                 <div class="club-text">
                     <div class="club-title">
                         Sarinah Club
@@ -1045,6 +1022,7 @@
                     </div>
                     <div class="club-sub">Loyalty point, voucher belanja, &amp; akses event khusus member.</div>
                 </div>
+
                 <span class="club-cta">
                     Daftar
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -1062,7 +1040,7 @@
                      id="previewCard"
                      th:attr="data-original-url=${originalUrl},data-short-code=${shortCode},data-track-id=${trackId}">
                 <div class="dest-label">Tujuan:</div>
-                <h1 class="dest-url" id="fullUrl" th:text="${originalUrl}">catalog.sarinah.co.id/event-jakarta</h1>
+                <h1 class="dest-url" id="fullUrl" th:text="${originalUrl}">https://www.google.com/</h1>
 
                 <div class="dest-notes">
                     <p>Kami belum dapat mengambil informasi detail dari tujuan tersebut untuk saat ini.</p>
@@ -1132,7 +1110,7 @@
 
 <script th:inline="javascript">
     (function () {
-        const IG_ENDPOINT = '/api/v1/instagram/latest?limit=6';
+        const IG_ENDPOINT = /*[[@{/api/v1/instagram/latest(limit=6)}]]*/ '/api/v1/instagram/latest?limit=6';
 
         const previewCard = document.getElementById('previewCard');
         const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
@@ -1190,7 +1168,7 @@
         }
 
         function normalizePost(post) {
-            const mediaUrl = post.media_url || post.mediaUrl || post.thumbnail_url || post.thumbnailUrl || '';
+            const mediaUrl = post.media_url || post.mediaUrl || post.thumbnail_url || post.thumbnailUrl || post.image_url || post.imageUrl || '';
             const permalink = post.permalink || post.url || 'https://www.instagram.com/sarinahindonesia/';
             const caption = post.caption || post.title || 'Lihat post Instagram';
 
@@ -1213,7 +1191,7 @@
 
             const finalPosts = normalized.length ? normalized : fallbackPosts.map(normalizePost);
 
-            igGrid.innerHTML = finalPosts.map(function (post, index) {
+            igGrid.innerHTML = finalPosts.map(function (post) {
                 const safeUrl = escapeHtml(post.permalink);
                 const safeCaption = escapeHtml(post.caption || 'Lihat post');
                 const safeImage = escapeHtml(post.mediaUrl || '');
