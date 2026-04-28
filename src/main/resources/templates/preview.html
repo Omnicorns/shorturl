@@ -189,32 +189,94 @@
           border-radius:3px;
         }
 
-        .ig-embed-area .instagram-media{
-          margin:0 auto 10px !important;
-          min-width:0 !important;
-          max-width:100% !important;
-          width:100% !important;
+        /* ============================================================== */
+        /* IG GRID — feed thumbnail clickable                             */
+        /* ============================================================== */
+        .ig-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:6px;
         }
-        .ig-embed-area .instagram-media:last-child{ margin-bottom:0 !important; }
 
-        .ig-skeleton{
+        .ig-tile{
+          position:relative;
+          aspect-ratio:1/1;
+          overflow:hidden;
+          border-radius:8px;
+          background:#1a1a1a;
+          display:block;
+          cursor:pointer;
+          transition:transform .25s ease, box-shadow .25s ease;
+        }
+
+        .ig-tile:hover{
+          transform:scale(1.02);
+          box-shadow:0 8px 20px rgba(0,0,0,.18);
+          z-index:2;
+        }
+
+        .ig-tile-img{
+          width:100%;
+          height:100%;
+          background-size:cover;
+          background-position:center;
+          /* Fallback gradient warna IG kalau gambar gagal load */
+          background-color:#222;
+          background-image:linear-gradient(135deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+        }
+
+        .ig-tile-overlay{
+          position:absolute;
+          inset:0;
+          background:linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.2) 60%, transparent 100%);
           display:flex;
           flex-direction:column;
-          gap:10px;
-        }
-        .ig-skeleton-tile{
-          background:linear-gradient(90deg,#eee 0%, #f5f5f5 50%, #eee 100%);
-          background-size:200% 100%;
-          animation:shimmerBg 1.4s ease-in-out infinite;
-          border-radius:10px;
-          aspect-ratio:1/1;
-          width:100%;
-        }
-        @keyframes shimmerBg{
-          0%{background-position:200% 0}
-          100%{background-position:-200% 0}
+          align-items:center;
+          justify-content:flex-end;
+          padding:10px;
+          opacity:0;
+          transition:opacity .2s;
+          color:#fff;
+          text-align:center;
         }
 
+        .ig-tile:hover .ig-tile-overlay{ opacity:1; }
+
+        .ig-tile-overlay svg{
+          width:22px;
+          height:22px;
+          margin-bottom:4px;
+        }
+
+        .ig-tile-overlay span{
+          font-size:11px;
+          font-weight:600;
+        }
+
+        .ig-tile-more{
+          background:linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          color:#fff;
+        }
+
+        .ig-tile-more-content{
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:4px;
+          text-align:center;
+          padding:10px;
+        }
+
+        .ig-tile-more-content svg{ width:28px; height:28px; }
+        .ig-tile-more-content span{ font-size:12px; font-weight:700; line-height:1.2; }
+        .ig-tile-more-content small{ font-size:10px; opacity:.85; line-height:1.2; }
+
+        /* ============================================================== */
+        /* CLUB BANNER                                                    */
+        /* ============================================================== */
         .club-banner{
           position:relative;
           background:linear-gradient(120deg, var(--red) 0%, var(--red-deep) 55%, #6b1a23 100%);
@@ -251,11 +313,19 @@
           flex-shrink:0;
           position:relative;
           z-index:1;
+          overflow:hidden;
         }
         .club-icon svg{
           width:clamp(18px,2.4vh,24px);
           height:clamp(18px,2.4vh,24px);
           color:var(--gold);
+        }
+        .club-icon img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          border-radius:10px;
+          display:block;
         }
         .club-text{ flex:1; min-width:0; position:relative; z-index:1; }
         .club-title{
@@ -307,14 +377,13 @@
         .club-cta svg{ width:12px; height:12px; }
 
         /* ============================================================== */
-        /* SISI KANAN — diperbaiki, card auto-fit konten + tombol terpaku  */
+        /* SISI KANAN — preview card                                      */
         /* ============================================================== */
         .preview-col{
           display:flex;
           flex-direction:column;
           gap:clamp(8px,1.2vh,10px);
           min-height:0;
-          /* tombol & countdown nempel di bawah, card di atas */
           justify-content:flex-start;
         }
 
@@ -325,12 +394,6 @@
           flex-shrink:0;
         }
 
-        /*
-          KEY FIX: card hanya selebar konten (auto-fit), bukan flex:1.
-          Kalau viewport tinggi → ada ruang kosong di bawah (digantikan margin auto).
-          Kalau viewport pendek → card scroll internal (overflow:auto + min-height:0).
-          flex:0 1 auto = boleh shrink, tapi tidak melar mengisi ruang.
-        */
         .preview-card{
           background:var(--card);
           border:1px solid var(--line);
@@ -409,7 +472,6 @@
         .learn-more a{color:#1a56d3;font-weight:500}
         .learn-more a:hover{text-decoration:underline}
 
-        /* spacer fleksibel — mendorong tombol/countdown ke bawah */
         .preview-spacer{
           flex:1 1 auto;
           min-height:0;
@@ -468,10 +530,7 @@
         /* ============================================================== */
         /* RESPONSIVE                                                     */
         /* ============================================================== */
-
-        /* TABLET dan bawah: stack vertikal, prioritaskan preview di atas */
         @media (max-width:960px){
-          /* aktifkan scroll halaman karena konten panjang */
           body{
             overflow:auto;
             height:auto;
@@ -487,7 +546,6 @@
             flex:none;
           }
 
-          /* Urutan: PREVIEW dulu (yg user butuh), baru IG/club */
           .preview-col{
             order:1;
             gap:10px;
@@ -503,19 +561,17 @@
           }
           .preview-spacer{ display:none; }
 
-          /* IG embed: kasih tinggi maksimum supaya tidak ambil seluruh layar */
           .ig-card{
             flex:none;
             height:auto;
           }
           .ig-embed-area{
-            max-height:480px;
+            max-height:520px;
           }
 
           .header-inner{padding:8px 16px}
         }
 
-        /* MOBILE */
         @media (max-width:560px){
           .header-inner{padding:8px 14px}
           .brand-img{height:36px}
@@ -536,7 +592,13 @@
           .ig-handle svg{ width:11px; height:11px; }
           .ig-sub{ font-size:10px; }
           .ig-link{ padding:5px 9px; font-size:10px; }
-          .ig-embed-area{ padding:8px; max-height:420px; }
+          .ig-embed-area{ padding:8px; max-height:none; }
+
+          .ig-grid{ gap:4px; }
+          .ig-tile-overlay{ opacity:1; } /* di mobile, overlay selalu kelihatan */
+          .ig-tile-overlay span{ font-size:10px; }
+          .ig-tile-more-content span{ font-size:11px; }
+          .ig-tile-more-content small{ font-size:9px; }
 
           .club-banner{ padding:12px 14px; gap:10px; border-radius:12px; }
           .club-icon{ width:36px; height:36px; }
@@ -547,13 +609,11 @@
           .club-cta{ padding:8px 12px; font-size:11px; }
         }
 
-        /* Layar pendek desktop (laptop pendek <720px tinggi) */
         @media (max-height:720px) and (min-width:961px){
           .preview-card{ overflow:auto; }
           .dest-notes p:nth-child(2){ display:none; }
         }
 
-        /* Landscape phone */
         @media (max-height:480px) and (orientation:landscape) and (max-width:960px){
           body{ overflow:hidden; height:100vh; }
           .wrap{
@@ -571,33 +631,6 @@
           .ig-card{ flex:1; }
           .dest-notes p:nth-child(2){ display:none; }
         }
-
-        .club-icon{
-  width:clamp(38px,4.8vh,50px);
-  height:clamp(38px,4.8vh,50px);
-  background:rgba(255,255,255,.15);
-  border:1.5px solid rgba(255,255,255,.3);
-  border-radius:12px;
-  display:grid;
-  place-items:center;
-  flex-shrink:0;
-  position:relative;
-  z-index:1;
-  overflow:hidden;          /* TAMBAHAN: supaya gambar tidak nongol keluar border */
-}
-.club-icon svg{
-  width:clamp(18px,2.4vh,24px);
-  height:clamp(18px,2.4vh,24px);
-  color:var(--gold);
-}
-.club-icon img{             /* TAMBAHAN BARU */
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  border-radius:10px;
-  display:block;
-}
-
     </style>
 </head>
 <body>
@@ -613,7 +646,7 @@
 <main class="wrap">
 
     <!-- ============================================================== -->
-    <!-- SISI KIRI: IG feed embed + banner Sarinah Club register        -->
+    <!-- SISI KIRI: IG feed grid + banner Sarinah Club register         -->
     <!-- ============================================================== -->
     <section class="feature" aria-label="Feed Instagram & Sarinah Club">
 
@@ -644,45 +677,92 @@
                 </a>
             </div>
 
+            <!--
+                ============================================================
+                CARA UPDATE FEED (untuk admin / tim sosmed):
+                Ganti nilai data-permalink DAN href dengan URL post IG terbaru.
+                Format URL: https://www.instagram.com/p/<KODE>/
+                Tile ke-6 = link ke profil utama, tidak perlu diubah.
+                Thumbnail otomatis di-fetch dari permalink — tidak perlu upload gambar.
+                ============================================================
+            -->
             <div class="ig-embed-area" id="igEmbedArea">
-                <div class="ig-skeleton" id="igSkeleton">
-                    <div class="ig-skeleton-tile"></div>
+                <div class="ig-grid">
+
+                    <a href="https://www.instagram.com/p/DXN9TnLkaGW/" target="_blank" rel="noopener" class="ig-tile">
+                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXN9TnLkaGW/"></div>
+                        <div class="ig-tile-overlay">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7"/>
+                                <path d="M21 3l-9 9"/>
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+                            </svg>
+                            <span>Lihat di Instagram</span>
+                        </div>
+                    </a>
+
+                    <a href="https://www.instagram.com/p/DXKK6Ucj8MJ/" target="_blank" rel="noopener" class="ig-tile">
+                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXKK6Ucj8MJ/"></div>
+                        <div class="ig-tile-overlay">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7"/>
+                                <path d="M21 3l-9 9"/>
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+                            </svg>
+                            <span>Lihat di Instagram</span>
+                        </div>
+                    </a>
+
+                    <a href="https://www.instagram.com/p/DWoLwRdAXm4/" target="_blank" rel="noopener" class="ig-tile">
+                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DWoLwRdAXm4/"></div>
+                        <div class="ig-tile-overlay">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7"/>
+                                <path d="M21 3l-9 9"/>
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+                            </svg>
+                            <span>Lihat di Instagram</span>
+                        </div>
+                    </a>
+
+                    <a href="https://www.instagram.com/p/DXK05Zskysm/" target="_blank" rel="noopener" class="ig-tile">
+                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXK05Zskysm/"></div>
+                        <div class="ig-tile-overlay">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7"/>
+                                <path d="M21 3l-9 9"/>
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+                            </svg>
+                            <span>Lihat di Instagram</span>
+                        </div>
+                    </a>
+
+                    <a href="https://www.instagram.com/p/DXW7KlblEbh/" target="_blank" rel="noopener" class="ig-tile">
+                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXW7KlblEbh/"></div>
+                        <div class="ig-tile-overlay">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 3h7v7"/>
+                                <path d="M21 3l-9 9"/>
+                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
+                            </svg>
+                            <span>Lihat di Instagram</span>
+                        </div>
+                    </a>
+
+                    <!-- Tile ke-6: link ke profil utama -->
+                    <a href="https://www.instagram.com/sarinahindonesia/" target="_blank" rel="noopener" class="ig-tile ig-tile-more">
+                        <div class="ig-tile-more-content">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5"/>
+                                <circle cx="12" cy="12" r="4"/>
+                                <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+                            </svg>
+                            <span>Lihat semua post</span>
+                            <small>@sarinahindonesia</small>
+                        </div>
+                    </a>
+
                 </div>
-
-                <blockquote class="instagram-media"
-                            data-instgrm-captioned
-                            data-instgrm-permalink="https://www.instagram.com/p/DXN9TnLkaGW/"
-                            data-instgrm-version="14"
-                            style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
-                </blockquote>
-
-                <blockquote class="instagram-media"
-                            data-instgrm-captioned
-                            data-instgrm-permalink="https://www.instagram.com/p/DXKK6Ucj8MJ/"
-                            data-instgrm-version="14"
-                            style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
-                </blockquote>
-
-                <blockquote class="instagram-media"
-                            data-instgrm-captioned
-                            data-instgrm-permalink="https://www.instagram.com/p/DWoLwRdAXm4/"
-                            data-instgrm-version="14"
-                            style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
-                </blockquote>
-
-                <blockquote class="instagram-media"
-                            data-instgrm-captioned
-                            data-instgrm-permalink="https://www.instagram.com/p/DXK05Zskysm/"
-                            data-instgrm-version="14"
-                            style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
-                </blockquote>
-
-                <blockquote class="instagram-media"
-                            data-instgrm-captioned
-                            data-instgrm-permalink="https://www.instagram.com/p/DXW7KlblEbh/"
-                            data-instgrm-version="14"
-                            style="background:#FFF;border:0;border-radius:10px;box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15);margin:0;max-width:100%;min-width:0;padding:0;width:100%">
-                </blockquote>
             </div>
         </div>
 
@@ -705,7 +785,7 @@
     </section>
 
     <!-- ============================================================== -->
-    <!-- SISI KANAN                                                     -->
+    <!-- SISI KANAN — preview tujuan                                    -->
     <!-- ============================================================== -->
     <section class="preview-col">
         <div class="preview-caption">Berikut pratinjau tujuan Anda</div>
@@ -757,7 +837,6 @@
             </p>
         </article>
 
-        <!-- spacer mendorong tombol ke bawah saat layar tinggi -->
         <div class="preview-spacer"></div>
 
         <a th:href="@{/{code}/go(code=${shortCode})}" class="continue-btn" id="continueBtn">
@@ -778,10 +857,47 @@
 
 </main>
 
-<script async src="https://www.instagram.com/embed.js"></script>
-
 <script th:inline="javascript">
     (function () {
+
+      // =============================================================
+      // 1. AUTO-LOAD THUMBNAIL IG dari permalink (no token, no API)
+      // =============================================================
+      function loadIgThumbnails() {
+        const tiles = document.querySelectorAll('.ig-tile-img[data-permalink]');
+        tiles.forEach(function(tile){
+          const permalink = tile.dataset.permalink;
+          if (!permalink) return;
+
+          // Extract shortcode dari URL: /p/XXXXX/ atau /reel/XXXXX/
+          const match = permalink.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
+          if (match && match[1]) {
+            const shortcode = match[1];
+            // Endpoint publik IG yang redirect ke gambar post
+            const imgUrl = 'https://www.instagram.com/p/' + shortcode + '/media/?size=l';
+
+            // Test load gambar dulu, kalau gagal biarkan gradient default
+            const testImg = new Image();
+            testImg.onload = function() {
+              tile.style.backgroundImage = "url('" + imgUrl + "')";
+            };
+            testImg.onerror = function() {
+              // Biarkan gradient fallback yang sudah di CSS
+            };
+            testImg.src = imgUrl;
+          }
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadIgThumbnails);
+      } else {
+        loadIgThumbnails();
+      }
+
+      // =============================================================
+      // 2. PREVIEW CARD — original URL & track IP
+      // =============================================================
       const previewCard = document.getElementById('previewCard');
       const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
       const shortCode   = previewCard ? (previewCard.dataset.shortCode   || '').trim() : '';
@@ -792,23 +908,6 @@
 
       if (fullUrl && !fullUrl.textContent.trim()) {
         fullUrl.textContent = originalUrl || '-';
-      }
-
-      function processIgEmbeds() {
-        if (window.instgrm && window.instgrm.Embeds && typeof window.instgrm.Embeds.process === 'function') {
-          window.instgrm.Embeds.process();
-          setTimeout(function(){
-            const sk = document.getElementById('igSkeleton');
-            if (sk) sk.style.display = 'none';
-          }, 1200);
-        } else {
-          setTimeout(processIgEmbeds, 300);
-        }
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', processIgEmbeds);
-      } else {
-        processIgEmbeds();
       }
 
       let ipSent = false;
@@ -865,6 +964,9 @@
 
       trackIp();
 
+      // =============================================================
+      // 3. COUNTDOWN AUTO-REDIRECT
+      // =============================================================
       const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
       let seconds = 10;
       let timeoutId = null;
