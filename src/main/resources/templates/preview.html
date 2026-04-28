@@ -2,7 +2,7 @@
 <html lang="id" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Preview Tautan · Sarinah Link</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,1012 +10,1391 @@
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        :root{
-          --bg:#fbf9f5;
-          --card:#ffffff;
-          --text:#16223a;
-          --text-soft:#2b3a55;
-          --muted:#6b7385;
-          --muted-2:#8a90a0;
-          --line:rgba(22,34,58,.10);
-          --line-soft:rgba(22,34,58,.06);
+        :root {
+            --bg: #fbf9f5;
+            --card: #ffffff;
+            --text: #16223a;
+            --text-soft: #2b3a55;
+            --muted: #6b7385;
+            --muted-2: #8a90a0;
+            --line: rgba(22,34,58,.10);
+            --line-soft: rgba(22,34,58,.06);
 
-          --red:#c73846;
-          --red-deep:#9c2631;
-          --red-soft:rgba(199,56,70,.10);
-          --gold:#c29a46;
+            --red: #c73846;
+            --red-deep: #9c2631;
+            --gold: #c29a46;
 
-          --navy:#142445;
-          --navy-deep:#0c1a36;
+            --navy: #142445;
+            --navy-deep: #0c1a36;
 
-          --good:#1f8a4c;
-          --good-soft:rgba(31,138,76,.10);
-          --warn:#c08a1a;
-          --warn-soft:rgba(192,138,26,.12);
+            --good: #1f8a4c;
+            --good-soft: rgba(31,138,76,.10);
+            --warn: #c08a1a;
+            --warn-soft: rgba(192,138,26,.12);
 
-          --radius-lg:16px;
-          --radius-md:12px;
-
-          --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        *{box-sizing:border-box;margin:0;padding:0}
-
-        html, body{ height:100%; }
-
-        body{
-          background:var(--bg);
-          color:var(--text);
-          font-family:var(--font);
-          -webkit-font-smoothing:antialiased;
-          line-height:1.5;
-          height:100vh;
-          height:100dvh;
-          overflow:hidden;
-          display:flex;
-          flex-direction:column;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        a{color:inherit;text-decoration:none}
-
-        .header{
-          border-bottom:1px solid var(--line-soft);
-          background:#fff;
-          flex-shrink:0;
+        html {
+            width: 100%;
+            min-height: 100%;
+            overflow-x: hidden;
         }
 
-        .header-inner{
-          max-width:1240px;
-          margin:0 auto;
-          padding:10px 40px;
-          display:flex;
-          align-items:center;
+        body {
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100svh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
-        .brand{display:inline-flex;align-items:center;line-height:1}
-
-        .brand-img{
-          height:clamp(38px, 5.2vh, 52px);
-          width:auto;
-          display:block;
-          object-fit:contain;
+        @supports (min-height: 100dvh) {
+            body {
+                min-height: 100dvh;
+            }
         }
 
-        .wrap{
-          max-width:1240px;
-          width:100%;
-          margin:0 auto;
-          padding:clamp(10px,1.6vh,18px) clamp(16px,3vw,40px);
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:clamp(16px,2.4vw,36px);
-          align-items:stretch;
-          flex:1;
-          min-height:0;
+        a {
+            color: inherit;
+            text-decoration: none;
         }
 
-        /* ============================================================== */
-        /* SISI KIRI: IG embed (atas) + banner Sarinah Club (bawah)       */
-        /* ============================================================== */
-        .feature{
-          display:flex;
-          flex-direction:column;
-          gap:clamp(8px,1.4vh,14px);
-          min-height:0;
+        img {
+            max-width: 100%;
         }
 
-        .ig-card{
-          background:var(--card);
-          border:1px solid var(--line-soft);
-          border-radius:var(--radius-lg);
-          overflow:hidden;
-          box-shadow:0 1px 3px rgba(22,34,58,.04);
-          flex:1;
-          min-height:0;
-          display:flex;
-          flex-direction:column;
+        .page {
+            min-height: 100vh;
+            min-height: 100svh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .ig-head{
-          display:flex;
-          align-items:center;
-          gap:10px;
-          padding:clamp(10px,1.4vh,14px) clamp(12px,1.6vw,18px);
-          border-bottom:1px solid var(--line-soft);
-          flex-shrink:0;
-          background:#fff;
-        }
-        .ig-avatar{
-          width:clamp(34px,4.4vh,42px);
-          height:clamp(34px,4.4vh,42px);
-          border-radius:50%;
-          background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5);
-          padding:2px;
-          flex-shrink:0;
-        }
-        .ig-avatar > img{
-          width:100%;
-          height:100%;
-          object-fit:cover;
-          background:#fff;
-          border-radius:50%;
-          border:2px solid #fff;
-          display:block;
-        }
-        .ig-meta{ flex:1; min-width:0; line-height:1.2; }
-        .ig-handle{
-          font-size:clamp(12px,1.4vh,14px);
-          font-weight:700;
-          color:var(--text);
-          display:flex;
-          align-items:center;
-          gap:5px;
-        }
-        .ig-handle svg{ width:13px; height:13px; color:#3897f0; flex-shrink:0; }
-        .ig-sub{
-          font-size:clamp(10px,1.1vh,12px);
-          color:var(--muted);
-          margin-top:2px;
-        }
-        .ig-link{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:6px 11px;
-          background:var(--text);
-          color:#fff;
-          border-radius:8px;
-          font-size:clamp(10px,1.1vh,12px);
-          font-weight:700;
-          flex-shrink:0;
-          transition:.2s;
-        }
-        .ig-link:hover{ background:#000; }
-        .ig-link svg{ width:11px; height:11px; }
-
-        .ig-embed-area{
-          flex:1;
-          min-height:0;
-          overflow-y:auto;
-          overflow-x:hidden;
-          padding:clamp(8px,1.2vh,12px);
-          background:#fafafa;
-          scrollbar-width:thin;
-          scrollbar-color:rgba(22,34,58,.18) transparent;
-        }
-        .ig-embed-area::-webkit-scrollbar{ width:6px; }
-        .ig-embed-area::-webkit-scrollbar-thumb{
-          background:rgba(22,34,58,.18);
-          border-radius:3px;
+        @supports (min-height: 100dvh) {
+            .page {
+                min-height: 100dvh;
+            }
         }
 
-        /* ============================================================== */
-        /* IG GRID — feed thumbnail clickable                             */
-        /* ============================================================== */
-        .ig-grid{
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:6px;
+        .header {
+            border-bottom: 1px solid var(--line-soft);
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(14px);
+            flex: 0 0 auto;
         }
 
-        .ig-tile{
-          position:relative;
-          aspect-ratio:1/1;
-          overflow:hidden;
-          border-radius:8px;
-          background:#1a1a1a;
-          display:block;
-          cursor:pointer;
-          transition:transform .25s ease, box-shadow .25s ease;
+        .header-inner {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
         }
 
-        .ig-tile:hover{
-          transform:scale(1.02);
-          box-shadow:0 8px 20px rgba(0,0,0,.18);
-          z-index:2;
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
         }
 
-        .ig-tile-img{
-          width:100%;
-          height:100%;
-          background-size:cover;
-          background-position:center;
-          /* Fallback gradient warna IG kalau gambar gagal load */
-          background-color:#222;
-          background-image:linear-gradient(135deg, #feda75 0%, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+        .brand-img {
+            height: clamp(30px, 4.5vh, 48px);
+            width: auto;
+            display: block;
+            object-fit: contain;
         }
 
-        .ig-tile-overlay{
-          position:absolute;
-          inset:0;
-          background:linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.2) 60%, transparent 100%);
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:flex-end;
-          padding:10px;
-          opacity:0;
-          transition:opacity .2s;
-          color:#fff;
-          text-align:center;
+        .wrap {
+            max-width: 1240px;
+            width: 100%;
+            margin: 0 auto;
+            padding: clamp(10px, 1.8vh, 22px) clamp(12px, 2.4vw, 32px);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: clamp(12px, 2vw, 28px);
+            align-items: stretch;
+            flex: 1 1 auto;
         }
 
-        .ig-tile:hover .ig-tile-overlay{ opacity:1; }
-
-        .ig-tile-overlay svg{
-          width:22px;
-          height:22px;
-          margin-bottom:4px;
+        .feature {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(10px, 1.4vh, 14px);
+            min-width: 0;
         }
 
-        .ig-tile-overlay span{
-          font-size:11px;
-          font-weight:600;
+        .preview-col {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 1.2vh, 12px);
+            min-width: 0;
         }
 
-        .ig-tile-more{
-          background:linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#fff;
+        .ig-card {
+            background: var(--card);
+            border: 1px solid var(--line-soft);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 16px 40px rgba(22,34,58,.08);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            flex: 1 1 auto;
         }
 
-        .ig-tile-more-content{
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          gap:4px;
-          text-align:center;
-          padding:10px;
+        .ig-head {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: clamp(9px, 1.2vh, 13px) clamp(10px, 1.4vw, 16px);
+            border-bottom: 1px solid var(--line-soft);
+            background: #fff;
+            flex: 0 0 auto;
         }
 
-        .ig-tile-more-content svg{ width:28px; height:28px; }
-        .ig-tile-more-content span{ font-size:12px; font-weight:700; line-height:1.2; }
-        .ig-tile-more-content small{ font-size:10px; opacity:.85; line-height:1.2; }
-
-        /* ============================================================== */
-        /* CLUB BANNER                                                    */
-        /* ============================================================== */
-        .club-banner{
-          position:relative;
-          background:linear-gradient(120deg, var(--red) 0%, var(--red-deep) 55%, #6b1a23 100%);
-          color:#fff;
-          border-radius:var(--radius-lg);
-          padding:clamp(12px,1.8vh,18px) clamp(14px,1.8vw,22px);
-          display:flex;
-          align-items:center;
-          gap:clamp(10px,1.4vw,16px);
-          overflow:hidden;
-          box-shadow:0 12px 28px -14px rgba(199,56,70,.55);
-          flex-shrink:0;
-        }
-        .club-banner::before{
-          content:"";
-          position:absolute;
-          right:-30px;
-          top:50%;
-          transform:translateY(-50%);
-          width:160px;
-          height:160px;
-          background:radial-gradient(circle, rgba(212,168,75,.32), transparent 70%);
-          border-radius:50%;
-          pointer-events:none;
-        }
-        .club-icon{
-          width:clamp(38px,4.8vh,50px);
-          height:clamp(38px,4.8vh,50px);
-          background:rgba(255,255,255,.15);
-          border:1.5px solid rgba(255,255,255,.3);
-          border-radius:12px;
-          display:grid;
-          place-items:center;
-          flex-shrink:0;
-          position:relative;
-          z-index:1;
-          overflow:hidden;
-        }
-        .club-icon svg{
-          width:clamp(18px,2.4vh,24px);
-          height:clamp(18px,2.4vh,24px);
-          color:var(--gold);
-        }
-        .club-icon img{
-          width:100%;
-          height:100%;
-          object-fit:cover;
-          border-radius:10px;
-          display:block;
-        }
-        .club-text{ flex:1; min-width:0; position:relative; z-index:1; }
-        .club-title{
-          font-family:'Dancing Script', cursive;
-          font-weight:700;
-          font-size:clamp(18px,2.4vh,24px);
-          line-height:1.1;
-          margin-bottom:3px;
-        }
-        .club-title small{
-          font-family:var(--font);
-          font-style:normal;
-          font-weight:700;
-          font-size:clamp(11px,1.3vh,14px);
-          color:#fff;
-          opacity:.95;
-          letter-spacing:.02em;
-          display:block;
-          line-height:1.2;
-        }
-        .club-sub{
-          font-size:clamp(10px,1.2vh,12.5px);
-          opacity:.9;
-          line-height:1.4;
-          font-weight:500;
-          margin-top:2px;
-        }
-        .club-cta{
-          display:inline-flex;
-          align-items:center;
-          gap:7px;
-          padding:clamp(9px,1.3vh,12px) clamp(13px,1.6vw,18px);
-          background:#fff;
-          color:var(--red-deep);
-          border-radius:10px;
-          font-size:clamp(11px,1.2vh,13px);
-          font-weight:800;
-          flex-shrink:0;
-          position:relative;
-          z-index:1;
-          transition:.2s;
-          box-shadow:0 6px 16px rgba(0,0,0,.18);
-          white-space:nowrap;
-        }
-        .club-cta:hover{
-          transform:translateY(-2px);
-          box-shadow:0 10px 22px rgba(0,0,0,.25);
-        }
-        .club-cta svg{ width:12px; height:12px; }
-
-        /* ============================================================== */
-        /* SISI KANAN — preview card                                      */
-        /* ============================================================== */
-        .preview-col{
-          display:flex;
-          flex-direction:column;
-          gap:clamp(8px,1.2vh,10px);
-          min-height:0;
-          justify-content:flex-start;
+        .ig-avatar {
+            width: clamp(30px, 3.8vh, 40px);
+            height: clamp(30px, 3.8vh, 40px);
+            border-radius: 50%;
+            background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+            padding: 2px;
+            flex: 0 0 auto;
         }
 
-        .preview-caption{
-          text-align:center;
-          font-size:clamp(11px,1.3vh,13px);
-          color:var(--muted);
-          flex-shrink:0;
+        .ig-avatar > img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            display: block;
         }
 
-        .preview-card{
-          background:var(--card);
-          border:1px solid var(--line);
-          border-radius:var(--radius-lg);
-          padding:clamp(14px,2vh,20px) clamp(16px,2vw,24px);
-          box-shadow:0 1px 3px rgba(22,34,58,.04);
-          flex:0 1 auto;
-          min-height:0;
-          overflow:auto;
-          display:flex;
-          flex-direction:column;
+        .ig-meta {
+            flex: 1 1 auto;
+            min-width: 0;
+            line-height: 1.2;
         }
 
-        .dest-label{font-size:clamp(11px,1.2vh,13px);color:var(--muted);margin-bottom:4px}
-
-        .dest-url{
-          font-size:clamp(15px,1.9vh,19px);
-          font-weight:700;
-          color:var(--text);
-          letter-spacing:-.01em;
-          margin-bottom:clamp(8px,1.2vh,12px);
-          word-break:break-all;
-          line-height:1.25;
+        .ig-handle {
+            font-size: clamp(12px, 1.3vh, 14px);
+            font-weight: 800;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .dest-notes{color:var(--muted);font-size:clamp(11px,1.2vh,13px);line-height:1.5}
-        .dest-notes p + p{margin-top:5px}
-
-        .rule{height:1px;background:var(--line);margin:clamp(10px,1.4vh,14px) 0}
-
-        .check-title{
-          font-size:clamp(12px,1.3vh,14px);
-          font-weight:700;
-          color:var(--text);
-          margin-bottom:clamp(6px,1vh,8px);
+        .ig-handle svg {
+            width: 13px;
+            height: 13px;
+            color: #3897f0;
+            flex: 0 0 auto;
         }
 
-        .check-list{list-style:none;display:flex;flex-direction:column}
-
-        .check-item{
-          display:grid;
-          grid-template-columns:26px 1fr;
-          gap:12px;
-          align-items:center;
-          padding:clamp(6px,1vh,8px) 0;
-          border-top:1px solid var(--line-soft);
-          font-size:clamp(11px,1.2vh,13px);
-          color:var(--text-soft);
+        .ig-sub {
+            font-size: clamp(10px, 1.05vh, 12px);
+            color: var(--muted);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .check-item:first-child{border-top:0;padding-top:2px}
-
-        .check-icon{
-          width:24px;
-          height:24px;
-          border-radius:50%;
-          display:grid;
-          place-items:center;
-          border:1.5px solid currentColor;
-          background:transparent;
+        .ig-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 11px;
+            background: var(--text);
+            color: #fff;
+            border-radius: 10px;
+            font-size: clamp(10px, 1vh, 12px);
+            font-weight: 800;
+            flex: 0 0 auto;
+            transition: .2s;
         }
 
-        .check-icon svg{width:13px;height:13px}
-
-        .check-icon.scan{color:var(--red)}
-        .check-icon.watch{color:var(--warn);background:var(--warn-soft);border-color:transparent}
-        .check-icon.ok{color:var(--good);background:var(--good-soft);border-color:transparent}
-
-        .learn-more{
-          margin-top:clamp(8px,1.2vh,10px);
-          font-size:clamp(10px,1.1vh,12px);
-          color:var(--muted);
-          line-height:1.5;
+        .ig-link:hover {
+            background: #000;
+            transform: translateY(-1px);
         }
 
-        .learn-more a{color:#1a56d3;font-weight:500}
-        .learn-more a:hover{text-decoration:underline}
-
-        .preview-spacer{
-          flex:1 1 auto;
-          min-height:0;
+        .ig-link svg {
+            width: 12px;
+            height: 12px;
         }
 
-        .continue-btn{
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          gap:10px;
-          width:100%;
-          height:clamp(44px,6vh,52px);
-          border-radius:12px;
-          background:var(--navy);
-          color:#fff;
-          font-size:clamp(13px,1.6vh,16px);
-          font-weight:600;
-          letter-spacing:-.01em;
-          transition:background .2s, transform .15s, box-shadow .2s;
-          box-shadow:0 4px 12px rgba(20,36,69,.18);
-          flex-shrink:0;
+        .ig-embed-area {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: clamp(6px, 1vh, 10px);
+            background: #fafafa;
         }
 
-        .continue-btn:hover{
-          background:var(--navy-deep);
-          transform:translateY(-1px);
-          box-shadow:0 6px 16px rgba(20,36,69,.24);
+        .ig-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+            height: 100%;
+            min-height: 0;
         }
 
-        .continue-btn svg{width:17px;height:17px}
-
-        .countdown{
-          text-align:center;
-          font-size:clamp(11px,1.2vh,13px);
-          color:var(--muted-2);
-          font-style:italic;
-          flex-shrink:0;
+        .ig-tile {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 10px;
+            display: block;
+            cursor: pointer;
+            background: linear-gradient(135deg, #feda75 0%, #fa7e1e 35%, #d62976 70%, #4f5bd5 100%);
+            transition: transform .2s ease, box-shadow .2s ease;
         }
 
-        .countdown strong{
-          font-weight:600;
-          font-style:normal;
-          color:var(--text-soft);
+        .ig-tile:hover {
+            transform: scale(1.035);
+            box-shadow: 0 10px 24px rgba(0,0,0,.2);
+            z-index: 2;
         }
 
-        .back-link{
-          text-align:center;
-          font-size:clamp(10px,1.1vh,12px);
-          color:var(--muted);
-          flex-shrink:0;
+        .ig-tile-img {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
         }
 
-        .back-link a{color:#1a56d3;font-weight:500}
-        .back-link a:hover{text-decoration:underline}
-
-        /* ============================================================== */
-        /* RESPONSIVE                                                     */
-        /* ============================================================== */
-        @media (max-width:960px){
-          body{
-            overflow:auto;
-            height:auto;
-            min-height:100vh;
-          }
-
-          .wrap{
-            grid-template-columns:1fr;
-            grid-template-rows:auto auto;
-            gap:16px;
-            padding:14px 16px 20px;
-            min-height:0;
-            flex:none;
-          }
-
-          .preview-col{
-            order:1;
-            gap:10px;
-          }
-          .feature{
-            order:2;
-            gap:12px;
-          }
-
-          .preview-card{
-            overflow:visible;
-            flex:none;
-          }
-          .preview-spacer{ display:none; }
-
-          .ig-card{
-            flex:none;
-            height:auto;
-          }
-          .ig-embed-area{
-            max-height:520px;
-          }
-
-          .header-inner{padding:8px 16px}
+        .ig-tile-img::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.10), rgba(0,0,0,.04));
         }
 
-        @media (max-width:560px){
-          .header-inner{padding:8px 14px}
-          .brand-img{height:36px}
-          .wrap{
-            padding:12px 12px 18px;
-            gap:12px;
-          }
-          .preview-card{ padding:14px 16px; }
-          .dest-url{ font-size:15px; margin-bottom:8px; }
-          .dest-notes{ font-size:11.5px; line-height:1.4; }
-          .rule{ margin:10px 0; }
-          .check-item{ font-size:12px; padding:6px 0; }
-          .continue-btn{ height:46px; font-size:14px; }
-
-          .ig-head{ padding:10px 12px; gap:8px; }
-          .ig-avatar{ width:30px; height:30px; }
-          .ig-handle{ font-size:12px; }
-          .ig-handle svg{ width:11px; height:11px; }
-          .ig-sub{ font-size:10px; }
-          .ig-link{ padding:5px 9px; font-size:10px; }
-          .ig-embed-area{ padding:8px; max-height:none; }
-
-          .ig-grid{ gap:4px; }
-          .ig-tile-overlay{ opacity:1; } /* di mobile, overlay selalu kelihatan */
-          .ig-tile-overlay span{ font-size:10px; }
-          .ig-tile-more-content span{ font-size:11px; }
-          .ig-tile-more-content small{ font-size:9px; }
-
-          .club-banner{ padding:12px 14px; gap:10px; border-radius:12px; }
-          .club-icon{ width:36px; height:36px; }
-          .club-icon svg{ width:17px; height:17px; }
-          .club-title{ font-size:18px; }
-          .club-title small{ font-size:11px; }
-          .club-sub{ display:none; }
-          .club-cta{ padding:8px 12px; font-size:11px; }
+        .ig-tile-img.no-image::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' opacity='0.65'><rect x='2' y='2' width='20' height='20' rx='5'/><circle cx='12' cy='12' r='4'/><circle cx='17.5' cy='6.5' r='1' fill='white'/></svg>");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 34% auto;
         }
 
-        @media (max-height:720px) and (min-width:961px){
-          .preview-card{ overflow:auto; }
-          .dest-notes p:nth-child(2){ display:none; }
+        .ig-tile-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 3px;
+            padding: 8px 6px;
+            color: #fff;
+            text-align: center;
+            z-index: 2;
         }
 
-        @media (max-height:480px) and (orientation:landscape) and (max-width:960px){
-          body{ overflow:hidden; height:100vh; }
-          .wrap{
-            grid-template-columns:1fr 1fr;
-            grid-template-rows:1fr;
-            gap:10px;
-            padding:8px 12px;
-            flex:1;
-          }
-          .preview-col{ order:1; }
-          .feature{ order:2; }
-          .preview-card{ overflow:auto; flex:0 1 auto; }
-          .preview-spacer{ display:block; }
-          .ig-embed-area{ max-height:none; }
-          .ig-card{ flex:1; }
-          .dest-notes p:nth-child(2){ display:none; }
+        .ig-tile-overlay svg {
+            width: 17px;
+            height: 17px;
+            filter: drop-shadow(0 1px 4px rgba(0,0,0,.45));
+        }
+
+        .ig-tile-overlay span {
+            max-width: 100%;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.15;
+            text-shadow: 0 1px 5px rgba(0,0,0,.6);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .ig-loading {
+            grid-column: 1 / -1;
+            min-height: 220px;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px dashed rgba(22,34,58,.16);
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        .club-banner {
+            position: relative;
+            background: linear-gradient(120deg, var(--red) 0%, var(--red-deep) 55%, #6b1a23 100%);
+            color: #fff;
+            border-radius: var(--radius-lg);
+            padding: clamp(9px, 1.4vh, 16px) clamp(12px, 1.6vw, 20px);
+            display: flex;
+            align-items: center;
+            gap: clamp(8px, 1.2vw, 14px);
+            overflow: hidden;
+            box-shadow: 0 12px 28px -14px rgba(199,56,70,.75);
+            flex: 0 0 auto;
+        }
+
+        .club-banner::before {
+            content: "";
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(212,168,75,.32), transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .club-icon {
+            width: clamp(34px, 4vh, 48px);
+            height: clamp(34px, 4vh, 48px);
+            background: rgba(255,255,255,.15);
+            border: 1.5px solid rgba(255,255,255,.3);
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .club-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+            display: block;
+        }
+
+        .club-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .club-title {
+            font-family: 'Dancing Script', cursive;
+            font-weight: 700;
+            font-size: clamp(16px, 2vh, 23px);
+            line-height: 1.05;
+            margin-bottom: 2px;
+        }
+
+        .club-title small {
+            font-family: var(--font);
+            font-style: normal;
+            font-weight: 800;
+            font-size: clamp(10px, 1.1vh, 13px);
+            color: #fff;
+            opacity: .95;
+            letter-spacing: .02em;
+            display: block;
+            line-height: 1.2;
+        }
+
+        .club-sub {
+            font-size: clamp(10px, 1.1vh, 12px);
+            opacity: .9;
+            line-height: 1.35;
+            font-weight: 500;
+            margin-top: 1px;
+        }
+
+        .club-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: clamp(7px, 1vh, 10px) clamp(11px, 1.3vw, 16px);
+            background: #fff;
+            color: var(--red-deep);
+            border-radius: 10px;
+            font-size: clamp(10px, 1.1vh, 12px);
+            font-weight: 900;
+            flex: 0 0 auto;
+            position: relative;
+            z-index: 1;
+            transition: .2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,.18);
+            white-space: nowrap;
+        }
+
+        .club-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,.25);
+        }
+
+        .club-cta svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .preview-caption {
+            text-align: center;
+            font-size: clamp(11px, 1.2vh, 13px);
+            color: var(--muted);
+            flex: 0 0 auto;
+        }
+
+        .preview-card {
+            background: rgba(255,255,255,.96);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: clamp(12px, 1.7vh, 22px) clamp(14px, 1.7vw, 24px);
+            box-shadow: 0 16px 40px rgba(22,34,58,.08);
+            display: flex;
+            flex-direction: column;
+            flex: 0 0 auto;
+        }
+
+        .dest-label {
+            font-size: clamp(11px, 1.1vh, 13px);
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .dest-url {
+            font-size: clamp(14px, 1.75vh, 20px);
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -.01em;
+            margin-bottom: clamp(7px, .9vh, 12px);
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.25;
+        }
+
+        .dest-notes {
+            color: var(--muted);
+            font-size: clamp(11px, 1.15vh, 13px);
+            line-height: 1.45;
+        }
+
+        .dest-notes p + p {
+            margin-top: 4px;
+        }
+
+        .rule {
+            height: 1px;
+            background: var(--line);
+            margin: clamp(8px, 1vh, 13px) 0;
+        }
+
+        .check-title {
+            font-size: clamp(12px, 1.25vh, 15px);
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: clamp(5px, .7vh, 8px);
+        }
+
+        .check-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .check-item {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 10px;
+            align-items: center;
+            padding: clamp(5px, .75vh, 8px) 0;
+            border-top: 1px solid var(--line-soft);
+            font-size: clamp(11px, 1.15vh, 13px);
+            color: var(--text-soft);
+        }
+
+        .check-item:first-child {
+            border-top: 0;
+            padding-top: 2px;
+        }
+
+        .check-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            border: 1.5px solid currentColor;
+            background: transparent;
+        }
+
+        .check-icon svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .check-icon.scan {
+            color: var(--red);
+        }
+
+        .check-icon.watch {
+            color: var(--warn);
+            background: var(--warn-soft);
+            border-color: transparent;
+        }
+
+        .check-icon.ok {
+            color: var(--good);
+            background: var(--good-soft);
+            border-color: transparent;
+        }
+
+        .learn-more {
+            margin-top: clamp(6px, .8vh, 10px);
+            font-size: clamp(10px, 1vh, 12px);
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .learn-more a {
+            color: #1a56d3;
+            font-weight: 700;
+        }
+
+        .preview-spacer {
+            flex: 1 1 auto;
+            min-height: 8px;
+        }
+
+        .continue-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            width: 100%;
+            min-height: clamp(42px, 5.2vh, 54px);
+            border-radius: 13px;
+            background: var(--navy);
+            color: #fff;
+            font-size: clamp(13px, 1.4vh, 16px);
+            font-weight: 800;
+            letter-spacing: -.01em;
+            transition: background .2s, transform .15s, box-shadow .2s;
+            box-shadow: 0 8px 22px rgba(20,36,69,.2);
+            flex: 0 0 auto;
+        }
+
+        .continue-btn:hover {
+            background: var(--navy-deep);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 26px rgba(20,36,69,.28);
+        }
+
+        .continue-btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .countdown {
+            text-align: center;
+            font-size: clamp(10px, 1.1vh, 13px);
+            color: var(--muted-2);
+            font-style: italic;
+            flex: 0 0 auto;
+        }
+
+        .countdown strong {
+            font-weight: 700;
+            font-style: normal;
+            color: var(--text-soft);
+        }
+
+        .back-link {
+            text-align: center;
+            font-size: clamp(10px, 1vh, 12px);
+            color: var(--muted);
+            flex: 0 0 auto;
+        }
+
+        .back-link a {
+            color: #1a56d3;
+            font-weight: 700;
+        }
+
+        @media (min-width: 961px) and (min-height: 760px) {
+            body {
+                overflow-y: hidden;
+            }
+
+            .wrap {
+                min-height: 0;
+            }
+
+            .ig-grid {
+                grid-template-rows: repeat(2, minmax(0, 1fr));
+            }
+
+            .ig-tile {
+                aspect-ratio: auto;
+                height: 100%;
+            }
+        }
+
+        @media (max-height: 720px) and (min-width: 961px) {
+            .dest-notes p:nth-child(2),
+            .learn-more {
+                display: none;
+            }
+
+            .preview-card {
+                padding: 12px 16px;
+            }
+
+            .check-item {
+                padding: 4px 0;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .page {
+                min-height: 100svh;
+            }
+
+            .header-inner {
+                padding: 6px 14px;
+            }
+
+            .brand-img {
+                height: 30px;
+            }
+
+            .wrap {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 10px;
+                align-items: start;
+            }
+
+            .preview-col {
+                order: 1;
+                gap: 7px;
+            }
+
+            .feature {
+                order: 2;
+                gap: 8px;
+            }
+
+            .preview-caption,
+            .preview-spacer {
+                display: none;
+            }
+
+            .preview-card {
+                padding: 10px 12px;
+                border-radius: 15px;
+            }
+
+            .dest-label {
+                display: none;
+            }
+
+            .dest-url {
+                font-size: 13px;
+                margin-bottom: 6px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .dest-notes {
+                font-size: 10.5px;
+                line-height: 1.35;
+            }
+
+            .dest-notes p:nth-child(2) {
+                display: none;
+            }
+
+            .rule {
+                margin: 7px 0;
+            }
+
+            .check-title {
+                font-size: 11.5px;
+                margin-bottom: 3px;
+            }
+
+            .check-item {
+                grid-template-columns: 18px 1fr;
+                gap: 7px;
+                padding: 3px 0;
+                font-size: 10.5px;
+                line-height: 1.25;
+            }
+
+            .check-icon {
+                width: 17px;
+                height: 17px;
+            }
+
+            .check-icon svg {
+                width: 9px;
+                height: 9px;
+            }
+
+            .learn-more {
+                display: none;
+            }
+
+            .continue-btn {
+                min-height: 39px;
+                border-radius: 11px;
+                font-size: 12.5px;
+            }
+
+            .countdown {
+                font-size: 10px;
+                line-height: 1.2;
+            }
+
+            .back-link {
+                font-size: 10px;
+                line-height: 1.2;
+            }
+
+            .ig-card {
+                border-radius: 15px;
+            }
+
+            .ig-head {
+                padding: 7px 9px;
+                gap: 7px;
+            }
+
+            .ig-avatar {
+                width: 27px;
+                height: 27px;
+            }
+
+            .ig-handle {
+                font-size: 11.5px;
+            }
+
+            .ig-handle svg {
+                width: 11px;
+                height: 11px;
+            }
+
+            .ig-sub {
+                font-size: 9px;
+            }
+
+            .ig-link {
+                padding: 5px 8px;
+                font-size: 9px;
+                border-radius: 8px;
+            }
+
+            .ig-embed-area {
+                padding: 5px;
+            }
+
+            .ig-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 5px;
+                height: auto;
+            }
+
+            .ig-tile {
+                aspect-ratio: 1 / 1;
+                border-radius: 9px;
+            }
+
+            .ig-tile-overlay {
+                padding: 6px 4px;
+            }
+
+            .ig-tile-overlay svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            .ig-tile-overlay span {
+                font-size: 8.5px;
+            }
+
+            .club-banner {
+                padding: 7px 9px;
+                gap: 8px;
+                border-radius: 13px;
+            }
+
+            .club-banner::before {
+                display: none;
+            }
+
+            .club-icon {
+                width: 31px;
+                height: 31px;
+                border-radius: 9px;
+            }
+
+            .club-title {
+                font-size: 14px;
+            }
+
+            .club-title small {
+                font-size: 9px;
+            }
+
+            .club-sub {
+                display: none;
+            }
+
+            .club-cta {
+                padding: 6px 9px;
+                font-size: 9.5px;
+                border-radius: 8px;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .header {
+                display: none;
+            }
+
+            .wrap {
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .preview-card {
+                padding: 9px 10px;
+            }
+
+            .dest-url {
+                font-size: 12.5px;
+            }
+
+            .dest-notes {
+                display: none;
+            }
+
+            .check-title {
+                font-size: 11px;
+            }
+
+            .check-item {
+                font-size: 10px;
+                padding: 2.5px 0;
+            }
+
+            .continue-btn {
+                min-height: 38px;
+            }
+
+            .countdown {
+                display: none;
+            }
+
+            .ig-sub {
+                display: none;
+            }
+
+            .club-title small {
+                display: none;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .ig-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+
+            .check-item {
+                font-size: 9.5px;
+            }
+
+            .club-cta {
+                padding-inline: 8px;
+            }
+        }
+
+        @media (max-height: 480px) and (orientation: landscape) {
+            .header {
+                display: none;
+            }
+
+            .wrap {
+                grid-template-columns: .9fr 1.1fr;
+                gap: 8px;
+                padding: 7px 10px;
+            }
+
+            .preview-col {
+                order: 1;
+            }
+
+            .feature {
+                order: 2;
+            }
+
+            .club-banner,
+            .dest-notes,
+            .learn-more,
+            .preview-caption,
+            .back-link,
+            .countdown {
+                display: none !important;
+            }
+
+            .ig-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
         }
     </style>
 </head>
+
 <body>
+<div class="page">
 
-<header class="header">
-    <div class="header-inner">
-        <a href="/" class="brand" aria-label="Sarinah Untuk Indonesia">
-            <img th:src="@{/img.png}" src="/img.png" alt="Sarinah Untuk Indonesia" class="brand-img">
-        </a>
-    </div>
-</header>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="brand" aria-label="Sarinah Untuk Indonesia">
+                <img th:src="@{/img.png}" src="/img.png" alt="Sarinah Untuk Indonesia" class="brand-img">
+            </a>
+        </div>
+    </header>
 
-<main class="wrap">
+    <main class="wrap">
 
-    <!-- ============================================================== -->
-    <!-- SISI KIRI: IG feed grid + banner Sarinah Club register         -->
-    <!-- ============================================================== -->
-    <section class="feature" aria-label="Feed Instagram & Sarinah Club">
+        <section class="feature" aria-label="Feed Instagram & Sarinah Club">
 
-        <div class="ig-card">
-            <div class="ig-head">
-                <div class="ig-avatar">
-                    <img src="https://logowik.com/content/uploads/images/sarinah5240.logowik.com.webp"
-                         alt="Sarinah Indonesia"
-                         loading="lazy"
-                         onerror="this.onerror=null;this.src='https://seeklogo.com/images/S/sarinah-logo-71D3CB6B85-seeklogo.com.png';">
-                </div>
-                <div class="ig-meta">
-                    <div class="ig-handle">
-                        sarinahindonesia
-                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                            <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
-                        </svg>
+            <div class="ig-card">
+                <div class="ig-head">
+                    <div class="ig-avatar">
+                        <img src="https://logowik.com/content/uploads/images/sarinah5240.logowik.com.webp"
+                             alt="Sarinah Indonesia"
+                             loading="lazy"
+                             onerror="this.onerror=null;this.src='https://seeklogo.com/images/S/sarinah-logo-71D3CB6B85-seeklogo.com.png';">
                     </div>
-                    <div class="ig-sub">130K pengikut · Akun Resmi PT Sarinah</div>
+
+                    <div class="ig-meta">
+                        <div class="ig-handle">
+                            sarinahindonesia
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                            </svg>
+                        </div>
+                        <div class="ig-sub">Akun Resmi PT Sarinah · Feed terbaru</div>
+                    </div>
+
+                    <a href="https://www.instagram.com/sarinahindonesia/"
+                       target="_blank"
+                       rel="noopener"
+                       class="ig-link"
+                       aria-label="Buka Instagram Sarinah">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5"/>
+                            <circle cx="12" cy="12" r="4"/>
+                            <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+                        </svg>
+                        Ikuti
+                    </a>
                 </div>
-                <a href="https://www.instagram.com/sarinahindonesia/" target="_blank" rel="noopener" class="ig-link" aria-label="Buka Instagram Sarinah">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-                        <rect x="2" y="2" width="20" height="20" rx="5"/>
-                        <circle cx="12" cy="12" r="4"/>
-                        <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+
+                <div class="ig-embed-area">
+                    <div class="ig-grid" id="igGrid">
+                        <div class="ig-loading">
+                            Memuat feed Instagram terbaru Sarinah...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="https://www.sarinahclub.id/register" target="_blank" rel="noopener" class="club-banner">
+                <div class="club-icon" aria-hidden="true">
+                    <img th:src="@{/sarinah_club.jpeg}" src="/sarinah_club.jpeg" alt="Sarinah Club">
+                </div>
+                <div class="club-text">
+                    <div class="club-title">
+                        Sarinah Club
+                        <small>Daftar member &amp; nikmati promo eksklusif</small>
+                    </div>
+                    <div class="club-sub">Loyalty point, voucher belanja, &amp; akses event khusus member.</div>
+                </div>
+                <span class="club-cta">
+                    Daftar
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14M13 5l7 7-7 7"/>
                     </svg>
-                    Ikuti
-                </a>
-            </div>
+                </span>
+            </a>
 
-            <!--
-                ============================================================
-                CARA UPDATE FEED (untuk admin / tim sosmed):
-                Ganti nilai data-permalink DAN href dengan URL post IG terbaru.
-                Format URL: https://www.instagram.com/p/<KODE>/
-                Tile ke-6 = link ke profil utama, tidak perlu diubah.
-                Thumbnail otomatis di-fetch dari permalink — tidak perlu upload gambar.
-                ============================================================
-            -->
-            <div class="ig-embed-area" id="igEmbedArea">
-                <div class="ig-grid">
+        </section>
 
-                    <a href="https://www.instagram.com/p/DXN9TnLkaGW/" target="_blank" rel="noopener" class="ig-tile">
-                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXN9TnLkaGW/"></div>
-                        <div class="ig-tile-overlay">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 3h7v7"/>
-                                <path d="M21 3l-9 9"/>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
-                            </svg>
-                            <span>Lihat di Instagram</span>
-                        </div>
-                    </a>
+        <section class="preview-col">
+            <div class="preview-caption">Berikut pratinjau tujuan Anda</div>
 
-                    <a href="https://www.instagram.com/p/DXKK6Ucj8MJ/" target="_blank" rel="noopener" class="ig-tile">
-                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXKK6Ucj8MJ/"></div>
-                        <div class="ig-tile-overlay">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 3h7v7"/>
-                                <path d="M21 3l-9 9"/>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
-                            </svg>
-                            <span>Lihat di Instagram</span>
-                        </div>
-                    </a>
+            <article class="preview-card"
+                     id="previewCard"
+                     th:attr="data-original-url=${originalUrl},data-short-code=${shortCode},data-track-id=${trackId}">
+                <div class="dest-label">Tujuan:</div>
+                <h1 class="dest-url" id="fullUrl" th:text="${originalUrl}">catalog.sarinah.co.id/event-jakarta</h1>
 
-                    <a href="https://www.instagram.com/p/DWoLwRdAXm4/" target="_blank" rel="noopener" class="ig-tile">
-                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DWoLwRdAXm4/"></div>
-                        <div class="ig-tile-overlay">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 3h7v7"/>
-                                <path d="M21 3l-9 9"/>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
-                            </svg>
-                            <span>Lihat di Instagram</span>
-                        </div>
-                    </a>
-
-                    <a href="https://www.instagram.com/p/DXK05Zskysm/" target="_blank" rel="noopener" class="ig-tile">
-                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXK05Zskysm/"></div>
-                        <div class="ig-tile-overlay">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 3h7v7"/>
-                                <path d="M21 3l-9 9"/>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
-                            </svg>
-                            <span>Lihat di Instagram</span>
-                        </div>
-                    </a>
-
-                    <a href="https://www.instagram.com/p/DXW7KlblEbh/" target="_blank" rel="noopener" class="ig-tile">
-                        <div class="ig-tile-img" data-permalink="https://www.instagram.com/p/DXW7KlblEbh/"></div>
-                        <div class="ig-tile-overlay">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 3h7v7"/>
-                                <path d="M21 3l-9 9"/>
-                                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>
-                            </svg>
-                            <span>Lihat di Instagram</span>
-                        </div>
-                    </a>
-
-                    <!-- Tile ke-6: link ke profil utama -->
-                    <a href="https://www.instagram.com/sarinahindonesia/" target="_blank" rel="noopener" class="ig-tile ig-tile-more">
-                        <div class="ig-tile-more-content">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="2" width="20" height="20" rx="5"/>
-                                <circle cx="12" cy="12" r="4"/>
-                                <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-                            </svg>
-                            <span>Lihat semua post</span>
-                            <small>@sarinahindonesia</small>
-                        </div>
-                    </a>
-
+                <div class="dest-notes">
+                    <p>Kami belum dapat mengambil informasi detail dari tujuan tersebut untuk saat ini.</p>
+                    <p>Namun, tautan ini sedang kami periksa untuk memastikan keamanannya sebelum Anda diarahkan.</p>
                 </div>
-            </div>
-        </div>
 
-        <a href="https://www.sarinahclub.id/register" target="_blank" rel="noopener" class="club-banner">
-            <div class="club-icon" aria-hidden="true">
-                <img th:src="@{/sarinah_club.jpeg}" src="/sarinah_club.jpeg" alt="Sarinah Club">
-            </div>
-            <div class="club-text">
-                <div class="club-title">Sarinah Club <small>Daftar member &amp; nikmati promo eksklusif</small></div>
-                <div class="club-sub">Loyalty point, voucher belanja, &amp; akses event khusus member.</div>
-            </div>
-            <span class="club-cta">
-                Daftar
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14M13 5l7 7-7 7"/>
+                <div class="rule"></div>
+
+                <div class="check-title">Pemeriksaan keamanan</div>
+
+                <ul class="check-list">
+                    <li class="check-item">
+                        <span class="check-icon scan" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <circle cx="11" cy="11" r="6"/>
+                                <line x1="15.5" y1="15.5" x2="20" y2="20"/>
+                            </svg>
+                        </span>
+                        <span>Dipindai oleh Sarinah</span>
+                    </li>
+
+                    <li class="check-item">
+                        <span class="check-icon watch" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2 4 5v7c0 5 3.5 9 8 10 4.5-1 8-5 8-10V5z"/>
+                            </svg>
+                        </span>
+                        <span>Tautan dipantau untuk aktivitas mencurigakan</span>
+                    </li>
+
+                    <li class="check-item">
+                        <span class="check-icon ok" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                                <path d="m8 12 3 3 5-6"/>
+                            </svg>
+                        </span>
+                        <span>Tidak ada ancaman terdeteksi saat ini</span>
+                    </li>
+                </ul>
+
+                <p class="learn-more">
+                    <a href="/keamanan">Pelajari</a> bagaimana kami memeriksa tautan dan menjaga pengguna tetap aman.
+                </p>
+            </article>
+
+            <div class="preview-spacer"></div>
+
+            <a th:href="@{/{code}/go(code=${shortCode})}" class="continue-btn" id="continueBtn">
+                Lanjutkan ke tujuan
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 6l6 6-6 6"/>
                 </svg>
-            </span>
-        </a>
+            </a>
 
-    </section>
-
-    <!-- ============================================================== -->
-    <!-- SISI KANAN — preview tujuan                                    -->
-    <!-- ============================================================== -->
-    <section class="preview-col">
-        <div class="preview-caption">Berikut pratinjau tujuan Anda</div>
-
-        <article class="preview-card" id="previewCard"
-                 th:attr="data-original-url=${originalUrl},data-short-code=${shortCode},data-track-id=${trackId}">
-            <div class="dest-label">Tujuan:</div>
-            <h1 class="dest-url" id="fullUrl" th:text="${originalUrl}">catalog.sarinah.co.id/event-jakarta</h1>
-
-            <div class="dest-notes">
-                <p>Kami belum dapat mengambil informasi detail dari tujuan tersebut untuk saat ini.</p>
-                <p>Namun, jangan khawatir—tautan ini sedang kami periksa untuk memastikan keamanannya sebelum Anda diarahkan.</p>
+            <div class="countdown">
+                Anda akan diarahkan dalam <strong id="counter">5</strong> detik…
             </div>
 
-            <div class="rule"></div>
+            <div class="back-link">
+                <a href="/">‹ Kembali ke beranda</a>
+            </div>
+        </section>
 
-            <div class="check-title">Pemeriksaan keamanan</div>
-            <ul class="check-list">
-                <li class="check-item">
-                    <span class="check-icon scan" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                            <circle cx="11" cy="11" r="6"/>
-                            <line x1="15.5" y1="15.5" x2="20" y2="20"/>
-                        </svg>
-                    </span>
-                    <span>Dipindai oleh Sarinah</span>
-                </li>
-                <li class="check-item">
-                    <span class="check-icon watch" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2 4 5v7c0 5 3.5 9 8 10 4.5-1 8-5 8-10V5z"/>
-                        </svg>
-                    </span>
-                    <span>Tautan dipantau untuk aktivitas mencurigakan</span>
-                </li>
-                <li class="check-item">
-                    <span class="check-icon ok" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="9" stroke-width="2"/>
-                            <path d="m8 12 3 3 5-6"/>
-                        </svg>
-                    </span>
-                    <span>Tidak ada ancaman terdeteksi saat ini</span>
-                </li>
-            </ul>
-
-            <p class="learn-more">
-                <a href="/keamanan">Pelajari</a> bagaimana kami memeriksa tautan dan menjaga pengguna tetap aman.
-            </p>
-        </article>
-
-        <div class="preview-spacer"></div>
-
-        <a th:href="@{/{code}/go(code=${shortCode})}" class="continue-btn" id="continueBtn">
-            Lanjutkan ke tujuan
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 6l6 6-6 6"/>
-            </svg>
-        </a>
-
-        <div class="countdown">
-            Anda akan diarahkan dalam <strong id="counter">10</strong> detik…
-        </div>
-
-        <div class="back-link">
-            <a href="/">‹ Kembali ke beranda</a>
-        </div>
-    </section>
-
-</main>
+    </main>
+</div>
 
 <script th:inline="javascript">
     (function () {
+        const IG_ENDPOINT = '/api/v1/instagram/latest?limit=6';
 
-      // =============================================================
-      // 1. AUTO-LOAD THUMBNAIL IG dari permalink (no token, no API)
-      // =============================================================
-      function loadIgThumbnails() {
-        const tiles = document.querySelectorAll('.ig-tile-img[data-permalink]');
-        tiles.forEach(function(tile){
-          const permalink = tile.dataset.permalink;
-          if (!permalink) return;
+        const previewCard = document.getElementById('previewCard');
+        const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
+        const shortCode = previewCard ? (previewCard.dataset.shortCode || '').trim() : '';
+        const trackId = previewCard ? (previewCard.dataset.trackId || '').trim() : '';
+        const fullUrl = document.getElementById('fullUrl');
+        const continueBtn = document.getElementById('continueBtn');
+        const counterEl = document.getElementById('counter');
+        const igGrid = document.getElementById('igGrid');
 
-          // Extract shortcode dari URL: /p/XXXXX/ atau /reel/XXXXX/
-          const match = permalink.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
-          if (match && match[1]) {
-            const shortcode = match[1];
-            // Endpoint publik IG yang redirect ke gambar post
-            const imgUrl = 'https://www.instagram.com/p/' + shortcode + '/media/?size=l';
-
-            // Test load gambar dulu, kalau gagal biarkan gradient default
-            const testImg = new Image();
-            testImg.onload = function() {
-              tile.style.backgroundImage = "url('" + imgUrl + "')";
-            };
-            testImg.onerror = function() {
-              // Biarkan gradient fallback yang sudah di CSS
-            };
-            testImg.src = imgUrl;
-          }
-        });
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadIgThumbnails);
-      } else {
-        loadIgThumbnails();
-      }
-
-      // =============================================================
-      // 2. PREVIEW CARD — original URL & track IP
-      // =============================================================
-      const previewCard = document.getElementById('previewCard');
-      const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
-      const shortCode   = previewCard ? (previewCard.dataset.shortCode   || '').trim() : '';
-      const trackId     = previewCard ? (previewCard.dataset.trackId     || '').trim() : '';
-      const fullUrl     = document.getElementById('fullUrl');
-      const continueBtn = document.getElementById('continueBtn');
-      const counterEl   = document.getElementById('counter');
-
-      if (fullUrl && !fullUrl.textContent.trim()) {
-        fullUrl.textContent = originalUrl || '-';
-      }
-
-      let ipSent = false;
-
-      function sendIpData(payload) {
-        if (ipSent) return;
-        ipSent = true;
-        const body = JSON.stringify(payload);
-        if (navigator.sendBeacon) {
-          const blob = new Blob([body], {type: 'application/json'});
-          navigator.sendBeacon('/api/track-ip', blob);
-        } else {
-          fetch('/api/track-ip', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: body,
-            keepalive: true
-          }).catch(function(){});
+        if (fullUrl && !fullUrl.textContent.trim()) {
+            fullUrl.textContent = originalUrl || '-';
         }
-      }
 
-      function trackIp() {
-        if (!trackId) return;
-        fetch('https://ipapi.co/json/', { mode: 'cors' })
-          .then(function(r) { return r.ok ? r.json() : null; })
-          .then(function(data) {
-            if (!data || !data.ip) return;
-            sendIpData({
-              trackId:     trackId,
-              shortCode:   shortCode,
-              clientIp:    data.ip,
-              country:     data.country_name || null,
-              countryCode: data.country_code || null,
-              region:      data.region       || null,
-              city:        data.city         || null,
-              isp:         data.org          || null
-            });
-          })
-          .catch(function() {
-            fetch('https://api.ipify.org?format=json')
-              .then(function(r){ return r.ok ? r.json() : null; })
-              .then(function(d){
-                if (d && d.ip) {
-                  sendIpData({
-                    trackId:   trackId,
-                    shortCode: shortCode,
-                    clientIp:  d.ip
-                  });
-                }
-              })
-              .catch(function(){});
-          });
-      }
+        const fallbackPosts = [
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: 'Buka Instagram Sarinah'
+            },
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: 'Feed Sarinah'
+            },
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: 'Info terbaru'
+            },
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: 'Lihat post'
+            },
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: 'Sarinah Indonesia'
+            },
+            {
+                permalink: 'https://www.instagram.com/sarinahindonesia/',
+                media_url: '',
+                caption: '@sarinahindonesia'
+            }
+        ];
 
-      trackIp();
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
-      // =============================================================
-      // 3. COUNTDOWN AUTO-REDIRECT
-      // =============================================================
-      const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
-      let seconds = 10;
-      let timeoutId = null;
-      let finished = false;
-      let paused = false;
+        function normalizePost(post) {
+            const mediaUrl = post.media_url || post.mediaUrl || post.thumbnail_url || post.thumbnailUrl || '';
+            const permalink = post.permalink || post.url || 'https://www.instagram.com/sarinahindonesia/';
+            const caption = post.caption || post.title || 'Lihat post Instagram';
 
-      function updateCounter() {
-        if (counterEl) counterEl.textContent = Math.max(0, seconds);
-      }
+            return {
+                mediaUrl: mediaUrl,
+                permalink: permalink,
+                caption: caption
+            };
+        }
 
-      function stopTimer() {
-        if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
-      }
+        function renderInstagramPosts(posts) {
+            if (!igGrid) return;
 
-      function goNow() {
-        if (finished || !redirectUrl) return;
-        finished = true;
-        stopTimer();
-        window.location.href = redirectUrl;
-      }
+            const normalized = (posts || [])
+                .map(normalizePost)
+                .filter(function (post) {
+                    return post.permalink;
+                })
+                .slice(0, 6);
 
-      function tick() {
-        if (finished || paused) return;
-        seconds = Math.max(0, seconds - 1);
+            const finalPosts = normalized.length ? normalized : fallbackPosts.map(normalizePost);
+
+            igGrid.innerHTML = finalPosts.map(function (post, index) {
+                const safeUrl = escapeHtml(post.permalink);
+                const safeCaption = escapeHtml(post.caption || 'Lihat post');
+                const safeImage = escapeHtml(post.mediaUrl || '');
+
+                const imageStyle = safeImage
+                    ? 'style="background-image:url(\'' + safeImage + '\')"'
+                    : '';
+
+                const noImageClass = safeImage ? '' : ' no-image';
+
+                return '' +
+                    '<a href="' + safeUrl + '" target="_blank" rel="noopener" class="ig-tile" aria-label="' + safeCaption + '">' +
+                        '<div class="ig-tile-img' + noImageClass + '" ' + imageStyle + '></div>' +
+                        '<div class="ig-tile-overlay">' +
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                                '<path d="M14 3h7v7"/>' +
+                                '<path d="M21 3l-9 9"/>' +
+                                '<path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>' +
+                            '</svg>' +
+                            '<span>' + safeCaption + '</span>' +
+                        '</div>' +
+                    '</a>';
+            }).join('');
+        }
+
+        function loadLatestInstagram() {
+            if (!igGrid) return;
+
+            fetch(IG_ENDPOINT, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                cache: 'no-store'
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Instagram endpoint error');
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    const posts = Array.isArray(data) ? data : (data.data || data.posts || []);
+                    renderInstagramPosts(posts);
+                })
+                .catch(function () {
+                    renderInstagramPosts(fallbackPosts);
+                });
+        }
+
+        loadLatestInstagram();
+
+        let ipSent = false;
+
+        function sendIpData(payload) {
+            if (ipSent) return;
+
+            ipSent = true;
+
+            const body = JSON.stringify(payload);
+
+            if (navigator.sendBeacon) {
+                const blob = new Blob([body], { type: 'application/json' });
+                navigator.sendBeacon('/api/track-ip', blob);
+            } else {
+                fetch('/api/track-ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body,
+                    keepalive: true
+                }).catch(function () {});
+            }
+        }
+
+        function trackIp() {
+            if (!trackId) return;
+
+            fetch('https://ipapi.co/json/', { mode: 'cors' })
+                .then(function (r) {
+                    return r.ok ? r.json() : null;
+                })
+                .then(function (data) {
+                    if (!data || !data.ip) return;
+
+                    sendIpData({
+                        trackId: trackId,
+                        shortCode: shortCode,
+                        clientIp: data.ip,
+                        country: data.country_name || null,
+                        countryCode: data.country_code || null,
+                        region: data.region || null,
+                        city: data.city || null,
+                        isp: data.org || null
+                    });
+                })
+                .catch(function () {
+                    fetch('https://api.ipify.org?format=json')
+                        .then(function (r) {
+                            return r.ok ? r.json() : null;
+                        })
+                        .then(function (d) {
+                            if (d && d.ip) {
+                                sendIpData({
+                                    trackId: trackId,
+                                    shortCode: shortCode,
+                                    clientIp: d.ip
+                                });
+                            }
+                        })
+                        .catch(function () {});
+                });
+        }
+
+        trackIp();
+
+        const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
+
+        let seconds = 5;
+        let timeoutId = null;
+        let finished = false;
+        let paused = false;
+
+        function updateCounter() {
+            if (counterEl) counterEl.textContent = Math.max(0, seconds);
+        }
+
+        function stopTimer() {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+        }
+
+        function goNow() {
+            if (finished || !redirectUrl) return;
+
+            finished = true;
+            stopTimer();
+            window.location.href = redirectUrl;
+        }
+
+        function tick() {
+            if (finished || paused) return;
+
+            seconds = Math.max(0, seconds - 1);
+            updateCounter();
+
+            if (seconds <= 0) {
+                goNow();
+                return;
+            }
+
+            timeoutId = setTimeout(tick, 1000);
+        }
+
+        function startTimer() {
+            if (finished || paused || timeoutId) return;
+            timeoutId = setTimeout(tick, 1000);
+        }
+
         updateCounter();
-        if (seconds <= 0) { goNow(); return; }
-        timeoutId = setTimeout(tick, 1000);
-      }
+        startTimer();
 
-      function startTimer() {
-        if (finished || paused || timeoutId) return;
-        timeoutId = setTimeout(tick, 1000);
-      }
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function () {
+                finished = true;
+                stopTimer();
+            });
+        }
 
-      updateCounter();
-      startTimer();
+        document.addEventListener('visibilitychange', function () {
+            if (finished) return;
 
-      if (continueBtn) {
-        continueBtn.addEventListener('click', function () {
-          finished = true;
-          stopTimer();
+            if (document.hidden) {
+                paused = true;
+                stopTimer();
+            } else {
+                paused = false;
+                startTimer();
+            }
         });
-      }
-
-      document.addEventListener('visibilitychange', function () {
-        if (finished) return;
-        if (document.hidden) { paused = true; stopTimer(); }
-        else { paused = false; startTimer(); }
-      });
     })();
 </script>
 
