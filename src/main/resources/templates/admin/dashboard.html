@@ -1382,6 +1382,8 @@
                     <button id="selectAllUrlBtn" class="btn btn-ghost btn-xs" type="button">Select all (page)</button>
                     <button id="deselectAllUrlBtn" class="btn btn-ghost btn-xs" type="button">Deselect</button>
                     <span style="flex:1"></span>
+                    <button id="bulkUrlLogExcelBtn" class="btn btn-ghost btn-sm" type="button" disabled
+                            title="Download log akses sebagai Excel (.xlsx)">↓ Log Excel</button>
                     <button id="bulkUrlDownloadBtn" class="btn btn-accent btn-sm" type="button" disabled>↓ Download QR (.zip)</button>
                 </div>
 
@@ -1639,7 +1641,11 @@
             <h3 id="logDrawerTitle">Log Akses</h3>
             <p id="logDrawerSubtitle">—</p>
         </div>
-        <button class="modal-close" id="closeLogDrawerBtn">×</button>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <button id="downloadLogExcelBtn" class="btn btn-accent btn-sm" type="button" disabled
+                    title="Download log sebagai Excel (.xlsx)">↓ Excel</button>
+            <button class="modal-close" id="closeLogDrawerBtn">×</button>
+        </div>
     </div>
     <div class="log-drawer-body" id="logDrawerBody">
         <div class="empty">Memuat log…</div>
@@ -1803,47 +1809,8 @@
             return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
-<!--        /* ═══ Sidebar tabs ═══ */-->
-<!--        document.querySelectorAll('.stab').forEach(t => {-->
-<!--            t.addEventListener('click', () => {-->
-<!--                document.querySelectorAll('.stab').forEach(x => x.classList.remove('active'));-->
-<!--                document.querySelectorAll('.sidebar-panel').forEach(x => x.classList.remove('active'));-->
-<!--                t.classList.add('active');-->
-<!--                $('sp-' + t.dataset.sidebar).classList.add('active');-->
-<!--            });-->
-<!--        });-->
-
-<!--        /* ═══ Upload sub-tabs ═══ */-->
-<!--        document.querySelectorAll('.upload-sub-tab').forEach(t => {-->
-<!--            t.addEventListener('click', () => {-->
-<!--                document.querySelectorAll('.upload-sub-tab').forEach(x => x.classList.remove('active'));-->
-<!--                document.querySelectorAll('.upload-sub-panel').forEach(x => x.classList.remove('active'));-->
-<!--                t.classList.add('active');-->
-<!--                $(t.dataset.sub).classList.add('active');-->
-<!--            });-->
-<!--        });-->
-
-<!--        /* ═══ Content tabs (URLs / Catalogs) ═══ */-->
-<!--        document.querySelectorAll('.ctab').forEach(t => {-->
-<!--            t.addEventListener('click', () => {-->
-<!--                document.querySelectorAll('.ctab').forEach(x => x.classList.remove('active'));-->
-<!--                document.querySelectorAll('.content-panel').forEach(x => x.classList.remove('active'));-->
-<!--                t.classList.add('active');-->
-<!--                $('cp-' + t.dataset.ctab).classList.add('active');-->
-
-<!--                $('searchUrls').style.display = t.dataset.ctab === 'urls' ? 'flex' : 'none';-->
-<!--                $('searchCatalogs').style.display = t.dataset.ctab === 'catalogs' ? 'flex' : 'none';-->
-
-<!--                if (t.dataset.ctab === 'catalogs' && !_catalogLoaded) {-->
-<!--                    _catalogLoaded = true;-->
-<!--                    loadCatalogs(0);-->
-<!--                }-->
-<!--            });-->
-<!--        });-->
-            /* ═══ Sidebar tabs ═══ */
+        /* ═══ Sidebar tabs ═══ */
         // Mapping sinkronisasi: sidebar <-> content
-        // create (Short URL form)  ↔  urls (Short URLs list)
-        // upload (Upload Catalog)  ↔  catalogs (Catalog PDF list)
         const SIDEBAR_TO_CONTENT = { create: 'urls', upload: 'catalogs' };
         const CONTENT_TO_SIDEBAR = { urls: 'create', catalogs: 'upload' };
 
@@ -1864,18 +1831,15 @@
             const panel = $('cp-' + key);
             if (panel) panel.classList.add('active');
 
-            // Search box khusus per tab
             $('searchUrls').style.display = key === 'urls' ? 'flex' : 'none';
             $('searchCatalogs').style.display = key === 'catalogs' ? 'flex' : 'none';
 
-            // Lazy load catalog pertama kali dibuka
             if (key === 'catalogs' && !_catalogLoaded) {
                 _catalogLoaded = true;
                 loadCatalogs(0);
             }
         }
 
-        // Sidebar click → switch sidebar + content yang berpasangan
         document.querySelectorAll('.stab').forEach(t => {
             t.addEventListener('click', () => {
                 const sKey = t.dataset.sidebar;
@@ -1885,7 +1849,6 @@
             });
         });
 
-        // Content click → switch content + sidebar yang berpasangan
         document.querySelectorAll('.ctab').forEach(t => {
             t.addEventListener('click', () => {
                 const cKey = t.dataset.ctab;
@@ -1895,7 +1858,7 @@
             });
         });
 
-        /* ═══ Upload sub-tabs (Single / Bulk dalam panel Upload) ═══ */
+        /* ═══ Upload sub-tabs ═══ */
         document.querySelectorAll('.upload-sub-tab').forEach(t => {
             t.addEventListener('click', () => {
                 document.querySelectorAll('.upload-sub-tab').forEach(x => x.classList.remove('active'));
@@ -1914,8 +1877,9 @@
             }
         });
 
-        /* ═══ QR library ═══ */
+        /* ═══ QR library + JSZip + SheetJS loader ═══ */
         let _qrReady = false, _qrLoading = false, _zipReady = false, _zipLoading = false;
+        let _xlsxReady = false, _xlsxLoading = false;
         let _logoImg = null, _logoLoaded = false;
 
         function loadScriptOnce(src) {
@@ -1953,6 +1917,15 @@
             }
             _zipLoading = false; return false;
         }
+        async function ensureXLSX() {
+            if (_xlsxReady && typeof XLSX !== 'undefined') return true;
+            if (_xlsxLoading) { for (let i = 0; i < 50; i++) { await new Promise(r => setTimeout(r, 100)); if (_xlsxReady) return true; } return false; }
+            _xlsxLoading = true;
+            for (const src of ['https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js']) {
+                if (await loadScriptOnce(src) && typeof XLSX !== 'undefined') { _xlsxReady = true; _xlsxLoading = false; return true; }
+            }
+            _xlsxLoading = false; return false;
+        }
         async function ensureLogo() {
             if (_logoLoaded && _logoImg) return _logoImg;
             const src = $('qrLogo').src;
@@ -1964,7 +1937,7 @@
                 img.src = src + (src.includes('?') ? '&' : '?') + '_r=' + Date.now();
             });
         }
-        ensureQR(); ensureJSZip(); ensureLogo();
+        ensureQR(); ensureJSZip(); ensureXLSX(); ensureLogo();
 
         function roundRect(ctx, x, y, w, h, r) {
             ctx.beginPath();
@@ -2097,7 +2070,6 @@
             $('editUrlTitle').value = title || '';
             $('editUrlOriginal').value = url || '';
             $('editUrlSubtitle').textContent = code ? `Kode: ${code}` : '—';
-            // set action path dengan id yang benar
             editUrlForm.setAttribute('action', `/admin/${id}/update`);
             editUrlBackdrop.classList.add('show');
         }
@@ -2123,6 +2095,12 @@
         /* ═══ Log drawer ═══ */
         const logDrawer = $('logDrawer');
         const logDrawerBody = $('logDrawerBody');
+
+        // State untuk export Excel (single drawer)
+        let _currentDrawerLogs = [];
+        let _currentDrawerCode = '';
+        let _currentDrawerTitle = '';
+
         function closeLogDrawer() { logDrawer.classList.remove('show'); }
 
         async function openLogDrawer({ code, title }) {
@@ -2132,6 +2110,12 @@
 
             const oldSummary = logDrawer.querySelector('.log-summary');
             if (oldSummary) oldSummary.remove();
+
+            // Reset state Excel export
+            _currentDrawerCode = code;
+            _currentDrawerTitle = title || code;
+            _currentDrawerLogs = [];
+            $('downloadLogExcelBtn').disabled = true;
 
             logDrawer.classList.add('show');
 
@@ -2143,6 +2127,10 @@
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await handleJson(res);
                 const items = Array.isArray(data) ? data : (data.content || data.logs || []);
+
+                // Simpan untuk export Excel
+                _currentDrawerLogs = items;
+                $('downloadLogExcelBtn').disabled = items.length === 0;
 
                 if (!items.length) {
                     logDrawerBody.innerHTML = '<div class="empty" style="padding:40px 20px"><span class="empty-emoji">∅</span>Belum ada akses tercatat.</div>';
@@ -2276,6 +2264,100 @@
                 e.preventDefault();
                 if (!b.dataset.code) { toast('Code kosong', 'error'); return; }
                 openLogDrawer({ code: b.dataset.code, title: b.dataset.title });
+            }
+        });
+
+        /* ═══════════════════════════════════════════════════════════════
+           EXCEL EXPORT — Log akses ke .xlsx
+           =══════════════════════════════════════════════════════════════ */
+
+        function formatExcelDate(d) {
+            if (!d) return '';
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function logsToRows(logs, shortCode) {
+            return logs.map((l, idx) => {
+                const raw = l.createdAt || l.accessedAt;
+                const d = raw ? new Date(raw) : null;
+                const ua = parseUA(l.userAgent || '');
+                return {
+                    'No':               idx + 1,
+                    'Short Code':       shortCode || '',
+                    'Tanggal & Waktu':  d && !isNaN(d.getTime()) ? formatExcelDate(d) : (raw || '-'),
+                    'IP Address':       l.ipAddress || l.ip || '',
+                    'Country':          l.country || '',
+                    'Country Code':     l.countryCode || '',
+                    'Region':           l.region || '',
+                    'City':             l.city || '',
+                    'ISP':              l.isp || '',
+                    'Browser':          l.browser ? `${l.browser}${l.browserVersion ? ' ' + l.browserVersion : ''}` : ua.browser,
+                    'Operating System': l.operatingSystem || ua.os,
+                    'Device Type':      l.deviceType || ua.device,
+                    'Device Brand':     l.deviceBrand || '',
+                    'Referer':          l.referer || '',
+                    'User Agent':       l.userAgent || ''
+                };
+            });
+        }
+
+        function autoFitCols(rows) {
+            if (!rows.length) return [];
+            const keys = Object.keys(rows[0]);
+            return keys.map(k => {
+                let max = k.length;
+                for (const r of rows) {
+                    const v = String(r[k] ?? '');
+                    if (v.length > max) max = v.length;
+                }
+                return { wch: Math.min(Math.max(max + 2, 10), 60) };
+            });
+        }
+
+        function buildSheet(wb, logs, shortCode, sheetNames) {
+            const rows = logsToRows(logs, shortCode);
+            if (!rows.length) {
+                rows.push({ 'No': '', 'Short Code': shortCode, 'Tanggal & Waktu': '(belum ada akses)' });
+            }
+            const ws = XLSX.utils.json_to_sheet(rows);
+            ws['!cols'] = autoFitCols(rows);
+
+            let baseName = String(shortCode || 'log').replace(/[\\/?*\[\]:]/g, '_').substring(0, 28);
+            let sheetName = baseName;
+            let n = 2;
+            while (sheetNames.has(sheetName)) {
+                sheetName = `${baseName}_${n++}`.substring(0, 31);
+            }
+            sheetNames.add(sheetName);
+
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            return rows.length;
+        }
+
+        // Tombol Excel di drawer (single)
+        $('downloadLogExcelBtn').addEventListener('click', async () => {
+            if (!_currentDrawerLogs.length) {
+                toast('Belum ada log untuk di-export', 'warning');
+                return;
+            }
+            const btn = $('downloadLogExcelBtn');
+            const orig = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+                if (!await ensureXLSX()) throw new Error('Library xlsx gagal dimuat');
+                const wb = XLSX.utils.book_new();
+                buildSheet(wb, _currentDrawerLogs, _currentDrawerCode, new Set());
+                const today = new Date().toISOString().slice(0, 10);
+                const fname = `log-${(_currentDrawerCode || 'akses').replace(/[^\w\-]+/g, '_')}-${today}.xlsx`;
+                XLSX.writeFile(wb, fname);
+                toast(`Excel di-download (${_currentDrawerLogs.length} baris) ✓`, 'success');
+            } catch (e) {
+                toast('Gagal export Excel: ' + e.message, 'error', 4000);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = orig;
             }
         });
 
@@ -2431,18 +2513,10 @@
                 const fd = new FormData();
                 fd.append('filename', fname);
                 if (file) fd.append('file', file);
-
-                // Endpoint standar: PUT /api/admin/users/pdf/{id}
-                // Pakai POST + _method=PUT untuk kompatibilitas Spring
                 fd.append('_method', 'PUT');
 
                 const endpoint = CATALOG_API.replace('/catalogs', '/pdf/') + encodeURIComponent(id);
                 let res = await fetch(endpoint, { method: 'PUT', headers: csrfHeaders(), body: fd });
-
-                // fallback: kalau 405 / 404, coba POST
-<!--                if (res.status === 405 || res.status === 404) {-->
-<!--                    res = await fetch(endpoint, { method: 'POST', headers: csrfHeaders(), body: fd });-->
-<!--                }-->
 
                 await handleJson(res);
                 toast('Catalog diupdate ✓', 'success');
@@ -2514,7 +2588,7 @@
         $('nextPageBtn').addEventListener('click', () => loadCatalogs(Math.min(currentTotalPages - 1, currentPage + 1)));
         $('lastPageBtn').addEventListener('click', () => loadCatalogs(Math.max(0, currentTotalPages - 1)));
 
-        /* ═══ Download progress helpers (shared) ═══ */
+        /* ═══ Download progress helpers ═══ */
         const dlProgress = $('dlProgress');
         const dlTitle = $('dlTitle'), dlPct = $('dlPct'), dlBar = $('dlBar'), dlText = $('dlText'), dlDetail = $('dlDetail');
         function showProgress(v) { if (v) { dlProgress.classList.add('show'); dlBar.className = 'dl-bar'; } else dlProgress.classList.remove('show'); }
@@ -2522,7 +2596,7 @@
             const pct = total ? Math.round(done / total * 100) : 0;
             dlBar.style.width = pct + '%';
             dlPct.textContent = pct + '%';
-            dlText.textContent = `${done} / ${total} QR selesai`;
+            dlText.textContent = `${done} / ${total} selesai`;
             if (cur) dlDetail.textContent = `→ ${cur}`;
         }
 
@@ -2601,18 +2675,19 @@
             setTimeout(() => showProgress(false), failed ? 8000 : 4000);
         });
 
-        /* ═══ BULK QR DOWNLOAD — SHORT URLs ═══ */
+        /* ═══ BULK QR + LOG EXCEL — SHORT URLs ═══ */
         const bulkUrlBar = $('bulkUrlBar');
         const bulkUrlInfo = $('bulkUrlInfo');
         const bulkUrlDownloadBtn = $('bulkUrlDownloadBtn');
+        const bulkUrlLogExcelBtn = $('bulkUrlLogExcelBtn');
         const checkAllUrlHead = $('checkAllUrlHead');
-        // Map id -> { code, title, url }
         const selectedUrls = new Map();
 
         function updateBulkUrlBar() {
             const c = selectedUrls.size;
             bulkUrlInfo.textContent = c > 0 ? `${c} dipilih` : '0 dipilih';
             bulkUrlDownloadBtn.disabled = c === 0;
+            if (bulkUrlLogExcelBtn) bulkUrlLogExcelBtn.disabled = c === 0;
             bulkUrlBar.classList.toggle('show', c > 0);
             const cbs = document.querySelectorAll('.js-url-check');
             if (cbs.length) {
@@ -2660,6 +2735,7 @@
             updateBulkUrlBar();
         });
 
+        // Bulk QR download
         bulkUrlDownloadBtn.addEventListener('click', async () => {
             if (!selectedUrls.size) return;
             const [qrOk, zipOk] = await Promise.all([ensureQR(), ensureJSZip()]);
@@ -2679,14 +2755,11 @@
 
             const zip = new JSZip();
             const folder = zip.folder('qr-short-urls');
-
-            // track nama file untuk hindari duplikat dalam zip
             const usedNames = new Set();
 
             for (const [id, meta] of entries) {
                 const rawName = meta.title || meta.code || id;
                 let safe = String(rawName).replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || `url_${id}`;
-                // unik-kan jika ada duplikat
                 let finalName = safe;
                 let n = 2;
                 while (usedNames.has(finalName)) { finalName = `${safe}_${n++}`; }
@@ -2734,6 +2807,89 @@
                 toast('Gagal ZIP: ' + e.message, 'error', 5000);
             }
             bulkUrlDownloadBtn.disabled = false;
+            setTimeout(() => showProgress(false), failed ? 8000 : 4000);
+        });
+
+        // Bulk Log Excel download
+        bulkUrlLogExcelBtn.addEventListener('click', async () => {
+            if (!selectedUrls.size) return;
+            const entries = [...selectedUrls.entries()];
+
+            if (!await ensureXLSX()) {
+                toast('Library xlsx gagal dimuat', 'error');
+                return;
+            }
+
+            bulkUrlLogExcelBtn.disabled = true;
+            const origText = bulkUrlLogExcelBtn.textContent;
+            bulkUrlLogExcelBtn.textContent = '…';
+
+            const total = entries.length;
+            let done = 0, totalRows = 0, failed = 0;
+            const failedCodes = [];
+
+            dlTitle.textContent = `Mengambil log untuk ${total} URL…`;
+            dlDetail.textContent = '';
+            showProgress(true);
+            updProgress(0, total);
+
+            const wb = XLSX.utils.book_new();
+            const sheetNames = new Set();
+
+            async function fetchOne([id, meta]) {
+                try {
+                    const res = await fetch(`${URL_LOGS_API}?code=${encodeURIComponent(meta.code)}&size=1000`, {
+                        cache: 'no-store',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await handleJson(res);
+                    const items = Array.isArray(data) ? data : (data.content || data.logs || []);
+                    const n = buildSheet(wb, items, meta.code, sheetNames);
+                    totalRows += n;
+                } catch (e) {
+                    failed++;
+                    failedCodes.push(meta.code);
+                    console.warn(`[bulk-log] ${meta.code} gagal:`, e.message);
+                }
+                done++;
+                updProgress(done, total, meta.code);
+            }
+
+            // Process 4 concurrent
+            const concurrency = 4;
+            for (let i = 0; i < entries.length; i += concurrency) {
+                await Promise.all(entries.slice(i, i + concurrency).map(fetchOne));
+            }
+
+            dlTitle.textContent = 'Membuat Excel…';
+
+            try {
+                if (wb.SheetNames.length === 0) {
+                    const ws = XLSX.utils.json_to_sheet([{ Info: 'Tidak ada log yang berhasil diambil' }]);
+                    XLSX.utils.book_append_sheet(wb, ws, 'empty');
+                }
+
+                const today = new Date().toISOString().slice(0, 10);
+                XLSX.writeFile(wb, `log-${total}-urls-${today}.xlsx`);
+
+                let msg = `${total - failed} sheet berhasil (${totalRows} baris log).`;
+                if (failed > 0) {
+                    msg += ` ${failed} gagal.`;
+                    dlDetail.textContent = 'Gagal: ' + failedCodes.join(', ');
+                }
+                dlBar.classList.add(failed ? 'error' : 'done');
+                dlTitle.textContent = 'Excel selesai';
+                dlText.textContent = msg;
+                toast(msg, failed ? 'warning' : 'success', 4500);
+            } catch (e) {
+                dlBar.classList.add('error');
+                dlTitle.textContent = 'Gagal';
+                toast('Gagal export: ' + e.message, 'error', 5000);
+            }
+
+            bulkUrlLogExcelBtn.disabled = selectedUrls.size === 0;
+            bulkUrlLogExcelBtn.textContent = origText;
             setTimeout(() => showProgress(false), failed ? 8000 : 4000);
         });
 
@@ -2879,16 +3035,13 @@
         let _lastClickMap = new Map();
         let _pollCount = 0;
 
-        // Tag element Quick Stats sidebar biar gampang diupdate
         (function tagQuickStats() {
             const cards = document.querySelectorAll('#sp-create [style*="font-family:var(--font-display)"]');
-            // urutan: [0]=Total URL, [1]=Total Klik, [2]=Rata-rata
             if (cards[0]) cards[0].id = 'qs-total-urls';
             if (cards[1]) cards[1].id = 'qs-total-clicks';
             if (cards[2]) cards[2].id = 'qs-avg-clicks';
         })();
 
-        // Tag topbar stats biar tidak pakai heuristik
         (function tagTopStats() {
             document.querySelectorAll('.top-stats span').forEach(span => {
                 const t = span.textContent.trim();
@@ -2900,7 +3053,6 @@
             });
         })();
 
-        // Seed dari state awal table
         document.querySelectorAll('.js-url-check').forEach(cb => {
             const code = cb.dataset.code;
             const row = cb.closest('tr');
@@ -2924,7 +3076,6 @@
             }, 900);
         }
 
-        // Visual indicator: dot kecil di topbar kalau polling jalan
         (function injectPollIndicator() {
             const brand = document.querySelector('.brand-tag');
             if (!brand) return;
@@ -3001,13 +3152,11 @@
                     }
                 }
 
-                // Update Topbar
                 const topUrls = $('top-total-urls');
                 const topClicks = $('top-total-clicks');
                 if (topUrls) topUrls.textContent = totalUrls;
                 if (topClicks) topClicks.textContent = totalClicks;
 
-                // Update Quick Stats sidebar
                 const qsUrls = $('qs-total-urls');
                 const qsClicks = $('qs-total-clicks');
                 const qsAvg = $('qs-avg-clicks');
@@ -3060,9 +3209,7 @@
             }
         });
 
-        // Manual trigger buat testing dari console browser: window.refreshClicks()
         window.refreshClicks = pollClickCounts;
-
 
         /* ═══ Init ═══ */
         renderBulk();

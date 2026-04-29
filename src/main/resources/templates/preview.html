@@ -19,19 +19,14 @@
             --muted-2: #8a90a0;
             --line: rgba(22,34,58,.10);
             --line-soft: rgba(22,34,58,.06);
-
             --red: #c73846;
             --red-deep: #9c2631;
-            --gold: #c29a46;
-
             --navy: #142445;
             --navy-deep: #0c1a36;
-
             --good: #1f8a4c;
             --good-soft: rgba(31,138,76,.10);
             --warn: #c08a1a;
             --warn-soft: rgba(192,138,26,.12);
-
             --radius-lg: 18px;
             --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -126,7 +121,6 @@
             flex: 1 1 auto;
             min-height: 0;
             overflow: hidden;
-
             padding: clamp(9px, 1.5vh, 18px) clamp(12px, 2.4vw, 32px);
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -136,8 +130,6 @@
 
         .feature,
         .preview-col,
-        .ig-card,
-        .ig-embed-area,
         .preview-card {
             min-height: 0;
         }
@@ -156,206 +148,195 @@
             overflow: hidden;
         }
 
-        .ig-card {
-            background: var(--card);
+        .google-preview-card {
+            height: 100%;
+            min-height: 0;
+            background: #fff;
             border: 1px solid var(--line-soft);
             border-radius: var(--radius-lg);
             overflow: hidden;
             box-shadow: 0 16px 40px rgba(22,34,58,.08);
+        }
+
+        .google-preview-card.three-results {
             display: flex;
             flex-direction: column;
+            align-items: stretch;
+            justify-content: center;
+            gap: 18px;
+            padding: clamp(18px, 3vw, 34px);
         }
 
-        .ig-head {
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: clamp(8px, 1.1vh, 12px) clamp(10px, 1.4vw, 16px);
-            border-bottom: 1px solid var(--line-soft);
-            background: #fff;
-        }
-
-        .ig-avatar {
-            width: clamp(30px, 3.8vh, 40px);
-            height: clamp(30px, 3.8vh, 40px);
-            border-radius: 50%;
-            background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
-            padding: 2px;
-            flex: 0 0 auto;
-        }
-
-        .ig-avatar > img {
+        .google-result {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: #fff;
-            border-radius: 50%;
-            border: 2px solid #fff;
             display: block;
+            color: #202124;
+            text-decoration: none;
         }
 
-        .ig-meta {
-            flex: 1 1 auto;
-            min-width: 0;
-            line-height: 1.2;
+        .three-results .google-result {
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(22,34,58,.08);
         }
 
-        .ig-handle {
-            font-size: clamp(12px, 1.3vh, 14px);
-            font-weight: 900;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .three-results .google-result:last-child {
+            padding-bottom: 0;
+            border-bottom: 0;
         }
 
-        .ig-handle svg {
-            width: 13px;
-            height: 13px;
-            color: #3897f0;
-            flex: 0 0 auto;
-        }
-
-        .ig-sub {
-            font-size: clamp(10px, 1.05vh, 12px);
-            color: var(--muted);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .ig-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 7px 11px;
-            background: var(--text);
-            color: #fff;
-            border-radius: 10px;
-            font-size: clamp(10px, 1vh, 12px);
-            font-weight: 900;
-            flex: 0 0 auto;
-            transition: .2s;
-        }
-
-        .ig-link:hover {
-            background: #000;
-            transform: translateY(-1px);
-        }
-
-        .ig-link svg {
-            width: 12px;
-            height: 12px;
-        }
-
-        .ig-embed-area {
-            flex: 1 1 auto;
-            overflow: hidden;
-            padding: clamp(6px, 1vh, 10px);
-            background: #fafafa;
-        }
-
-        .ig-grid {
-            width: 100%;
-            height: 100%;
-            min-height: 0;
+        .google-top {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            grid-template-rows: 1fr;
-            gap: 7px;
-            overflow: hidden;
-        }
-
-        .ig-tile {
-            position: relative;
-            overflow: hidden;
-            border-radius: 13px;
-            display: block;
-            cursor: pointer;
-            background: linear-gradient(135deg, #feda75 0%, #fa7e1e 35%, #d62976 70%, #4f5bd5 100%);
-            transition: transform .2s ease, box-shadow .2s ease;
-            min-height: 0;
-            height: 100%;
-        }
-
-        .ig-tile:hover {
-            transform: scale(1.025);
-            box-shadow: 0 10px 24px rgba(0,0,0,.2);
-            z-index: 2;
-        }
-
-        .ig-tile-img {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-        }
-
-        .ig-tile-img::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.10), rgba(0,0,0,.04));
-        }
-
-        .ig-tile-img.no-image::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' opacity='0.65'><rect x='2' y='2' width='20' height='20' rx='5'/><circle cx='12' cy='12' r='4'/><circle cx='17.5' cy='6.5' r='1' fill='white'/></svg>");
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 32% auto;
-        }
-
-        .ig-tile-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
+            grid-template-columns: 34px 1fr 24px;
+            gap: 10px;
             align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
-            padding: 10px 7px;
-            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .google-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+        }
+
+        .google-icon svg {
+            width: 30px;
+            height: 30px;
+            display: block;
+        }
+
+        .google-meta {
+            min-width: 0;
+        }
+
+        .google-source {
+            color: #202124;
+            font-size: clamp(12px, 1.25vh, 15px);
+            font-weight: 500;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .google-sub {
+            color: #5f6368;
+            font-size: clamp(10px, 1.05vh, 12px);
+            margin-top: 2px;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .google-more {
+            color: #5f6368;
+            font-size: 21px;
+            line-height: 1;
             text-align: center;
-            z-index: 2;
         }
 
-        .ig-tile-overlay svg {
-            width: 18px;
-            height: 18px;
-            filter: drop-shadow(0 1px 4px rgba(0,0,0,.45));
-        }
-
-        .ig-tile-overlay span {
-            max-width: 100%;
-            font-size: 11px;
-            font-weight: 900;
-            line-height: 1.15;
-            text-shadow: 0 1px 5px rgba(0,0,0,.6);
+        .google-title {
+            color: #1a0dab;
+            font-size: clamp(16px, 2vw, 22px);
+            line-height: 1.22;
+            font-weight: 400;
+            letter-spacing: -.01em;
+            margin-bottom: 9px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        .ig-loading {
-            grid-column: 1 / -1;
+        .google-result:hover .google-title {
+            text-decoration: underline;
+        }
+
+        .google-content {
+            display: grid;
+            grid-template-columns: 132px 1fr;
+            gap: 13px;
+            align-items: start;
+        }
+
+        .google-thumb {
+            position: relative;
+            height: 78px;
             border-radius: 14px;
-            background: #fff;
-            border: 1px dashed rgba(22,34,58,.16);
+            overflow: hidden;
+            background: #eee;
+            box-shadow: 0 8px 20px rgba(22,34,58,.10);
+        }
+
+        .google-thumb img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .google-thumb img.thumb-logo {
+            object-fit: contain;
+            padding: 18px;
+            background: linear-gradient(135deg, #ffffff, #fff1e9);
+        }
+
+        .google-thumb::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,.42), transparent 65%);
+            pointer-events: none;
+        }
+
+        .play-btn {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 32px;
+            height: 32px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: rgba(0,0,0,.56);
+            color: #fff;
             display: grid;
             place-items: center;
-            text-align: center;
-            color: var(--muted);
-            font-size: 13px;
-            padding: 20px;
+            z-index: 2;
+        }
+
+        .play-btn svg {
+            width: 17px;
+            height: 17px;
+            margin-left: 3px;
+        }
+
+        .duration {
+            position: absolute;
+            left: 8px;
+            bottom: 6px;
+            z-index: 2;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            text-shadow: 0 1px 4px rgba(0,0,0,.7);
+        }
+
+        .google-snippet {
+            color: #3c4043;
+            font-size: clamp(12px, 1.25vh, 14px);
+            line-height: 1.4;
+            max-width: 650px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .google-snippet b {
+            color: #5f6368;
+            font-weight: 800;
         }
 
         .club-banner {
@@ -668,6 +649,28 @@
             .check-item {
                 padding: 4px 0;
             }
+
+            .google-preview-card.three-results {
+                gap: 12px;
+                padding: 24px;
+            }
+
+            .three-results .google-result {
+                padding-bottom: 12px;
+            }
+
+            .google-title {
+                font-size: 18px;
+                -webkit-line-clamp: 1;
+            }
+
+            .google-thumb {
+                height: 62px;
+            }
+
+            .google-snippet {
+                -webkit-line-clamp: 2;
+            }
         }
 
         @media (max-width: 960px) {
@@ -763,65 +766,75 @@
                 line-height: 1.1;
             }
 
-            .ig-card {
-                height: 100%;
-                border-radius: 16px;
+            .google-preview-card.three-results {
+                gap: 8px;
+                padding: 12px;
             }
 
-            .ig-head {
-                min-height: 42px;
-                padding: 6px 9px;
+            .three-results .google-result {
+                padding-bottom: 8px;
             }
 
-            .ig-avatar {
-                width: 27px;
-                height: 27px;
+            .google-top {
+                grid-template-columns: 26px 1fr 18px;
+                gap: 7px;
+                margin-bottom: 4px;
             }
 
-            .ig-handle {
-                font-size: 12px;
+            .google-icon,
+            .google-icon svg {
+                width: 24px;
+                height: 24px;
             }
 
-            .ig-sub {
-                display: none !important;
-            }
-
-            .ig-link {
-                padding: 6px 9px;
+            .google-source {
                 font-size: 10px;
+            }
+
+            .google-sub {
+                font-size: 8.5px;
+            }
+
+            .google-more {
+                font-size: 17px;
+            }
+
+            .google-title {
+                font-size: 12px;
+                margin-bottom: 5px;
+                -webkit-line-clamp: 1;
+            }
+
+            .google-content {
+                grid-template-columns: 78px 1fr;
+                gap: 7px;
+            }
+
+            .google-thumb {
+                height: 48px;
                 border-radius: 9px;
             }
 
-            .ig-embed-area {
-                padding: 6px;
+            .google-snippet {
+                font-size: 9px;
+                line-height: 1.25;
+                -webkit-line-clamp: 2;
             }
 
-            .ig-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-                grid-template-rows: 1fr !important;
-                gap: 5px;
-                height: 100% !important;
+            .play-btn {
+                width: 22px;
+                height: 22px;
             }
 
-            .ig-tile {
-                height: 100% !important;
-                aspect-ratio: auto !important;
-                border-radius: 10px;
+            .play-btn svg {
+                width: 12px;
+                height: 12px;
             }
 
-            .ig-tile-overlay {
-                padding: 5px 3px;
-            }
-
-            .ig-tile-overlay svg {
-                width: 13px;
-                height: 13px;
-            }
-
-            .ig-tile-overlay span {
+            .duration {
                 font-size: 8px;
-                line-height: 1.1;
-                -webkit-line-clamp: 1;
+                left: 5px;
+                bottom: 4px;
             }
 
             .club-banner {
@@ -907,27 +920,25 @@
                 display: none !important;
             }
 
-            .ig-head {
-                min-height: 38px;
-                padding: 5px 8px;
+            .google-preview-card.three-results {
+                padding: 10px;
+                gap: 6px;
             }
 
-            .ig-avatar {
-                width: 24px;
-                height: 24px;
+            .three-results .google-result {
+                padding-bottom: 6px;
             }
 
-            .ig-link {
-                padding: 5px 8px;
-                font-size: 9px;
+            .google-content {
+                grid-template-columns: 68px 1fr;
             }
 
-            .ig-embed-area {
-                padding: 5px;
+            .google-thumb {
+                height: 42px;
             }
 
-            .ig-grid {
-                gap: 4px;
+            .google-snippet {
+                -webkit-line-clamp: 2;
             }
 
             .club-banner {
@@ -1004,49 +1015,184 @@
 
     <main class="wrap">
 
-        <section class="feature" aria-label="Feed Instagram & Sarinah Club">
+        <section class="feature" aria-label="Google Preview Instagram Sarinah & Sarinah Club">
 
-            <div class="ig-card">
-                <div class="ig-head">
-                    <div class="ig-avatar">
-                        <img th:src="@{/img.png}"
-                             src="/img.png"
-                             alt="Sarinah Indonesia"
-                             loading="lazy"
-                             onerror="this.onerror=null;this.src='https://logowik.com/content/uploads/images/sarinah5240.logowik.com.webp';">
-                    </div>
+            <div class="google-preview-card three-results">
 
-                    <div class="ig-meta">
-                        <div class="ig-handle">
-                            sarinahindonesia
-                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                <a href="https://www.instagram.com/sarinahindonesia/"
+                   target="_blank"
+                   rel="noopener"
+                   class="google-result"
+                   aria-label="Buka Instagram Sarinah Indonesia">
+
+                    <div class="google-top">
+                        <div class="google-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="igGradient1" x1="0%" y1="100%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#feda75"/>
+                                        <stop offset="35%" stop-color="#fa7e1e"/>
+                                        <stop offset="65%" stop-color="#d62976"/>
+                                        <stop offset="100%" stop-color="#4f5bd5"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igGradient1)"/>
+                                <circle cx="12" cy="12" r="4.3" fill="none" stroke="#fff" stroke-width="2"/>
+                                <circle cx="17.3" cy="6.7" r="1.25" fill="#fff"/>
                             </svg>
                         </div>
-                        <div class="ig-sub">Akun Resmi PT Sarinah · Feed terbaru</div>
+
+                        <div class="google-meta">
+                            <div class="google-source">Instagram · sarinahindonesia</div>
+                            <div class="google-sub">300+ likes · Konten Sarinah</div>
+                        </div>
+
+                        <div class="google-more">⋮</div>
                     </div>
 
-                    <a href="https://www.instagram.com/sarinahindonesia/"
-                       target="_blank"
-                       rel="noopener"
-                       class="ig-link"
-                       aria-label="Buka Instagram Sarinah">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-                            <rect x="2" y="2" width="20" height="20" rx="5"/>
-                            <circle cx="12" cy="12" r="4"/>
-                            <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-                        </svg>
-                        Ikuti
-                    </a>
-                </div>
+                    <div class="google-title">
+                        Sarinah sebagai destinasi belanja di Jakarta—tempat dimana produk lokal dan budaya Indonesia bertemu
+                    </div>
 
-                <div class="ig-embed-area">
-                    <div class="ig-grid" id="igGrid">
-                        <div class="ig-loading">
-                            Memuat feed Instagram terbaru Sarinah...
+                    <div class="google-content">
+                        <div class="google-thumb">
+                            <img src="/sarinah-google-thumb.jpg"
+                                 alt="Sarinah Indonesia"
+                                 onerror="this.onerror=null;this.src='/img.png';this.classList.add('thumb-logo');">
+
+                            <div class="play-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+
+                            <div class="duration">0:47</div>
+                        </div>
+
+                        <div class="google-snippet">
+                            <b>Jelajahi produk lokal penuh makna, dan abadikan momen</b>
+                            di setiap sudut Sarinah yang estetik. Nikmati berbagai promo,
+                            event, tenant pilihan, dan pengalaman belanja khas Indonesia.
                         </div>
                     </div>
-                </div>
+                </a>
+
+                <a href="https://www.instagram.com/sarinahindonesia/"
+                   target="_blank"
+                   rel="noopener"
+                   class="google-result"
+                   aria-label="Buka promo dan event Sarinah">
+
+                    <div class="google-top">
+                        <div class="google-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="igGradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#feda75"/>
+                                        <stop offset="35%" stop-color="#fa7e1e"/>
+                                        <stop offset="65%" stop-color="#d62976"/>
+                                        <stop offset="100%" stop-color="#4f5bd5"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igGradient2)"/>
+                                <circle cx="12" cy="12" r="4.3" fill="none" stroke="#fff" stroke-width="2"/>
+                                <circle cx="17.3" cy="6.7" r="1.25" fill="#fff"/>
+                            </svg>
+                        </div>
+
+                        <div class="google-meta">
+                            <div class="google-source">Instagram · sarinahindonesia</div>
+                            <div class="google-sub">Event · Promo · Tenant</div>
+                        </div>
+
+                        <div class="google-more">⋮</div>
+                    </div>
+
+                    <div class="google-title">
+                        Promo dan event terbaru Sarinah Indonesia—aktivasi belanja, tenant pilihan, dan pengalaman budaya
+                    </div>
+
+                    <div class="google-content">
+                        <div class="google-thumb">
+                            <img src="/sarinah-google-thumb-2.jpg"
+                                 alt="Promo dan Event Sarinah"
+                                 onerror="this.onerror=null;this.src='/img.png';this.classList.add('thumb-logo');">
+
+                            <div class="play-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+
+                            <div class="duration">0:35</div>
+                        </div>
+
+                        <div class="google-snippet">
+                            <b>Temukan promo, event, dan tenant pilihan</b>
+                            yang hadir di Sarinah. Cocok untuk pengunjung yang ingin mencari
+                            inspirasi belanja, kuliner, dan aktivitas akhir pekan.
+                        </div>
+                    </div>
+                </a>
+
+                <a href="https://www.instagram.com/sarinahindonesia/"
+                   target="_blank"
+                   rel="noopener"
+                   class="google-result"
+                   aria-label="Buka produk lokal Sarinah">
+
+                    <div class="google-top">
+                        <div class="google-icon">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="igGradient3" x1="0%" y1="100%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#feda75"/>
+                                        <stop offset="35%" stop-color="#fa7e1e"/>
+                                        <stop offset="65%" stop-color="#d62976"/>
+                                        <stop offset="100%" stop-color="#4f5bd5"/>
+                                    </linearGradient>
+                                </defs>
+                                <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#igGradient3)"/>
+                                <circle cx="12" cy="12" r="4.3" fill="none" stroke="#fff" stroke-width="2"/>
+                                <circle cx="17.3" cy="6.7" r="1.25" fill="#fff"/>
+                            </svg>
+                        </div>
+
+                        <div class="google-meta">
+                            <div class="google-source">Instagram · sarinahindonesia</div>
+                            <div class="google-sub">Produk lokal · UMKM Indonesia</div>
+                        </div>
+
+                        <div class="google-more">⋮</div>
+                    </div>
+
+                    <div class="google-title">
+                        Produk lokal pilihan di Sarinah—kurasi karya Indonesia untuk gaya hidup modern
+                    </div>
+
+                    <div class="google-content">
+                        <div class="google-thumb">
+                            <img src="/sarinah-google-thumb-3.jpg"
+                                 alt="Produk Lokal Sarinah"
+                                 onerror="this.onerror=null;this.src='/img.png';this.classList.add('thumb-logo');">
+
+                            <div class="play-btn">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8 5v14l11-7z"/>
+                                </svg>
+                            </div>
+
+                            <div class="duration">0:29</div>
+                        </div>
+
+                        <div class="google-snippet">
+                            <b>Dukung karya lokal dan produk UMKM Indonesia</b>
+                            melalui pilihan brand, tenant, dan koleksi khas Sarinah yang
+                            mengangkat nilai budaya Indonesia.
+                        </div>
+                    </div>
+                </a>
+
             </div>
 
             <a href="https://www.sarinahclub.id/register" target="_blank" rel="noopener" class="club-banner">
@@ -1151,8 +1297,6 @@
 
 <script th:inline="javascript">
     (function () {
-        const IG_ENDPOINT = /*[[@{/api/v1/instagram/latest(limit=3)}]]*/ '/api/v1/instagram/latest?limit=3';
-
         const previewCard = document.getElementById('previewCard');
         const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
         const shortCode = previewCard ? (previewCard.dataset.shortCode || '').trim() : '';
@@ -1160,115 +1304,10 @@
         const fullUrl = document.getElementById('fullUrl');
         const continueBtn = document.getElementById('continueBtn');
         const counterEl = document.getElementById('counter');
-        const igGrid = document.getElementById('igGrid');
 
         if (fullUrl && !fullUrl.textContent.trim()) {
             fullUrl.textContent = originalUrl || '-';
         }
-
-        const fallbackPosts = [
-            {
-                permalink: 'https://www.instagram.com/sarinahindonesia/',
-                media_url: '',
-                caption: 'Buka Instagram Sarinah'
-            },
-            {
-                permalink: 'https://www.instagram.com/sarinahindonesia/',
-                media_url: '',
-                caption: 'Feed Sarinah'
-            },
-            {
-                permalink: 'https://www.instagram.com/sarinahindonesia/',
-                media_url: '',
-                caption: 'Info terbaru'
-            }
-        ];
-
-        function escapeHtml(value) {
-            return String(value || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        function normalizePost(post) {
-            const mediaUrl = post.media_url || post.mediaUrl || post.thumbnail_url || post.thumbnailUrl || post.image_url || post.imageUrl || '';
-            const permalink = post.permalink || post.url || 'https://www.instagram.com/sarinahindonesia/';
-            const caption = post.caption || post.title || 'Lihat post Instagram';
-
-            return {
-                mediaUrl: mediaUrl,
-                permalink: permalink,
-                caption: caption
-            };
-        }
-
-        function renderInstagramPosts(posts) {
-            if (!igGrid) return;
-
-            const normalized = (posts || [])
-                .map(normalizePost)
-                .filter(function (post) {
-                    return post.permalink;
-                })
-                .slice(0, 3);
-
-            const finalPosts = normalized.length ? normalized : fallbackPosts.map(normalizePost);
-
-            igGrid.innerHTML = finalPosts.map(function (post) {
-                const safeUrl = escapeHtml(post.permalink);
-                const safeCaption = escapeHtml(post.caption || 'Lihat post');
-                const safeImage = escapeHtml(post.mediaUrl || '');
-
-                const imageStyle = safeImage
-                    ? 'style="background-image:url(\'' + safeImage + '\')"'
-                    : '';
-
-                const noImageClass = safeImage ? '' : ' no-image';
-
-                return '' +
-                    '<a href="' + safeUrl + '" target="_blank" rel="noopener" class="ig-tile" aria-label="' + safeCaption + '">' +
-                        '<div class="ig-tile-img' + noImageClass + '" ' + imageStyle + '></div>' +
-                        '<div class="ig-tile-overlay">' +
-                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-                                '<path d="M14 3h7v7"/>' +
-                                '<path d="M21 3l-9 9"/>' +
-                                '<path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/>' +
-                            '</svg>' +
-                            '<span>' + safeCaption + '</span>' +
-                        '</div>' +
-                    '</a>';
-            }).join('');
-        }
-
-        function loadLatestInstagram() {
-            if (!igGrid) return;
-
-            fetch(IG_ENDPOINT, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                cache: 'no-store'
-            })
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error('Instagram endpoint error');
-                    }
-                    return response.json();
-                })
-                .then(function (data) {
-                    const posts = Array.isArray(data) ? data : (data.data || data.posts || []);
-                    renderInstagramPosts(posts);
-                })
-                .catch(function () {
-                    renderInstagramPosts(fallbackPosts);
-                });
-        }
-
-        loadLatestInstagram();
 
         let ipSent = false;
 
