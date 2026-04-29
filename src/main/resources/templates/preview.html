@@ -32,17 +32,23 @@
             --font-google: Arial, sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        html, body {
+        html,
+        body {
             width: 100%;
-            height: 100svh;
             min-height: 100svh;
-            overflow: hidden;
         }
 
         @supports (height: 100dvh) {
-            html, body { height: 100dvh; min-height: 100dvh; }
+            html,
+            body {
+                min-height: 100dvh;
+            }
         }
 
         body {
@@ -51,22 +57,29 @@
             font-family: var(--font);
             -webkit-font-smoothing: antialiased;
             line-height: 1.5;
+            overflow-x: hidden;
         }
 
-        a { color: inherit; text-decoration: none; }
-        img { max-width: 100%; }
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        img {
+            max-width: 100%;
+        }
 
         .page {
             width: 100%;
-            height: 100svh;
-            min-height: 0;
+            min-height: 100svh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         @supports (height: 100dvh) {
-            .page { height: 100dvh; }
+            .page {
+                min-height: 100dvh;
+            }
         }
 
         .header {
@@ -85,7 +98,11 @@
             align-items: center;
         }
 
-        .brand { display: inline-flex; align-items: center; line-height: 1; }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
 
         .brand-img {
             height: clamp(28px, 4vh, 46px);
@@ -100,7 +117,6 @@
             margin: 0 auto;
             flex: 1 1 auto;
             min-height: 0;
-            overflow: hidden;
             padding: clamp(9px, 1.5vh, 18px) clamp(12px, 2.4vw, 32px);
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -108,20 +124,22 @@
             align-items: stretch;
         }
 
-        .feature, .preview-col, .preview-card { min-height: 0; }
+        .feature,
+        .preview-col,
+        .preview-card {
+            min-height: 0;
+        }
 
         .feature {
             display: grid;
             grid-template-rows: minmax(0, 1fr) auto;
             gap: clamp(8px, 1.2vh, 13px);
-            overflow: hidden;
         }
 
         .preview-col {
             display: flex;
             flex-direction: column;
             gap: clamp(7px, 1vh, 11px);
-            overflow: hidden;
         }
 
         .google-preview-card {
@@ -199,7 +217,9 @@
             overflow: hidden;
         }
 
-        .g-result:hover { background: rgba(26,13,171,.04); }
+        .g-result:hover {
+            background: rgba(26,13,171,.04);
+        }
 
         .g-result-source {
             display: flex;
@@ -220,7 +240,12 @@
             border: 1px solid rgba(0,0,0,.04);
         }
 
-        .g-favicon svg, .g-favicon img { width: 14px; height: 14px; display: block; }
+        .g-favicon svg,
+        .g-favicon img {
+            width: 14px;
+            height: 14px;
+            display: block;
+        }
 
         .g-source-text {
             min-width: 0;
@@ -258,7 +283,9 @@
             overflow: hidden;
         }
 
-        .g-result:hover .g-result-title { text-decoration: underline; }
+        .g-result:hover .g-result-title {
+            text-decoration: underline;
+        }
 
         .g-result-body {
             display: grid;
@@ -314,7 +341,11 @@
             z-index: 2;
         }
 
-        .g-play svg { width: 16px; height: 16px; margin-left: 2px; }
+        .g-play svg {
+            width: 16px;
+            height: 16px;
+            margin-left: 2px;
+        }
 
         .g-duration {
             position: absolute;
@@ -354,9 +385,15 @@
             font-weight: 500;
         }
 
-        .g-snippet-meta b { color: #202124; font-weight: 700; }
+        .g-snippet-meta b {
+            color: #202124;
+            font-weight: 700;
+        }
 
-        .g-result.is-loading { pointer-events: none; }
+        .g-result.is-loading {
+            pointer-events: none;
+        }
+
         .g-result.is-loading .skel {
             background: linear-gradient(90deg, #eef0f3 0%, #f7f8fa 50%, #eef0f3 100%);
             background-size: 200% 100%;
@@ -364,18 +401,28 @@
             border-radius: 4px;
             color: transparent !important;
         }
+
         @keyframes skel {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
+
         .g-result.is-loading .g-result-thumb {
             background: linear-gradient(90deg, #eef0f3 0%, #f7f8fa 50%, #eef0f3 100%);
             background-size: 200% 100%;
             animation: skel 1.4s ease-in-out infinite;
         }
+
         .g-result.is-loading .g-result-thumb img,
         .g-result.is-loading .g-play,
-        .g-result.is-loading .g-duration { display: none; }
+        .g-result.is-loading .g-duration {
+            display: none;
+        }
 
         .club-banner {
             position: relative;
@@ -429,7 +476,12 @@
             background: #fff;
         }
 
-        .club-text { flex: 1 1 auto; min-width: 0; position: relative; z-index: 1; }
+        .club-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+        }
 
         .club-title {
             font-weight: 900;
@@ -477,8 +529,15 @@
             white-space: nowrap;
         }
 
-        .club-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.25); }
-        .club-cta svg { width: 12px; height: 12px; }
+        .club-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,.25);
+        }
+
+        .club-cta svg {
+            width: 12px;
+            height: 12px;
+        }
 
         .preview-caption {
             text-align: center;
@@ -499,7 +558,11 @@
             overflow: hidden;
         }
 
-        .dest-label { font-size: clamp(11px, 1.1vh, 13px); color: var(--muted); margin-bottom: 4px; }
+        .dest-label {
+            font-size: clamp(11px, 1.1vh, 13px);
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
 
         .dest-url {
             font-size: clamp(14px, 1.75vh, 20px);
@@ -512,10 +575,21 @@
             line-height: 1.25;
         }
 
-        .dest-notes { color: var(--muted); font-size: clamp(11px, 1.15vh, 13px); line-height: 1.45; }
-        .dest-notes p + p { margin-top: 4px; }
+        .dest-notes {
+            color: var(--muted);
+            font-size: clamp(11px, 1.15vh, 13px);
+            line-height: 1.45;
+        }
 
-        .rule { height: 1px; background: var(--line); margin: clamp(8px, 1vh, 13px) 0; }
+        .dest-notes p + p {
+            margin-top: 4px;
+        }
+
+        .rule {
+            height: 1px;
+            background: var(--line);
+            margin: clamp(8px, 1vh, 13px) 0;
+        }
 
         .check-title {
             font-size: clamp(12px, 1.25vh, 15px);
@@ -524,7 +598,11 @@
             margin-bottom: clamp(5px, .7vh, 8px);
         }
 
-        .check-list { list-style: none; display: flex; flex-direction: column; }
+        .check-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+        }
 
         .check-item {
             display: grid;
@@ -537,7 +615,10 @@
             color: var(--text-soft);
         }
 
-        .check-item:first-child { border-top: 0; padding-top: 2px; }
+        .check-item:first-child {
+            border-top: 0;
+            padding-top: 2px;
+        }
 
         .check-icon {
             width: 22px;
@@ -549,10 +630,26 @@
             background: transparent;
         }
 
-        .check-icon svg { width: 12px; height: 12px; }
-        .check-icon.scan { color: var(--red); }
-        .check-icon.watch { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
-        .check-icon.ok { color: var(--good); background: var(--good-soft); border-color: transparent; }
+        .check-icon svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .check-icon.scan {
+            color: var(--red);
+        }
+
+        .check-icon.watch {
+            color: var(--warn);
+            background: var(--warn-soft);
+            border-color: transparent;
+        }
+
+        .check-icon.ok {
+            color: var(--good);
+            background: var(--good-soft);
+            border-color: transparent;
+        }
 
         .learn-more {
             margin-top: clamp(6px, .8vh, 10px);
@@ -561,9 +658,15 @@
             line-height: 1.45;
         }
 
-        .learn-more a { color: #1a56d3; font-weight: 800; }
+        .learn-more a {
+            color: #1a56d3;
+            font-weight: 800;
+        }
 
-        .preview-spacer { flex: 1 1 auto; min-height: 0; }
+        .preview-spacer {
+            flex: 1 1 auto;
+            min-height: 0;
+        }
 
         .continue-btn {
             display: flex;
@@ -590,7 +693,10 @@
             box-shadow: 0 10px 26px rgba(20,36,69,.28);
         }
 
-        .continue-btn svg { width: 17px; height: 17px; }
+        .continue-btn svg {
+            width: 17px;
+            height: 17px;
+        }
 
         .countdown {
             text-align: center;
@@ -600,7 +706,11 @@
             flex: 0 0 auto;
         }
 
-        .countdown strong { font-weight: 800; font-style: normal; color: var(--text-soft); }
+        .countdown strong {
+            font-weight: 800;
+            font-style: normal;
+            color: var(--text-soft);
+        }
 
         .back-link {
             text-align: center;
@@ -609,19 +719,38 @@
             flex: 0 0 auto;
         }
 
-        .back-link a { color: #1a56d3; font-weight: 800; }
+        .back-link a {
+            color: #1a56d3;
+            font-weight: 800;
+        }
 
         @media (max-height: 720px) and (min-width: 961px) {
             .dest-notes p:nth-child(2),
-            .learn-more { display: none; }
-            .preview-card { padding: 12px 16px; }
-            .check-item { padding: 4px 0; }
-            .google-preview-card { padding: 14px; }
+            .learn-more {
+                display: none;
+            }
+
+            .preview-card {
+                padding: 12px 16px;
+            }
+
+            .check-item {
+                padding: 4px 0;
+            }
+
+            .google-preview-card {
+                padding: 14px;
+            }
         }
 
         @media (max-width: 960px) {
-            .header-inner { padding: 5px 14px; }
-            .brand-img { height: 28px; }
+            .header-inner {
+                padding: 5px 14px;
+            }
+
+            .brand-img {
+                height: 28px;
+            }
 
             .wrap {
                 grid-template-columns: 1fr;
@@ -631,17 +760,47 @@
                 align-items: stretch;
             }
 
-            .preview-col { order: 1; gap: 6px; overflow: hidden; }
-            .feature { order: 2; grid-template-rows: minmax(0, 1fr) auto; gap: 7px; overflow: hidden; }
+            .preview-col {
+                order: 1;
+                gap: 6px;
+            }
+
+            .feature {
+                order: 2;
+                grid-template-rows: minmax(0, 1fr) auto;
+                gap: 7px;
+            }
 
             .preview-caption,
             .preview-spacer,
             .dest-label,
             .dest-notes,
-            .learn-more,
-            .countdown { display: none !important; }
+            .learn-more {
+                display: none !important;
+            }
 
-            .preview-card { padding: 9px 10px; border-radius: 15px; }
+            .countdown {
+                display: block !important;
+                text-align: center;
+                font-size: 11px;
+                line-height: 1.25;
+                color: var(--muted-2);
+                font-style: italic;
+                padding: 0 4px;
+                margin-top: -1px;
+                margin-bottom: 0;
+            }
+
+            .countdown strong {
+                color: var(--text-soft);
+                font-weight: 900;
+                font-style: normal;
+            }
+
+            .preview-card {
+                padding: 9px 10px;
+                border-radius: 15px;
+            }
 
             .dest-url {
                 font-size: 13px;
@@ -653,8 +812,14 @@
                 overflow: hidden;
             }
 
-            .rule { margin: 7px 0; }
-            .check-title { font-size: 11px; margin-bottom: 3px; }
+            .rule {
+                margin: 7px 0;
+            }
+
+            .check-title {
+                font-size: 11px;
+                margin-bottom: 3px;
+            }
 
             .check-item {
                 grid-template-columns: 18px 1fr;
@@ -664,89 +829,306 @@
                 line-height: 1.22;
             }
 
-            .check-icon { width: 17px; height: 17px; }
-            .check-icon svg { width: 9px; height: 9px; }
+            .check-icon {
+                width: 17px;
+                height: 17px;
+            }
 
-            .continue-btn { height: 38px; min-height: 38px; border-radius: 12px; font-size: 13px; }
-            .back-link { font-size: 10px; line-height: 1.1; }
+            .check-icon svg {
+                width: 9px;
+                height: 9px;
+            }
 
-            .google-preview-card { padding: 10px; }
-            .ig-latest-head { margin-bottom: 8px; padding-bottom: 7px; }
-            .ig-latest-title { font-size: 13px; }
-            .ig-latest-sub { display: none; }
-            .ig-profile-btn { padding: 6px 9px; font-size: 9px; }
+            .continue-btn {
+                height: 38px;
+                min-height: 38px;
+                border-radius: 12px;
+                font-size: 13px;
+            }
 
-            .ig-feed-list { gap: 8px; }
+            .back-link {
+                font-size: 10px;
+                line-height: 1.1;
+            }
 
-            .g-favicon { width: 18px; height: 18px; }
-            .g-favicon svg, .g-favicon img { width: 11px; height: 11px; }
-            .g-source-name { font-size: 10.5px; }
-            .g-source-path { font-size: 9.5px; }
+            .google-preview-card {
+                padding: 10px;
+            }
 
-            .g-result-title { font-size: 12.5px; line-height: 1.25; -webkit-line-clamp: 1; }
+            .ig-latest-head {
+                margin-bottom: 8px;
+                padding-bottom: 7px;
+            }
 
-            .g-result-body { grid-template-columns: 80px minmax(0, 1fr); gap: 8px; margin-top: 3px; }
-            .g-result-thumb { border-radius: 8px; }
-            .g-result-thumb.contain img { padding: 8px; }
+            .ig-latest-title {
+                font-size: 13px;
+            }
 
-            .g-play { width: 24px; height: 24px; }
-            .g-play svg { width: 13px; height: 13px; }
-            .g-duration { font-size: 9px; left: 4px; bottom: 4px; padding: 1px 4px; }
+            .ig-latest-sub {
+                display: none;
+            }
 
-            .g-snippet-text { font-size: 11px; line-height: 1.35; -webkit-line-clamp: 2; }
-            .g-snippet-meta { font-size: 9.5px; margin-top: 3px; }
+            .ig-profile-btn {
+                padding: 6px 9px;
+                font-size: 9px;
+            }
 
-            .club-banner { display: flex !important; min-height: 42px; padding: 6px 8px; border-radius: 14px; }
-            .club-banner::before { display: none; }
-            .club-icon { width: 30px; height: 30px; border-radius: 9px; padding: 3px; }
-            .club-title { font-size: 13px; margin-bottom: 0; }
-            .club-title small { font-size: 8.5px; }
-            .club-sub { display: none; }
-            .club-cta { padding: 5px 8px; font-size: 9px; border-radius: 8px; }
+            .ig-feed-list {
+                gap: 8px;
+            }
+
+            .g-favicon {
+                width: 18px;
+                height: 18px;
+            }
+
+            .g-favicon svg,
+            .g-favicon img {
+                width: 11px;
+                height: 11px;
+            }
+
+            .g-source-name {
+                font-size: 10.5px;
+            }
+
+            .g-source-path {
+                font-size: 9.5px;
+            }
+
+            .g-result-title {
+                font-size: 12.5px;
+                line-height: 1.25;
+                -webkit-line-clamp: 1;
+            }
+
+            .g-result-body {
+                grid-template-columns: 80px minmax(0, 1fr);
+                gap: 8px;
+                margin-top: 3px;
+            }
+
+            .g-result-thumb {
+                border-radius: 8px;
+            }
+
+            .g-result-thumb.contain img {
+                padding: 8px;
+            }
+
+            .g-play {
+                width: 24px;
+                height: 24px;
+            }
+
+            .g-play svg {
+                width: 13px;
+                height: 13px;
+            }
+
+            .g-duration {
+                font-size: 9px;
+                left: 4px;
+                bottom: 4px;
+                padding: 1px 4px;
+            }
+
+            .g-snippet-text {
+                font-size: 11px;
+                line-height: 1.35;
+                -webkit-line-clamp: 2;
+            }
+
+            .g-snippet-meta {
+                font-size: 9.5px;
+                margin-top: 3px;
+            }
+
+            .club-banner {
+                display: flex !important;
+                min-height: 42px;
+                padding: 6px 8px;
+                border-radius: 14px;
+            }
+
+            .club-banner::before {
+                display: none;
+            }
+
+            .club-icon {
+                width: 30px;
+                height: 30px;
+                border-radius: 9px;
+                padding: 3px;
+            }
+
+            .club-title {
+                font-size: 13px;
+                margin-bottom: 0;
+            }
+
+            .club-title small {
+                font-size: 8.5px;
+            }
+
+            .club-sub {
+                display: none;
+            }
+
+            .club-cta {
+                padding: 5px 8px;
+                font-size: 9px;
+                border-radius: 8px;
+            }
         }
 
         @media (max-width: 430px) and (max-height: 700px) {
-            .header-inner { padding: 4px 12px; }
-            .brand-img { height: 24px; }
-            .wrap { padding: 6px; gap: 5px; }
+            .header-inner {
+                padding: 4px 12px;
+            }
 
-            .preview-card { padding: 8px 9px; }
-            .dest-url { font-size: 12px; margin-bottom: 5px; }
-            .rule { margin: 5px 0; }
-            .check-title { font-size: 10.5px; }
-            .check-item { font-size: 9.5px; padding: 1.5px 0; }
-            .continue-btn { height: 36px; min-height: 36px; font-size: 12.5px; }
-            .back-link { display: none !important; }
+            .brand-img {
+                height: 24px;
+            }
 
-            .google-preview-card { padding: 8px; }
-            .ig-latest-head { margin-bottom: 6px; padding-bottom: 5px; }
-            .ig-feed-list { gap: 6px; }
+            .wrap {
+                padding: 6px;
+                gap: 5px;
+            }
 
-            .g-result-body { grid-template-columns: 72px minmax(0, 1fr); }
-            .g-result-title { font-size: 12px; }
-            .g-snippet-text { -webkit-line-clamp: 2; font-size: 10.5px; }
+            .preview-card {
+                padding: 8px 9px;
+            }
 
-            .ig-profile-btn { font-size: 8.5px; padding: 5px 7px; }
+            .dest-url {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
 
-            .club-banner { min-height: 38px; padding: 5px 7px; }
-            .club-icon { width: 26px; height: 26px; padding: 2px; }
-            .club-title { font-size: 12px; }
-            .club-title small { display: none; }
+            .rule {
+                margin: 5px 0;
+            }
+
+            .check-title {
+                font-size: 10.5px;
+            }
+
+            .check-item {
+                font-size: 9.5px;
+                padding: 1.5px 0;
+            }
+
+            .continue-btn {
+                height: 36px;
+                min-height: 36px;
+                font-size: 12.5px;
+            }
+
+            .countdown {
+                display: block !important;
+                font-size: 9.5px;
+                line-height: 1.1;
+                margin-top: -2px;
+                padding-bottom: 1px;
+            }
+
+            .back-link {
+                display: block !important;
+                font-size: 9.5px;
+            }
+
+            .google-preview-card {
+                padding: 8px;
+            }
+
+            .ig-latest-head {
+                margin-bottom: 6px;
+                padding-bottom: 5px;
+            }
+
+            .ig-feed-list {
+                gap: 6px;
+            }
+
+            .g-result-body {
+                grid-template-columns: 72px minmax(0, 1fr);
+            }
+
+            .g-result-title {
+                font-size: 12px;
+            }
+
+            .g-snippet-text {
+                -webkit-line-clamp: 2;
+                font-size: 10.5px;
+            }
+
+            .ig-profile-btn {
+                font-size: 8.5px;
+                padding: 5px 7px;
+            }
+
+            .club-banner {
+                min-height: 38px;
+                padding: 5px 7px;
+            }
+
+            .club-icon {
+                width: 26px;
+                height: 26px;
+                padding: 2px;
+            }
+
+            .club-title {
+                font-size: 12px;
+            }
+
+            .club-title small {
+                display: none;
+            }
         }
 
         @media (max-height: 480px) and (orientation: landscape) {
-            .header-inner { padding: 3px 12px; }
-            .brand-img { height: 22px; }
+            .header-inner {
+                padding: 3px 12px;
+            }
+
+            .brand-img {
+                height: 22px;
+            }
+
             .wrap {
                 grid-template-columns: .85fr 1.15fr;
                 grid-template-rows: 1fr;
                 gap: 8px;
                 padding: 6px 10px;
             }
-            .preview-col { order: 1; }
-            .feature { order: 2; }
-            .back-link, .countdown, .dest-notes, .learn-more, .preview-caption { display: none !important; }
-            .club-banner { display: flex !important; }
+
+            .preview-col {
+                order: 1;
+            }
+
+            .feature {
+                order: 2;
+            }
+
+            .back-link,
+            .dest-notes,
+            .learn-more,
+            .preview-caption {
+                display: none !important;
+            }
+
+            .countdown {
+                display: block !important;
+                font-size: 10px;
+                line-height: 1.1;
+                margin-top: -2px;
+            }
+
+            .club-banner {
+                display: flex !important;
+            }
         }
     </style>
 </head>
@@ -804,6 +1186,7 @@
                                 </div>
                             </div>
                         </a>
+
                         <a class="g-result is-loading" href="https://www.instagram.com/sarinahindonesia/reels/" target="_blank" rel="noopener">
                             <div class="g-result-source">
                                 <div class="g-favicon"></div>
@@ -821,6 +1204,7 @@
                                 </div>
                             </div>
                         </a>
+
                         <a class="g-result is-loading" href="https://www.instagram.com/sarinahindonesia/reels/" target="_blank" rel="noopener">
                             <div class="g-result-source">
                                 <div class="g-favicon"></div>
@@ -839,6 +1223,7 @@
                             </div>
                         </a>
                     </div>
+
                 </div>
             </div>
 
@@ -960,7 +1345,7 @@
 
 <script th:inline="javascript">
     /* ============================================================
-     *  REELS LOADER — fetch dari /api/sarinah-reels
+     *  REELS LOADER
      * ============================================================ */
     (function loadReels() {
         const list = document.getElementById('reelsList');
@@ -983,11 +1368,13 @@
             const t = new Date(iso).getTime();
             if (isNaN(t)) return '';
             const diff = Math.floor((Date.now() - t) / 1000);
+
             if (diff < 60) return 'baru saja';
             if (diff < 3600) return Math.floor(diff / 60) + ' menit lalu';
             if (diff < 86400) return Math.floor(diff / 3600) + ' jam lalu';
             if (diff < 86400 * 7) return Math.floor(diff / 86400) + ' hari lalu';
             if (diff < 86400 * 30) return Math.floor(diff / (86400 * 7)) + ' minggu lalu';
+
             return Math.floor(diff / (86400 * 30)) + ' bulan lalu';
         }
 
@@ -1038,6 +1425,7 @@
 
         function renderFallback() {
             list.innerHTML = '';
+
             for (let i = 0; i < 3; i++) {
                 list.appendChild(buildCard({
                     url: FALLBACK_PROFILE,
@@ -1049,40 +1437,49 @@
             }
         }
 
-        fetch('/api/sarinah-reels', { headers: { 'Accept': 'application/json' } })
-            .then(function (res) {
-                if (!res.ok) throw new Error('http ' + res.status);
-                return res.json();
-            })
-            .then(function (data) {
-                const items = (data && data.items) || [];
-                if (!items.length) {
-                    renderFallback();
-                    return;
-                }
-                list.innerHTML = '';
-                items.slice(0, 3).forEach(function (it) {
-                    list.appendChild(buildCard(it));
-                });
-            })
-            .catch(function () {
+        fetch('/api/sarinah-reels', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(function (res) {
+            if (!res.ok) throw new Error('http ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            const items = (data && data.items) || [];
+
+            if (!items.length) {
                 renderFallback();
+                return;
+            }
+
+            list.innerHTML = '';
+
+            items.slice(0, 3).forEach(function (it) {
+                list.appendChild(buildCard(it));
             });
+        })
+        .catch(function () {
+            renderFallback();
+        });
     })();
 
     /* ============================================================
-     *  TRACK + COUNTDOWN
-     *  FIX: tracking selalu jalan, tidak peduli trackId kosong/null.
-     *  Pakai fetch keepalive (lebih reliable dari sendBeacon untuk JSON).
+     *  TRACK IP PUBLIK + COUNTDOWN
      * ============================================================ */
     (function () {
         const previewCard = document.getElementById('previewCard');
 
         function readData(name) {
             if (!previewCard) return '';
+
             const v = previewCard.dataset[name];
-            // Thymeleaf bisa render string "null" — perlakukan sebagai kosong
-            if (!v || v === 'null' || v === 'undefined') return '';
+
+            if (!v || v === 'null' || v === 'undefined') {
+                return '';
+            }
+
             return String(v).trim();
         }
 
@@ -1098,84 +1495,124 @@
             fullUrl.textContent = originalUrl || '-';
         }
 
-        // Debug log — lihat di DevTools console biar tau apa yang terkirim
-        console.log('[Track] init', { trackId, shortCode, originalUrl });
+        console.log('[Track] init:', {
+            trackId: trackId,
+            shortCode: shortCode,
+            originalUrl: originalUrl
+        });
 
-        let trackSent = false;
+        let trackStarted = false;
 
-        function sendTrackData() {
-            // ❌ Sebelumnya: if (ipSent || !trackId) return;
-            //    Akibatnya, kalau trackId kosong, fetch tidak pernah dipanggil.
-            //
-            // ✅ Sekarang: cuma cegah double-send. trackId boleh kosong —
-            //    biar backend yang putuskan, bukan FE.
-            if (trackSent) return;
-            trackSent = true;
+        async function getPublicIpInfo() {
+            const controller = new AbortController();
 
-            const payload = {
-                trackId: trackId || null,
-                shortCode: shortCode || null,
-                originalUrl: originalUrl || null,
-                page: window.location.href,
-                userAgent: navigator.userAgent || null,
-                language: navigator.language || null,
-                platform: navigator.platform || null,
-                screenWidth: window.screen ? window.screen.width : null,
-                screenHeight: window.screen ? window.screen.height : null,
-                timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || null),
-                referrer: document.referrer || null,
-                trackedAt: new Date().toISOString()
-            };
+            const timeoutId = setTimeout(function () {
+                controller.abort();
+            }, 2500);
 
-            const body = JSON.stringify(payload);
-
-            // Pakai fetch keepalive — request tetap jalan walaupun halaman ditutup,
-            // dan content-type application/json bisa diterima Spring Boot tanpa preflight aneh.
-            // Fallback ke sendBeacon kalau fetch keepalive tidak supported.
-            const supportsKeepalive = (function () {
-                try { return 'keepalive' in new Request(''); }
-                catch (e) { return false; }
-            })();
-
-            if (supportsKeepalive) {
-                fetch('/api/track-ip', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body,
-                    keepalive: true,
-                    credentials: 'same-origin'
-                })
-                .then(function (res) {
-                    console.log('[Track] sent, status:', res.status);
-                })
-                .catch(function (err) {
-                    console.error('[Track] failed:', err);
+            try {
+                const res = await fetch('https://ipapi.co/json/', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    signal: controller.signal
                 });
-            } else if (navigator.sendBeacon) {
-                // Fallback — pakai text/plain biar tidak trigger CORS preflight
-                const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
-                const ok = navigator.sendBeacon('/api/track-ip', blob);
-                console.log('[Track] sendBeacon:', ok);
-            } else {
-                // Fallback paling akhir — synchronous-ish
-                fetch('/api/track-ip', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body
-                }).catch(function () {});
+
+                if (!res.ok) {
+                    throw new Error('ipapi status ' + res.status);
+                }
+
+                const data = await res.json();
+
+                return {
+                    clientIp: data.ip || null,
+                    country: data.country_name || null,
+                    countryCode: data.country_code || null,
+                    region: data.region || null,
+                    city: data.city || null,
+                    isp: data.org || null
+                };
+            } catch (e) {
+                console.warn('[Track] gagal ambil IP publik:', e);
+
+                return {
+                    clientIp: null,
+                    country: null,
+                    countryCode: null,
+                    region: null,
+                    city: null,
+                    isp: null
+                };
+            } finally {
+                clearTimeout(timeoutId);
             }
         }
 
-        // Kirim setelah halaman benar-benar siap (lebih aman dari race condition)
-        if (document.readyState === 'complete') {
-            sendTrackData();
-        } else {
-            window.addEventListener('load', sendTrackData, { once: true });
-            // Backup: pasti kirim setelah 1 detik kalau load event tidak fire
-            setTimeout(sendTrackData, 1000);
+        async function sendTrackData() {
+            if (trackStarted) return;
+            trackStarted = true;
+
+            if (!trackId) {
+                console.warn('[Track] trackId kosong. Backend tidak bisa update ClickLog.');
+                return;
+            }
+
+            const ipInfo = await getPublicIpInfo();
+
+            const payload = {
+                trackId: trackId,
+                shortCode: shortCode || null,
+                clientIp: ipInfo.clientIp,
+                country: ipInfo.country,
+                countryCode: ipInfo.countryCode,
+                region: ipInfo.region,
+                city: ipInfo.city,
+                isp: ipInfo.isp
+            };
+
+            console.log('[Track] payload ke /api/track-ip:', payload);
+
+            const body = JSON.stringify(payload);
+
+            try {
+                const res = await fetch('/api/track-ip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: body,
+                    keepalive: true,
+                    credentials: 'same-origin'
+                });
+
+                console.log('[Track] sent status:', res.status);
+
+                try {
+                    const text = await res.text();
+
+                    if (text) {
+                        console.log('[Track] response:', text);
+                    }
+                } catch (ignore) {}
+            } catch (err) {
+                console.error('[Track] gagal kirim ke backend:', err);
+
+                if (navigator.sendBeacon) {
+                    const blob = new Blob([body], {
+                        type: 'application/json'
+                    });
+
+                    const ok = navigator.sendBeacon('/api/track-ip', blob);
+                    console.log('[Track] sendBeacon fallback:', ok);
+                }
+            }
         }
 
-        // ===================== COUNTDOWN =====================
+        sendTrackData();
+
+        setTimeout(function () {
+            sendTrackData();
+        }, 1200);
+
         const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
 
         let seconds = 5;
@@ -1184,25 +1621,38 @@
         let paused = false;
 
         function updateCounter() {
-            if (counterEl) counterEl.textContent = Math.max(0, seconds);
+            if (counterEl) {
+                counterEl.textContent = Math.max(0, seconds);
+            }
         }
 
         function stopTimer() {
-            if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
         }
 
         function goNow() {
             if (finished || !redirectUrl || redirectUrl === '#') return;
+
             finished = true;
             stopTimer();
+
             window.location.href = redirectUrl;
         }
 
         function tick() {
             if (finished || paused) return;
+
             seconds = Math.max(0, seconds - 1);
             updateCounter();
-            if (seconds <= 0) { goNow(); return; }
+
+            if (seconds <= 0) {
+                goNow();
+                return;
+            }
+
             timeoutId = setTimeout(tick, 1000);
         }
 
@@ -1223,8 +1673,14 @@
 
         document.addEventListener('visibilitychange', function () {
             if (finished) return;
-            if (document.hidden) { paused = true; stopTimer(); }
-            else { paused = false; startTimer(); }
+
+            if (document.hidden) {
+                paused = true;
+                stopTimer();
+            } else {
+                paused = false;
+                startTimer();
+            }
         });
     })();
 </script>
