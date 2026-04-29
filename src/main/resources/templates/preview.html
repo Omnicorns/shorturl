@@ -1072,12 +1072,24 @@
 
     /* ============================================================
      *  TRACK + COUNTDOWN
+     *  FIX: tracking selalu jalan, tidak peduli trackId kosong/null.
+     *  Pakai fetch keepalive (lebih reliable dari sendBeacon untuk JSON).
      * ============================================================ */
     (function () {
         const previewCard = document.getElementById('previewCard');
-        const originalUrl = previewCard ? (previewCard.dataset.originalUrl || '').trim() : '';
-        const shortCode = previewCard ? (previewCard.dataset.shortCode || '').trim() : '';
-        const trackId = previewCard ? (previewCard.dataset.trackId || '').trim() : '';
+
+        function readData(name) {
+            if (!previewCard) return '';
+            const v = previewCard.dataset[name];
+            // Thymeleaf bisa render string "null" — perlakukan sebagai kosong
+            if (!v || v === 'null' || v === 'undefined') return '';
+            return String(v).trim();
+        }
+
+        const originalUrl = readData('originalUrl');
+        const shortCode = readData('shortCode');
+        const trackId = readData('trackId');
+
         const fullUrl = document.getElementById('fullUrl');
         const continueBtn = document.getElementById('continueBtn');
         const counterEl = document.getElementById('counter');
@@ -1086,16 +1098,24 @@
             fullUrl.textContent = originalUrl || '-';
         }
 
-        let ipSent = false;
+        // Debug log — lihat di DevTools console biar tau apa yang terkirim
+        console.log('[Track] init', { trackId, shortCode, originalUrl });
+
+        let trackSent = false;
 
         function sendTrackData() {
-            if (ipSent || !trackId) return;
-            ipSent = true;
+            // ❌ Sebelumnya: if (ipSent || !trackId) return;
+            //    Akibatnya, kalau trackId kosong, fetch tidak pernah dipanggil.
+            //
+            // ✅ Sekarang: cuma cegah double-send. trackId boleh kosong —
+            //    biar backend yang putuskan, bukan FE.
+            if (trackSent) return;
+            trackSent = true;
 
             const payload = {
-                trackId: trackId,
-                shortCode: shortCode,
-                originalUrl: originalUrl,
+                trackId: trackId || null,
+                shortCode: shortCode || null,
+                originalUrl: originalUrl || null,
                 page: window.location.href,
                 userAgent: navigator.userAgent || null,
                 language: navigator.language || null,
@@ -1109,21 +1129,53 @@
 
             const body = JSON.stringify(payload);
 
-            if (navigator.sendBeacon) {
-                const blob = new Blob([body], { type: 'application/json' });
-                navigator.sendBeacon('/api/track-ip', blob);
-            } else {
+            // Pakai fetch keepalive — request tetap jalan walaupun halaman ditutup,
+            // dan content-type application/json bisa diterima Spring Boot tanpa preflight aneh.
+            // Fallback ke sendBeacon kalau fetch keepalive tidak supported.
+            const supportsKeepalive = (function () {
+                try { return 'keepalive' in new Request(''); }
+                catch (e) { return false; }
+            })();
+
+            if (supportsKeepalive) {
                 fetch('/api/track-ip', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: body,
-                    keepalive: true
+                    keepalive: true,
+                    credentials: 'same-origin'
+                })
+                .then(function (res) {
+                    console.log('[Track] sent, status:', res.status);
+                })
+                .catch(function (err) {
+                    console.error('[Track] failed:', err);
+                });
+            } else if (navigator.sendBeacon) {
+                // Fallback — pakai text/plain biar tidak trigger CORS preflight
+                const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
+                const ok = navigator.sendBeacon('/api/track-ip', blob);
+                console.log('[Track] sendBeacon:', ok);
+            } else {
+                // Fallback paling akhir — synchronous-ish
+                fetch('/api/track-ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body
                 }).catch(function () {});
             }
         }
 
-        sendTrackData();
+        // Kirim setelah halaman benar-benar siap (lebih aman dari race condition)
+        if (document.readyState === 'complete') {
+            sendTrackData();
+        } else {
+            window.addEventListener('load', sendTrackData, { once: true });
+            // Backup: pasti kirim setelah 1 detik kalau load event tidak fire
+            setTimeout(sendTrackData, 1000);
+        }
 
+        // ===================== COUNTDOWN =====================
         const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
 
         let seconds = 5;
