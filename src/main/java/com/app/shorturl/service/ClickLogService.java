@@ -15,9 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
+import java.util.Set;
 
 // ═══════════════════════════════════════════════════════════════════
 //  ClickLogService.java — TAMBAHAN deteksi source dari Referer
+// ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+//  ClickLogService.java — DETEKSI QR via query param ?src=qr
+//  + tetap fallback ke Referer untuk klik biasa
 // ═══════════════════════════════════════════════════════════════════
 
 @Service
@@ -44,13 +50,19 @@ public class ClickLogService {
         private String ipAddress;
         private String userAgent;
         private String referer;
+        private String srcParam;   // ← BARU: nilai query param ?src=...
     }
 
+    /**
+     * Baca snapshot dari request — sekarang juga ambil query param "src"
+     * untuk deteksi QR / source manual lainnya.
+     */
     public static RequestSnapshot snapshot(HttpServletRequest request) {
         return RequestSnapshot.builder()
                 .ipAddress(extractClientIp(request))
                 .userAgent(request.getHeader("User-Agent"))
                 .referer(request.getHeader("Referer"))
+                .srcParam(request.getParameter("src"))   // ← BARU
                 .build();
     }
 
@@ -65,8 +77,8 @@ public class ClickLogService {
                 .ipAddress(ip)
                 .userAgent(truncate(userAgent, 500))
                 .referer(truncate(referer, 500))
-                // ─── BARU: kategorikan source dari referer + UA ───
-                .clickSource(detectClickSource(referer, userAgent));
+                // ─── Prioritas: query param > UA in-app > referer domain ───
+                .clickSource(detectClickSource(snap.getSrcParam(), referer, userAgent));
 
         if (userAgent != null && !userAgent.isBlank()) {
             parseUserAgent(userAgent, builder);
@@ -105,42 +117,49 @@ public class ClickLogService {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    //  BARU: Deteksi source klik dari Referer + User-Agent
+    //  Deteksi source dengan PRIORITAS:
+    //  1. ?src=qr / ?src=poster / dll  → eksplisit, paling akurat
+    //  2. User-Agent in-app browser    → FB/IG/WA app
+    //  3. Referer domain               → google/facebook/etc
+    //  4. Default                       → DIRECT atau REFERRAL
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * Kategorikan asal klik berdasarkan Referer header dan User-Agent.
-     *
-     * Catatan penting soal "QR":
-     *   HTTP Referer TIDAK BISA membedakan klik dari QR scan vs ketik
-     *   manual vs aplikasi tertentu — karena scan QR memang membuka URL
-     *   tanpa referer (sama seperti orang ngetik URL).
-     *
-     *   Yang bisa kita lakukan: kalau Referer KOSONG tapi User-Agent
-     *   menunjukkan in-app browser (FBAV/Instagram/Line) atau bot scanner
-     *   tertentu, kita bisa kasih label spesifik. Selain itu dilabel
-     *   "DIRECT" — yang artinya: ketik manual, bookmark, atau scan QR.
-     *
-     * Output (string singkat, max 30 char):
-     *   GOOGLE / BING / DUCKDUCKGO  - dari search engine
-     *   FACEBOOK / INSTAGRAM / TWITTER / TIKTOK / LINKEDIN / YOUTUBE  - sosmed
-     *   WHATSAPP / TELEGRAM / LINE / MESSENGER  - chat app
-     *   EMAIL  - dari client email (gmail/outlook web)
-     *   INTERNAL  - dari halaman lain di domain sendiri
-     *   REFERRAL  - dari website lain (ada referer tapi gak match kategori)
-     *   DIRECT  - tidak ada referer (ketik manual / QR scan / app native)
+     * Whitelist nilai ?src=... yang valid. Mencegah orang iseng append
+     * ?src=hack untuk pollute statistik.
      */
-    public static String detectClickSource(String referer, String userAgent) {
-        // ─── 1. Tidak ada referer ────────────────────────────────
-        if (referer == null || referer.isBlank()) {
-            // Coba deteksi in-app browser dari UA — ini yang paling akurat
-            // saat referer kosong.
-            String fromUa = detectFromUserAgent(userAgent);
-            if (fromUa != null) return fromUa;
-            return "DIRECT"; // ketik URL, bookmark, atau scan QR
+    private static final Set<String> ALLOWED_SRC = Set.of(
+            "qr",         // QR code di poster/spanduk/brosur
+            "poster",     // generic poster
+            "email",      // dari email campaign
+            "sms",        // dari SMS broadcast
+            "wa",         // dari WhatsApp broadcast (manual)
+            "ig",         // dari Instagram bio
+            "fb",         // dari Facebook post
+            "tiktok",     // dari TikTok bio
+            "ads",        // dari iklan berbayar
+            "print"       // dari media cetak
+    );
+
+    public static String detectClickSource(String srcParam, String referer, String userAgent) {
+
+        // ─── 1. Query param eksplisit (paling akurat) ────────────
+        if (srcParam != null && !srcParam.isBlank()) {
+            String src = srcParam.trim().toLowerCase();
+            if (ALLOWED_SRC.contains(src)) {
+                return src.toUpperCase();      // "qr" → "QR"
+            }
+            // Kalau nilainya gak di whitelist, abaikan & lanjut deteksi normal
         }
 
-        // ─── 2. Parse referer ────────────────────────────────────
+        // ─── 2. Tidak ada referer → cek UA in-app ────────────────
+        if (referer == null || referer.isBlank()) {
+            String fromUa = detectFromUserAgent(userAgent);
+            if (fromUa != null) return fromUa;
+            return "DIRECT"; // ketik manual / bookmark / scan QR tanpa marker
+        }
+
+        // ─── 3. Parse referer ────────────────────────────────────
         String host;
         try {
             host = new java.net.URI(referer).getHost();
@@ -152,7 +171,6 @@ public class ClickLogService {
             return "REFERRAL";
         }
 
-        // ─── 3. Match domain ke kategori ─────────────────────────
         // Search engines
         if (host.contains("google."))      return "GOOGLE";
         if (host.contains("bing.com"))     return "BING";
@@ -186,25 +204,18 @@ public class ClickLogService {
         if (host.contains("slack."))       return "SLACK";
         if (host.contains("discord."))     return "DISCORD";
 
-        // Email
+        // Email web
         if (host.contains("mail.google") || host.contains("gmail.")
                 || host.contains("outlook.") || host.contains("mail.yahoo")
                 || host.contains("mail.live"))
             return "EMAIL";
 
-        // Internal — kalau referer dari domain sendiri.
-        // Ganti "surl.co.id" sesuai domain kamu.
+        // Internal — ganti "surl.co.id" dengan domain Anda
         if (host.endsWith("surl.co.id"))   return "INTERNAL";
 
-        // Default: dari website lain
         return "REFERRAL";
     }
 
-    /**
-     * Deteksi in-app browser dari User-Agent.
-     * Berguna saat Referer kosong tapi user buka link dari dalam aplikasi
-     * (FB/IG/Line app pakai webview yang gak kirim referer).
-     */
     private static String detectFromUserAgent(String ua) {
         if (ua == null || ua.isBlank()) return null;
         String s = ua.toLowerCase();

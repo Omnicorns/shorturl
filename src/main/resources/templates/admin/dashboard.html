@@ -1733,6 +1733,54 @@
             return h;
         }
 
+         function withQrMarker(url) {
+        if (!url) return url;
+        try {
+            const u = new URL(url, location.origin);
+            u.searchParams.set('src', 'qr');
+            return u.toString();
+        } catch {
+            return url + (url.includes('?') ? '&' : '?') + 'src=qr';
+        }
+    }
+ 
+    /* ═══ Source label — tampilkan kategori klik ═══ */
+    function sourceLabel(s) {
+        if (!s) return null;
+        const map = {
+            QR:         { icon: '📱', label: 'QR Code',       color: '#7c2d0a' },
+            POSTER:     { icon: '🪧', label: 'Poster',         color: '#7c2d0a' },
+            EMAIL:      { icon: '✉️', label: 'Email',          color: '#075985' },
+            SMS:        { icon: '💬', label: 'SMS',            color: '#075985' },
+            ADS:        { icon: '💰', label: 'Iklan',          color: '#a16207' },
+            PRINT:      { icon: '🖨️', label: 'Cetak',          color: '#7c2d0a' },
+            GOOGLE:     { icon: '🔍', label: 'Google',         color: '#1a73e8' },
+            BING:       { icon: '🔍', label: 'Bing',           color: '#0078d4' },
+            DUCKDUCKGO: { icon: '🦆', label: 'DuckDuckGo',     color: '#de5833' },
+            YAHOO:      { icon: '🔍', label: 'Yahoo',          color: '#6001d2' },
+            YANDEX:     { icon: '🔍', label: 'Yandex',         color: '#ff0000' },
+            FACEBOOK:   { icon: '📘', label: 'Facebook',       color: '#1877f2' },
+            INSTAGRAM:  { icon: '📷', label: 'Instagram',      color: '#e4405f' },
+            TWITTER:    { icon: '🐦', label: 'Twitter / X',    color: '#1da1f2' },
+            TIKTOK:     { icon: '🎵', label: 'TikTok',         color: '#000000' },
+            LINKEDIN:   { icon: '💼', label: 'LinkedIn',       color: '#0a66c2' },
+            YOUTUBE:    { icon: '📺', label: 'YouTube',        color: '#ff0000' },
+            REDDIT:     { icon: '🤖', label: 'Reddit',         color: '#ff4500' },
+            PINTEREST:  { icon: '📌', label: 'Pinterest',      color: '#bd081c' },
+            WHATSAPP:   { icon: '💚', label: 'WhatsApp',       color: '#25d366' },
+            TELEGRAM:   { icon: '✈️', label: 'Telegram',       color: '#0088cc' },
+            LINE:       { icon: '💚', label: 'Line',           color: '#06c755' },
+            MESSENGER:  { icon: '💬', label: 'Messenger',      color: '#0084ff' },
+            SLACK:      { icon: '💬', label: 'Slack',          color: '#4a154b' },
+            DISCORD:    { icon: '🎮', label: 'Discord',        color: '#5865f2' },
+            WECHAT:     { icon: '💬', label: 'WeChat',         color: '#07c160' },
+            INTERNAL:   { icon: '🏠', label: 'Internal',       color: '#166534' },
+            REFERRAL:   { icon: '🔗', label: 'Referral',       color: '#3d3a33' },
+            DIRECT:     { icon: '⌨️', label: 'Direct',         color: '#85817a' }
+        };
+        return map[String(s).toUpperCase()] || { icon: '🔗', label: s, color: '#3d3a33' };
+    }
+
         /* ═══ Log helpers ═══ */
         function parseUA(ua) {
             if (!ua) return { browser: '', os: '', device: '', icon: '🌐' };
@@ -2003,31 +2051,33 @@
         const qrLoading = $('qrLoading');
         let _qrHighRes = '', _qrCurName = 'qr';
 
-        async function openQrModal({ url, title, filename }) {
-            qrUrlInput.value = url;
-            qrSubtitle.textContent = title || url;
-            _qrCurName = (filename || title || 'qr').replace(/[^\w\-]+/g, '_').replace(/\.pdf$/i, '');
-            qrLoading.textContent = 'Generating QR…';
-            qrLoading.style.display = 'block';
-            qrCanvas.style.opacity = '.3';
-            qrBackdrop.classList.add('show');
-            try {
-                const big = await renderQr(url, QR_EXPORT_SIZE);
-                await drawLogo(big);
-                _qrHighRes = big.toDataURL('image/png');
-                qrCanvas.width = QR_PREVIEW_SIZE;
-                qrCanvas.height = QR_PREVIEW_SIZE;
-                const ctx = qrCanvas.getContext('2d', { alpha: false });
-                ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
-                ctx.imageSmoothingQuality = 'high';
-                ctx.drawImage(big, 0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
-                qrCanvas.style.opacity = '1';
-                qrLoading.style.display = 'none';
-            } catch (e) {
-                qrLoading.textContent = 'Gagal generate QR';
-                toast('Gagal generate: ' + e.message, 'error');
-            }
+         async function openQrModal({ url, title, filename }) {
+        const urlForQr = withQrMarker(url);          // ← URL yang di-encode ke QR (ada ?src=qr)
+        qrUrlInput.value = url;                       // ← URL polos buat copy/preview
+        qrSubtitle.textContent = title || url;
+        _qrCurName = (filename || title || 'qr').replace(/[^\w\-]+/g, '_').replace(/\.pdf$/i, '');
+        qrLoading.textContent = 'Generating QR…';
+        qrLoading.style.display = 'block';
+        qrCanvas.style.opacity = '.3';
+        qrBackdrop.classList.add('show');
+        try {
+            const big = await renderQr(urlForQr, QR_EXPORT_SIZE);   // ← pakai urlForQr
+            await drawLogo(big);
+            _qrHighRes = big.toDataURL('image/png');
+            qrCanvas.width = QR_PREVIEW_SIZE;
+            qrCanvas.height = QR_PREVIEW_SIZE;
+            const ctx = qrCanvas.getContext('2d', { alpha: false });
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(big, 0, 0, QR_PREVIEW_SIZE, QR_PREVIEW_SIZE);
+            qrCanvas.style.opacity = '1';
+            qrLoading.style.display = 'none';
+        } catch (e) {
+            qrLoading.textContent = 'Gagal generate QR';
+            toast('Gagal generate: ' + e.message, 'error');
         }
+    }
+
         function closeQrModal() { qrBackdrop.classList.remove('show'); }
 
         qrBackdrop.addEventListener('click', e => { if (e.target === qrBackdrop) closeQrModal(); });
@@ -2138,23 +2188,24 @@
                 }
 
                 const parsed = items.map(l => {
-                    const raw = l.createdAt || l.accessedAt;
-                    const d = raw ? new Date(raw) : null;
-                    const ipInfo = normalizeIp(l.ipAddress || l.ip);
-                    const uaInfo = parseUA(l.userAgent || '');
-                    return {
-                        date: d && !isNaN(d.getTime()) ? d : null,
-                        raw: raw,
-                        ip: ipInfo,
-                        ua: uaInfo,
-                        userAgent: l.userAgent || '',
-                        referer: l.referer || '',
-                        city: l.city, region: l.region, country: l.country,
-                        isp: l.isp,
-                        browser: l.browser, browserVersion: l.browserVersion,
-                        deviceType: l.deviceType, operatingSystem: l.operatingSystem
-                    };
-                });
+                const raw = l.createdAt || l.accessedAt;
+                const d = raw ? new Date(raw) : null;
+                const ipInfo = normalizeIp(l.ipAddress || l.ip);
+                const uaInfo = parseUA(l.userAgent || '');
+                return {
+                    date: d && !isNaN(d.getTime()) ? d : null,
+                    raw: raw,
+                    ip: ipInfo,
+                    ua: uaInfo,
+                    userAgent: l.userAgent || '',
+                    referer: l.referer || '',
+                    city: l.city, region: l.region, country: l.country,
+                    isp: l.isp,
+                    browser: l.browser, browserVersion: l.browserVersion,
+                    deviceType: l.deviceType, operatingSystem: l.operatingSystem,
+                    clickSource: l.clickSource || null    // ← BARU
+                };
+            });
 
                 const grouped = [];
                 for (const p of parsed) {
@@ -2226,11 +2277,17 @@
                                     <span class="log-ip-pill ${g.ip.isLocal ? 'local' : ''}" title="${escapeHtml(g.ip.full)}">${escapeHtml(g.ip.display)}</span>
                                     ${loc ? `<span class="log-loc">📍 ${escapeHtml(loc)}${g.isp ? ` · ${escapeHtml(g.isp)}` : ''}</span>` : ''}
                                 </div>
-                                ${(browserLabel || osLabel || deviceLabel) ? `<div class="log-meta-line">
-                                    ${browserLabel ? `<span class="log-meta-chip"><span class="log-ico">${g.ua.icon}</span>${escapeHtml(browserLabel)}</span>` : ''}
-                                    ${osLabel ? `<span class="log-meta-chip"><span class="log-ico">💻</span>${escapeHtml(osLabel)}</span>` : ''}
-                                    ${deviceLabel ? `<span class="log-meta-chip"><span class="log-ico">📱</span>${escapeHtml(deviceLabel)}</span>` : ''}
-                                </div>` : ''}
+                                ${(g.clickSource || browserLabel || osLabel || deviceLabel) ? `<div class="log-meta-line">
+                                ${g.clickSource ? (() => {
+                                    const sl = sourceLabel(g.clickSource);
+                                    return `<span class="log-meta-chip" style="background:${sl.color}1a;color:${sl.color};padding:2px 8px;border-radius:100px;font-weight:600">
+                                        <span class="log-ico">${sl.icon}</span>${escapeHtml(sl.label)}
+                                    </span>`;
+                                })() : ''}
+                                ${browserLabel ? `<span class="log-meta-chip"><span class="log-ico">${g.ua.icon}</span>${escapeHtml(browserLabel)}</span>` : ''}
+                                ${osLabel ? `<span class="log-meta-chip"><span class="log-ico">💻</span>${escapeHtml(osLabel)}</span>` : ''}
+                                ${deviceLabel ? `<span class="log-meta-chip"><span class="log-ico">📱</span>${escapeHtml(deviceLabel)}</span>` : ''}
+                            </div>` : ''}
                                 ${g.referer ? `<div class="log-ref" title="${escapeHtml(g.referer)}">${escapeHtml(g.referer)}</div>` : ''}
                                 ${g.userAgent ? `
                                     <button type="button" class="log-detail-toggle" data-ua-target="${uaId}">Lihat UA mentah</button>
@@ -2277,6 +2334,7 @@
             return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
         }
 
+
         function logsToRows(logs, shortCode) {
             return logs.map((l, idx) => {
                 const raw = l.createdAt || l.accessedAt;
@@ -2286,6 +2344,7 @@
                     'No':               idx + 1,
                     'Short Code':       shortCode || '',
                     'Tanggal & Waktu':  d && !isNaN(d.getTime()) ? formatExcelDate(d) : (raw || '-'),
+                    'Source':           l.clickSource || '',
                     'IP Address':       l.ipAddress || l.ip || '',
                     'Country':          l.country || '',
                     'Country Code':     l.countryCode || '',
@@ -2631,7 +2690,7 @@
                     }
                     const safe = fname.replace(/[^\w\-]+/g, '_');
                     updProgress(done, total, safe);
-                    const viewerUrl = toAbsoluteUrl('/catalogue?id=' + id);
+                   const viewerUrl = withQrMarker(toAbsoluteUrl('/catalogue?id=' + id));
                     let blob = null;
                     for (let attempt = 1; attempt <= 2; attempt++) {
                         try { blob = await generateQrBlob(viewerUrl); break; }
@@ -2769,7 +2828,7 @@
                     updProgress(done, total, finalName);
                     let blob = null;
                     for (let attempt = 1; attempt <= 2; attempt++) {
-                        try { blob = await generateQrBlob(meta.url); break; }
+                        try { blob = await generateQrBlob(withQrMarker(meta.url)); break;}
                         catch (e) { if (attempt === 2) throw e; await new Promise(r => setTimeout(r, 200)); }
                     }
                     if (blob) folder.file(`qr_${finalName}.png`, blob);
