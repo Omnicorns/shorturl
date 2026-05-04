@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,8 @@ public class ShortUrlService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final ShortUrlRepository repository;
+    private static final Pattern URL_PATTERN  = Pattern.compile("^https?://.+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CODE_PATTERN = Pattern.compile("^[a-zA-Z0-9_\\-]{3,16}$");
 
     @Transactional
     public ShortUrl create(String originalUrl, String title, String customCode) {
@@ -128,5 +131,59 @@ public class ShortUrlService {
             throw new IllegalArgumentException("URL terlalu panjang (max 2048)");
         }
         return u;
+    }
+
+    @Transactional
+    public ShortUrl updateShortUrl(Long id,
+                                   String originalUrl,
+                                   String title,
+                                   String customCode) {
+
+        ShortUrl url = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Short URL dengan ID " + id + " tidak ditemukan."));
+
+        // ─── Validasi & set originalUrl ───────────────────────────
+        if (originalUrl == null || originalUrl.isBlank()) {
+            throw new IllegalArgumentException("URL Asli tidak boleh kosong.");
+        }
+        String urlTrimmed = originalUrl.trim();
+        if (urlTrimmed.length() > 2048) {
+            throw new IllegalArgumentException("URL terlalu panjang (maks 2048 karakter).");
+        }
+        if (!URL_PATTERN.matcher(urlTrimmed).matches()) {
+            throw new IllegalArgumentException("URL harus diawali http:// atau https://");
+        }
+        url.setOriginalUrl(urlTrimmed);
+
+        // ─── Set title ────────────────────────────────────────────
+        if (title != null && title.length() > 255) {
+            throw new IllegalArgumentException("Judul terlalu panjang (maks 255 karakter).");
+        }
+        url.setTitle(title);
+
+        // ─── Validasi & set customCode (= shortCode) ─────────────
+        if (customCode != null && !customCode.isBlank()) {
+            String code = customCode.trim();
+
+            if (!CODE_PATTERN.matcher(code).matches()) {
+                throw new IllegalArgumentException(
+                        "Custom Code harus 3-16 karakter dan hanya boleh huruf, angka, - dan _");
+            }
+
+            // Kalau code-nya beda dari yg lama, cek bentrok dgn record lain
+            if (!code.equals(url.getShortCode())) {
+                repository.findByShortCode(code)
+                        .filter(other -> !other.getId().equals(id))
+                        .ifPresent(other -> {
+                            throw new IllegalArgumentException(
+                                    "Code '" + code + "' sudah dipakai short URL lain.");
+                        });
+                url.setShortCode(code);
+            }
+        }
+        // Catatan: kalau customCode kosong, shortCode lama dipertahankan.
+
+        return repository.save(url);
     }
 }

@@ -114,4 +114,34 @@ public class AdminController {
         }
         return sb.toString();
     }
+
+    @PostMapping("/{id}/update")
+    public String updateShortUrl(@PathVariable Long id,
+                                 @RequestParam String originalUrl,
+                                 @RequestParam(required = false) String title,
+                                 @RequestParam(required = false) String customCode,
+                                 RedirectAttributes ra) {
+        try {
+            service.updateShortUrl(
+                    id,
+                    originalUrl,
+                    blankToNull(title),
+                    blankToNull(customCode)
+            );
+            ra.addFlashAttribute("success", "Short URL berhasil diperbarui.");
+        } catch (IllegalArgumentException e) {
+            // Validasi gagal → redirect balik ke dashboard dengan pesan error
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Gagal memperbarui: " + e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
+    /** Helper: trim string, return null kalau hasil kosong. */
+    private String blankToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
+    }
 }
