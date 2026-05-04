@@ -68,6 +68,9 @@ public class ClickLog {
     @Column(length = 80)
     private String isp;
 
+    @Column(name = "click_source", length = 30)
+    private String clickSource;
+
     @Column(length = 500)
     private String referer;
 

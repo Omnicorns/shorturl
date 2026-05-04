@@ -16,6 +16,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
+// ═══════════════════════════════════════════════════════════════════
+//  ClickLogService.java — TAMBAHAN deteksi source dari Referer
+// ═══════════════════════════════════════════════════════════════════
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -50,10 +54,6 @@ public class ClickLogService {
                 .build();
     }
 
-    /**
-     * Build ClickLog dari snapshot — extract logic supaya bisa dipakai
-     * baik dari method async maupun synchronous.
-     */
     private ClickLog buildClickLog(Long shortUrlId, String shortCode, RequestSnapshot snap) {
         String ip = snap.getIpAddress();
         String userAgent = snap.getUserAgent();
@@ -64,7 +64,9 @@ public class ClickLogService {
                 .shortCode(shortCode)
                 .ipAddress(ip)
                 .userAgent(truncate(userAgent, 500))
-                .referer(truncate(referer, 500));
+                .referer(truncate(referer, 500))
+                // ─── BARU: kategorikan source dari referer + UA ───
+                .clickSource(detectClickSource(referer, userAgent));
 
         if (userAgent != null && !userAgent.isBlank()) {
             parseUserAgent(userAgent, builder);
@@ -77,9 +79,6 @@ public class ClickLogService {
         return builder.build();
     }
 
-    /**
-     * Async version — untuk redirect biasa, tidak butuh ID kembali.
-     */
     @Async("logExecutor")
     public void logClick(Long shortUrlId, String shortCode, RequestSnapshot snap) {
         try {
@@ -89,12 +88,6 @@ public class ClickLogService {
         }
     }
 
-    /**
-     * Synchronous version — untuk halaman preview, di mana kita butuh ID-nya
-     * supaya bisa di-update belakangan dari sisi browser (IP tracking).
-     *
-     * Return null kalau gagal save.
-     */
     public Long logClickAndReturnId(Long shortUrlId, String shortCode, RequestSnapshot snap) {
         try {
             ClickLog saved = clickLogRepository.save(buildClickLog(shortUrlId, shortCode, snap));
@@ -110,6 +103,128 @@ public class ClickLogService {
         RequestSnapshot snap = snapshot(request);
         logClick(shortUrlId, shortCode, snap);
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  BARU: Deteksi source klik dari Referer + User-Agent
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Kategorikan asal klik berdasarkan Referer header dan User-Agent.
+     *
+     * Catatan penting soal "QR":
+     *   HTTP Referer TIDAK BISA membedakan klik dari QR scan vs ketik
+     *   manual vs aplikasi tertentu — karena scan QR memang membuka URL
+     *   tanpa referer (sama seperti orang ngetik URL).
+     *
+     *   Yang bisa kita lakukan: kalau Referer KOSONG tapi User-Agent
+     *   menunjukkan in-app browser (FBAV/Instagram/Line) atau bot scanner
+     *   tertentu, kita bisa kasih label spesifik. Selain itu dilabel
+     *   "DIRECT" — yang artinya: ketik manual, bookmark, atau scan QR.
+     *
+     * Output (string singkat, max 30 char):
+     *   GOOGLE / BING / DUCKDUCKGO  - dari search engine
+     *   FACEBOOK / INSTAGRAM / TWITTER / TIKTOK / LINKEDIN / YOUTUBE  - sosmed
+     *   WHATSAPP / TELEGRAM / LINE / MESSENGER  - chat app
+     *   EMAIL  - dari client email (gmail/outlook web)
+     *   INTERNAL  - dari halaman lain di domain sendiri
+     *   REFERRAL  - dari website lain (ada referer tapi gak match kategori)
+     *   DIRECT  - tidak ada referer (ketik manual / QR scan / app native)
+     */
+    public static String detectClickSource(String referer, String userAgent) {
+        // ─── 1. Tidak ada referer ────────────────────────────────
+        if (referer == null || referer.isBlank()) {
+            // Coba deteksi in-app browser dari UA — ini yang paling akurat
+            // saat referer kosong.
+            String fromUa = detectFromUserAgent(userAgent);
+            if (fromUa != null) return fromUa;
+            return "DIRECT"; // ketik URL, bookmark, atau scan QR
+        }
+
+        // ─── 2. Parse referer ────────────────────────────────────
+        String host;
+        try {
+            host = new java.net.URI(referer).getHost();
+            if (host == null) return "REFERRAL";
+            host = host.toLowerCase();
+            if (host.startsWith("www.")) host = host.substring(4);
+            if (host.startsWith("m."))   host = host.substring(2);
+        } catch (Exception e) {
+            return "REFERRAL";
+        }
+
+        // ─── 3. Match domain ke kategori ─────────────────────────
+        // Search engines
+        if (host.contains("google."))      return "GOOGLE";
+        if (host.contains("bing.com"))     return "BING";
+        if (host.contains("duckduckgo."))  return "DUCKDUCKGO";
+        if (host.contains("yahoo."))       return "YAHOO";
+        if (host.contains("yandex."))      return "YANDEX";
+
+        // Social media
+        if (host.contains("facebook.") || host.equals("fb.com") || host.contains("fb.me"))
+            return "FACEBOOK";
+        if (host.contains("instagram."))   return "INSTAGRAM";
+        if (host.contains("twitter.") || host.equals("x.com") || host.equals("t.co"))
+            return "TWITTER";
+        if (host.contains("tiktok."))      return "TIKTOK";
+        if (host.contains("linkedin.") || host.equals("lnkd.in"))
+            return "LINKEDIN";
+        if (host.contains("youtube.") || host.equals("youtu.be"))
+            return "YOUTUBE";
+        if (host.contains("reddit."))      return "REDDIT";
+        if (host.contains("pinterest."))   return "PINTEREST";
+
+        // Chat / messenger
+        if (host.contains("whatsapp.") || host.equals("wa.me") || host.contains("chat.whatsapp"))
+            return "WHATSAPP";
+        if (host.contains("telegram.") || host.equals("t.me"))
+            return "TELEGRAM";
+        if (host.contains("line.me") || host.contains("line.naver"))
+            return "LINE";
+        if (host.contains("messenger.") || host.equals("m.me"))
+            return "MESSENGER";
+        if (host.contains("slack."))       return "SLACK";
+        if (host.contains("discord."))     return "DISCORD";
+
+        // Email
+        if (host.contains("mail.google") || host.contains("gmail.")
+                || host.contains("outlook.") || host.contains("mail.yahoo")
+                || host.contains("mail.live"))
+            return "EMAIL";
+
+        // Internal — kalau referer dari domain sendiri.
+        // Ganti "surl.co.id" sesuai domain kamu.
+        if (host.endsWith("surl.co.id"))   return "INTERNAL";
+
+        // Default: dari website lain
+        return "REFERRAL";
+    }
+
+    /**
+     * Deteksi in-app browser dari User-Agent.
+     * Berguna saat Referer kosong tapi user buka link dari dalam aplikasi
+     * (FB/IG/Line app pakai webview yang gak kirim referer).
+     */
+    private static String detectFromUserAgent(String ua) {
+        if (ua == null || ua.isBlank()) return null;
+        String s = ua.toLowerCase();
+
+        if (s.contains("fbav") || s.contains("fban"))  return "FACEBOOK";
+        if (s.contains("instagram"))                    return "INSTAGRAM";
+        if (s.contains("line/"))                        return "LINE";
+        if (s.contains("twitter"))                      return "TWITTER";
+        if (s.contains("tiktok"))                       return "TIKTOK";
+        if (s.contains("whatsapp"))                     return "WHATSAPP";
+        if (s.contains("telegram"))                     return "TELEGRAM";
+        if (s.contains("linkedin"))                     return "LINKEDIN";
+        if (s.contains("micromessenger"))               return "WECHAT";
+
+        return null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Sisanya = kode lama, tidak berubah
+    // ═══════════════════════════════════════════════════════════════
 
     private void parseUserAgent(String ua, ClickLog.ClickLogBuilder builder) {
         try {
