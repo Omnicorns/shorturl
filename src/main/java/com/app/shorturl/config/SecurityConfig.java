@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -19,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.List;
@@ -82,9 +84,10 @@ public class SecurityConfig {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
-        // false → kalau username tidak ditemukan di in-memory,
-        // ProviderManager akan lanjut coba provider berikutnya (AD)
-        provider.setHideUserNotFoundExceptions(false);
+        // Biarkan default (hideUserNotFoundExceptions=true).
+        // Saat username tidak ada di in-memory, provider lempar
+        // BadCredentialsException → ProviderManager swallow & lanjut ke AD,
+        // tanpa men-trigger event LOGIN_FAILURE dobel.
         return provider;
     }
 
@@ -120,12 +123,19 @@ public class SecurityConfig {
     // ============================================================
     // AuthenticationManager — gabungkan kedua provider
     //   urutan: lokal dulu, baru AD
+    //
+    //   PENTING: inject AuthenticationEventPublisher supaya event
+    //   AuthenticationSuccessEvent / AbstractAuthenticationFailureEvent
+    //   ke-publish (default ProviderManager pakai NullEventPublisher
+    //   yang nggak fire event apapun → audit listener nggak jalan).
     // ============================================================
     @Bean
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider localAuthProvider,
-            ActiveDirectoryLdapAuthenticationProvider activeDirectoryProvider) {
+            ActiveDirectoryLdapAuthenticationProvider activeDirectoryProvider,
+            AuthenticationEventPublisher eventPublisher) {
         ProviderManager pm = new ProviderManager(localAuthProvider, activeDirectoryProvider);
+        pm.setAuthenticationEventPublisher(eventPublisher);
         pm.setEraseCredentialsAfterAuthentication(true);
         return pm;
     }
@@ -157,7 +167,8 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain webFilterChain(HttpSecurity http,
-                                              AuthenticationManager authenticationManager) throws Exception {
+                                              AuthenticationManager authenticationManager,
+                                              LogoutSuccessHandler logoutSuccessHandler) throws Exception {
         http
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
@@ -177,7 +188,7 @@ public class SecurityConfig {
                 )
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessHandler(logoutSuccessHandler)   // ⬅ catat audit, lalu redirect
                         .permitAll()
                 )
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
