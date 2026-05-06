@@ -1226,180 +1226,216 @@
 
 <script th:inline="javascript">
     (function trackAndCountdown() {
-        const previewCard = document.getElementById('previewCard');
+      const previewCard = document.getElementById('previewCard');
 
-        function readData(name) {
-            if (!previewCard) return '';
-            const v = previewCard.dataset[name];
-            if (!v || v === 'null' || v === 'undefined') return '';
-            return String(v).trim();
-        }
+      function readData(name) {
+          if (!previewCard) return '';
+          const v = previewCard.dataset[name];
+          if (!v || v === 'null' || v === 'undefined') return '';
+          return String(v).trim();
+      }
 
-        const originalUrl = readData('originalUrl');
-        const shortCode = readData('shortCode');
-        const trackId = readData('trackId');
+      const originalUrl = readData('originalUrl');
+      const shortCode = readData('shortCode');
+      const trackId = readData('trackId');
 
-        const fullUrl = document.getElementById('fullUrl');
-        const continueBtn = document.getElementById('continueBtn');
-        const counterEl = document.getElementById('counter');
+      const fullUrl = document.getElementById('fullUrl');
+      const continueBtn = document.getElementById('continueBtn');
+      const counterEl = document.getElementById('counter');
 
-        if (fullUrl && !fullUrl.textContent.trim()) {
-            fullUrl.textContent = originalUrl || '-';
-        }
+      if (fullUrl && !fullUrl.textContent.trim()) {
+          fullUrl.textContent = originalUrl || '-';
+      }
 
-        let trackStarted = false;
+      let trackStarted = false;
 
-        async function getPublicIpInfo() {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(function () {
-                controller.abort();
-            }, 2500);
+      // ============ HELPERS ============
 
-            try {
-                const res = await fetch('https://ipapi.co/json/', {
-                    method: 'GET',
-                    cache: 'no-store',
-                    signal: controller.signal
-                });
+      function fetchWithTimeout(url, opts, ms) {
+          const controller = new AbortController();
+          const t = setTimeout(() => controller.abort(), ms);
+          return fetch(url, Object.assign({ signal: controller.signal }, opts || {}))
+              .finally(() => clearTimeout(t));
+      }
 
-                if (!res.ok) throw new Error('ipapi status ' + res.status);
+      // Ambil IP + lokasi dari ipapi.co (untuk dapat IP user, ISP, dan fallback city)
+      async function getIpInfo() {
+          try {
+              const res = await fetchWithTimeout('https://ipapi.co/json/', { cache: 'no-store' }, 2500);
+              if (!res.ok) throw new Error('ipapi ' + res.status);
+              const d = await res.json();
+              return {
+                  clientIp: d.ip || null,
+                  country: d.country_name || null,
+                  countryCode: d.country_code || null,
+                  region: d.region || null,
+                  city: d.city || null,
+                  isp: d.org || null
+              };
+          } catch (e) {
+              return { clientIp: null, country: null, countryCode: null, region: null, city: null, isp: null };
+          }
+      }
 
-                const data = await res.json();
+      // Reverse geocode lat/lon → kota pakai Nominatim (OpenStreetMap, gratis, akurat untuk Indonesia)
+      async function reverseGeocode(lat, lon) {
+          try {
+              const url = 'https://nominatim.openstreetmap.org/reverse?format=json'
+                        + '&lat=' + encodeURIComponent(lat)
+                        + '&lon=' + encodeURIComponent(lon)
+                        + '&zoom=10&accept-language=id';
+              const res = await fetchWithTimeout(url, { cache: 'no-store' }, 3000);
+              if (!res.ok) throw new Error('nominatim ' + res.status);
+              const d = await res.json();
+              const a = d.address || {};
+              return {
+                  city: a.city || a.town || a.municipality || a.village || a.county || a.state_district || null,
+                  region: a.state || null,
+                  country: a.country || null,
+                  countryCode: (a.country_code || '').toUpperCase() || null
+              };
+          } catch (e) {
+              return null;
+          }
+      }
 
-                return {
-                    clientIp: data.ip || null,
-                    country: data.country_name || null,
-                    countryCode: data.country_code || null,
-                    region: data.region || null,
-                    city: data.city || null,
-                    isp: data.org || null
-                };
-            } catch (e) {
-                return {
-                    clientIp: null,
-                    country: null,
-                    countryCode: null,
-                    region: null,
-                    city: null,
-                    isp: null
-                };
-            } finally {
-                clearTimeout(timeoutId);
-            }
-        }
+      // Coba ambil GPS browser (lebih akurat). Resolve null kalau user tolak / gagal.
+      function getBrowserGeo() {
+          return new Promise(function (resolve) {
+              if (!('geolocation' in navigator)) return resolve(null);
 
-        async function sendTrackData() {
-            if (trackStarted) return;
-            trackStarted = true;
+              const timer = setTimeout(() => resolve(null), 4000);
 
-            if (!trackId) return;
+              navigator.geolocation.getCurrentPosition(
+                  function (pos) {
+                      clearTimeout(timer);
+                      resolve({
+                          lat: pos.coords.latitude,
+                          lon: pos.coords.longitude,
+                          accuracy: pos.coords.accuracy
+                      });
+                  },
+                  function () {
+                      clearTimeout(timer);
+                      resolve(null);
+                  },
+                  { enableHighAccuracy: false, timeout: 3500, maximumAge: 300000 }
+              );
+          });
+      }
 
-            const ipInfo = await getPublicIpInfo();
+      // ============ MAIN TRACK FUNCTION ============
 
-            const payload = {
-                trackId: trackId,
-                shortCode: shortCode || null,
-                clientIp: ipInfo.clientIp,
-                country: ipInfo.country,
-                countryCode: ipInfo.countryCode,
-                region: ipInfo.region,
-                city: ipInfo.city,
-                isp: ipInfo.isp
-            };
+      async function sendTrackData() {
+          if (trackStarted) return;
+          trackStarted = true;
 
-            const body = JSON.stringify(payload);
+          if (!trackId) return;
 
-            try {
-                await fetch('/api/track-ip', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: body,
-                    keepalive: true,
-                    credentials: 'same-origin'
-                });
-            } catch (err) {
-                if (navigator.sendBeacon) {
-                    const blob = new Blob([body], {
-                        type: 'application/json'
-                    });
-                    navigator.sendBeacon('/api/track-ip', blob);
-                }
-            }
-        }
+          // 1) Selalu ambil IP info — kita butuh clientIp dan ISP, dan jadi baseline
+          const ipInfo = await getIpInfo();
 
-        sendTrackData();
-        setTimeout(sendTrackData, 1200);
+          // 2) Coba GPS — kalau berhasil, override city/region/country yang lebih akurat
+          let finalCity = ipInfo.city;
+          let finalRegion = ipInfo.region;
+          let finalCountry = ipInfo.country;
+          let finalCountryCode = ipInfo.countryCode;
 
-        const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
+          const geo = await getBrowserGeo();
+          if (geo) {
+              const rev = await reverseGeocode(geo.lat, geo.lon);
+              if (rev && rev.city) {
+                  finalCity = rev.city;
+                  finalRegion = rev.region || finalRegion;
+                  finalCountry = rev.country || finalCountry;
+                  finalCountryCode = rev.countryCode || finalCountryCode;
+              }
+          }
 
-        let seconds = 5;
-        let timeoutId = null;
-        let finished = false;
-        let paused = false;
+          const payload = {
+              trackId: trackId,
+              shortCode: shortCode || null,
+              clientIp: ipInfo.clientIp,
+              country: finalCountry,
+              countryCode: finalCountryCode,
+              region: finalRegion,
+              city: finalCity,
+              isp: ipInfo.isp
+          };
 
-        function updateCounter() {
-            if (counterEl) counterEl.textContent = Math.max(0, seconds);
-        }
+          const body = JSON.stringify(payload);
 
-        function stopTimer() {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
-        }
+          try {
+              await fetch('/api/track-ip', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: body,
+                  keepalive: true,
+                  credentials: 'same-origin'
+              });
+          } catch (err) {
+              if (navigator.sendBeacon) {
+                  const blob = new Blob([body], { type: 'application/json' });
+                  navigator.sendBeacon('/api/track-ip', blob);
+              }
+          }
+      }
 
-        function goNow() {
-            if (finished || !redirectUrl || redirectUrl === '#') return;
+      sendTrackData();
 
-            finished = true;
-            stopTimer();
+      // ============ COUNTDOWN ============
 
-            window.location.href = redirectUrl;
-        }
+      const redirectUrl = continueBtn ? continueBtn.getAttribute('href') : null;
 
-        function tick() {
-            if (finished || paused) return;
+      let seconds = 5;
+      let timeoutId = null;
+      let finished = false;
+      let paused = false;
 
-            seconds = Math.max(0, seconds - 1);
-            updateCounter();
+      function updateCounter() {
+          if (counterEl) counterEl.textContent = Math.max(0, seconds);
+      }
 
-            if (seconds <= 0) {
-                goNow();
-                return;
-            }
+      function stopTimer() {
+          if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+      }
 
-            timeoutId = setTimeout(tick, 1000);
-        }
+      function goNow() {
+          if (finished || !redirectUrl || redirectUrl === '#') return;
+          finished = true;
+          stopTimer();
+          window.location.href = redirectUrl;
+      }
 
-        function startTimer() {
-            if (finished || paused || timeoutId) return;
-            timeoutId = setTimeout(tick, 1000);
-        }
+      function tick() {
+          if (finished || paused) return;
+          seconds = Math.max(0, seconds - 1);
+          updateCounter();
+          if (seconds <= 0) { goNow(); return; }
+          timeoutId = setTimeout(tick, 1000);
+      }
 
-        updateCounter();
-        startTimer();
+      function startTimer() {
+          if (finished || paused || timeoutId) return;
+          timeoutId = setTimeout(tick, 1000);
+      }
 
-        if (continueBtn) {
-            continueBtn.addEventListener('click', function () {
-                finished = true;
-                stopTimer();
-            });
-        }
+      updateCounter();
+      startTimer();
 
-        document.addEventListener('visibilitychange', function () {
-            if (finished) return;
+      if (continueBtn) {
+          continueBtn.addEventListener('click', function () {
+              finished = true;
+              stopTimer();
+          });
+      }
 
-            if (document.hidden) {
-                paused = true;
-                stopTimer();
-            } else {
-                paused = false;
-                startTimer();
-            }
-        });
-    })();
+      document.addEventListener('visibilitychange', function () {
+          if (finished) return;
+          if (document.hidden) { paused = true; stopTimer(); }
+          else { paused = false; startTimer(); }
+      });
+  })();
 </script>
 
 <script src="https://widget.rss.app/v1/list.js" type="text/javascript" async></script>
