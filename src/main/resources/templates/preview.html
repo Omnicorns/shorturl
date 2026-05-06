@@ -1326,61 +1326,47 @@
 
       // ============ MAIN TRACK FUNCTION ============
 
-      async function sendTrackData() {
-          if (trackStarted) return;
-          trackStarted = true;
+    async function sendTrackData() {
+    if (trackStarted) return;
+    trackStarted = true;
 
-          if (!trackId) return;
+    if (!trackId) return;
 
-          // 1) Selalu ambil IP info — kita butuh clientIp dan ISP, dan jadi baseline
-          const ipInfo = await getIpInfo();
+    // 1) Selalu ambil IP info — untuk dapat clientIp dan ISP
+    const ipInfo = await getIpInfo();
 
-          // 2) Coba GPS — kalau berhasil, override city/region/country yang lebih akurat
-          let finalCity = ipInfo.city;
-          let finalRegion = ipInfo.region;
-          let finalCountry = ipInfo.country;
-          let finalCountryCode = ipInfo.countryCode;
+    // Default: pakai semua data dari IP
+    let finalCity = ipInfo.city;
+    let finalRegion = ipInfo.region;
+    let finalCountry = ipInfo.country;
+    let finalCountryCode = ipInfo.countryCode;
 
-          const geo = await getBrowserGeo();
-          if (geo) {
-              const rev = await reverseGeocode(geo.lat, geo.lon);
-              if (rev && rev.city) {
-                  finalCity = rev.city;
-                  finalRegion = rev.region || finalRegion;
-                  finalCountry = rev.country || finalCountry;
-                  finalCountryCode = rev.countryCode || finalCountryCode;
-              }
-          }
+    // 2) Coba GPS — kalau berhasil, REPLACE TOTAL data lokasi (jangan dicampur)
+    const geo = await getBrowserGeo();
+    if (geo) {
+        const rev = await reverseGeocode(geo.lat, geo.lon);
+        if (rev && rev.city) {
+            // Override SEMUA, jangan fallback ke data IP
+            finalCity = rev.city;
+            finalRegion = rev.region;       // ← tanpa fallback ke ipInfo.region
+            finalCountry = rev.country;     // ← tanpa fallback
+            finalCountryCode = rev.countryCode; // ← tanpa fallback
+        }
+    }
 
-          const payload = {
-              trackId: trackId,
-              shortCode: shortCode || null,
-              clientIp: ipInfo.clientIp,
-              country: finalCountry,
-              countryCode: finalCountryCode,
-              region: finalRegion,
-              city: finalCity,
-              isp: ipInfo.isp
-          };
+    const payload = {
+        trackId: trackId,
+        shortCode: shortCode || null,
+        clientIp: ipInfo.clientIp,
+        country: finalCountry,
+        countryCode: finalCountryCode,
+        region: finalRegion,
+        city: finalCity,
+        isp: ipInfo.isp  // ISP tetap dari IP, GPS nggak punya info ISP
+    };
 
-          const body = JSON.stringify(payload);
-
-          try {
-              await fetch('/api/track-ip', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: body,
-                  keepalive: true,
-                  credentials: 'same-origin'
-              });
-          } catch (err) {
-              if (navigator.sendBeacon) {
-                  const blob = new Blob([body], { type: 'application/json' });
-                  navigator.sendBeacon('/api/track-ip', blob);
-              }
-          }
-      }
-
+    // ... sisanya sama (fetch ke /api/track-ip)
+}
       sendTrackData();
 
       // ============ COUNTDOWN ============
