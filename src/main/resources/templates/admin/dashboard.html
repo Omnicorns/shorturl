@@ -1162,6 +1162,194 @@
             .top-stats { display: none; }
             .search-box input { min-width: 140px; }
         }
+
+        /* ─── Owner cell ─── */
+        .owner-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+        .owner-name {
+            color: var(--ink-soft);
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .owner-name.owner-me {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .owner-name.owner-orphan {
+            color: var(--muted);
+            font-style: italic;
+            cursor: help;
+        }
+        .user-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            margin-left: 4px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: #fff;
+            font-family: var(--font-mono);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .08em;
+        }
+
+        /* ─── LDAP autocomplete dropdown ─── */
+        .chip-wrapper {
+            position: relative;
+        }
+        .ldap-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            max-height: 260px;
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(0,0,0,.12);
+            z-index: 50;
+        }
+        .ldap-dropdown.is-loading::before {
+            content: "Mencari di Active Directory…";
+            display: block;
+            padding: 12px 14px;
+            color: var(--muted);
+            font-size: 12px;
+            font-style: italic;
+        }
+        .ldap-dropdown .ldap-empty,
+        .ldap-dropdown .ldap-error {
+            padding: 12px 14px;
+            color: var(--muted);
+            font-size: 12px;
+            font-style: italic;
+        }
+        .ldap-dropdown .ldap-error { color: var(--danger, #c33); }
+        .ldap-item {
+            display: flex;
+            flex-direction: column;
+            padding: 8px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--line);
+            transition: background .1s;
+        }
+        .ldap-item:last-child { border-bottom: none; }
+        .ldap-item:hover,
+        .ldap-item.is-active {
+            background: var(--accent-soft);
+        }
+        .ldap-item .ldap-username {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .ldap-item .ldap-meta {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 1px;
+        }
+        .ldap-item .ldap-meta strong {
+            color: var(--ink-soft);
+            font-weight: 500;
+        }
+        .owner-share {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: var(--info-soft);
+            color: var(--info);
+            cursor: help;
+        }
+
+        /* ─── Access tags chip-input ─── */
+        .chip-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 6px;
+            min-height: 38px;
+            border: 1px solid var(--line-strong);
+            border-radius: var(--radius);
+            background: var(--surface);
+            cursor: text;
+        }
+        .chip-input:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 4px 3px 10px;
+            background: var(--accent-soft);
+            color: var(--accent-ink);
+            border-radius: 999px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .chip button {
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: rgba(124,45,10,.15);
+            color: var(--accent-ink);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background .12s;
+        }
+        .chip button:hover { background: rgba(124,45,10,.3); }
+        .chip-input input {
+            flex: 1;
+            min-width: 120px;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 4px 6px;
+            font-family: var(--font-body);
+            font-size: 13px;
+        }
+        .owner-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: var(--bg-soft);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+            font-size: 12px;
+        }
+        .owner-banner .owner-banner-label {
+            color: var(--muted);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .owner-banner .owner-banner-value {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--ink);
+        }
     </style>
 </head>
 <body>
@@ -1192,6 +1380,9 @@
         <span class="user-chip">
             <span class="avatar" sec:authentication="name">A</span>
             <span sec:authentication="name">admin</span>
+            <span th:if="${isSuperAdmin != null and isSuperAdmin}"
+                  class="user-badge"
+                  title="Anda super-admin: melihat & mengelola semua URL.">SUPER</span>
         </span>
     </div>
 </header>
@@ -1396,8 +1587,9 @@
                             <th>Tujuan</th>
                             <th>Klik</th>
                             <th>Dibuat</th>
+                            <th>Pemilik</th>
                             <th>Status</th>
-                            <th style="width:280px">Aksi</th>
+                            <th style="width:320px">Aksi</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -1432,6 +1624,21 @@
                                       th:text="${#temporals.format(u.createdAt, 'dd MMM yyyy')}">-</span>
                             </td>
                             <td>
+                                <div class="owner-cell">
+                                    <span th:if="${u.ownerUsername != null}"
+                                          class="owner-name"
+                                          th:classappend="${currentUser != null and #strings.equalsIgnoreCase(u.ownerUsername, currentUser)} ? ' owner-me' : ''"
+                                          th:text="${u.ownerUsername}">owner</span>
+                                    <span th:if="${u.ownerUsername == null}"
+                                          class="owner-name owner-orphan"
+                                          title="URL ini belum punya pemilik. Super-admin bisa meng-assign via tombol 👥.">— (yatim)</span>
+                                    <span th:if="${u.coManagers != null and !u.coManagers.isEmpty()}"
+                                          class="owner-share"
+                                          th:title="|Di-share ke: ${#strings.listJoin(u.coManagers, ', ')}|"
+                                          th:text="|+ ${u.coManagers.size()}|">+1</span>
+                                </div>
+                            </td>
+                            <td>
                                 <span th:if="${u.active}" class="badge badge-ok">● Aktif</span>
                                 <span th:unless="${u.active}" class="badge badge-off">○ Nonaktif</span>
                             </td>
@@ -1448,6 +1655,16 @@
                                             th:data-code="${u.shortCode}"
                                             th:data-title="${u.title != null ? u.title : ''}"
                                             th:data-url="${u.originalUrl}">✎</button>
+                                    <!-- Tombol kelola akses: hanya owner / super-admin -->
+                                    <button type="button"
+                                            th:if="${(isSuperAdmin != null and isSuperAdmin) or (currentUser != null and u.ownerUsername != null and #strings.equalsIgnoreCase(u.ownerUsername, currentUser))}"
+                                            class="btn btn-ghost btn-xs js-access-url"
+                                            th:data-id="${u.id}"
+                                            th:data-code="${u.shortCode}"
+                                            th:data-title="${u.title != null ? u.title : u.shortCode}"
+                                            th:data-owner="${u.ownerUsername != null ? u.ownerUsername : ''}"
+                                            th:data-comanagers="${u.coManagers != null ? #strings.listJoin(u.coManagers, ', ') : ''}"
+                                            title="Kelola siapa yang bisa lihat URL ini">👥</button>
                                     <button type="button" class="btn btn-ghost btn-xs js-open-log"
                                             th:data-code="${u.shortCode}"
                                             th:data-title="${u.title != null ? u.title : u.shortCode}">Log</button>
@@ -1465,7 +1682,7 @@
                             </td>
                         </tr>
                         <tr th:if="${urls.empty}">
-                            <td colspan="7" class="empty">
+                            <td colspan="8" class="empty">
                                 <span class="empty-emoji">∅</span>
                                 Belum ada short URL. Buat yang pertama di sidebar.
                             </td>
@@ -1629,6 +1846,70 @@
             <div class="modal-foot">
                 <button type="button" class="btn btn-ghost btn-sm" id="cancelEditUrlBtn">Batal</button>
                 <button type="submit" class="btn btn-accent btn-sm">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ─── KELOLA AKSES MODAL ─── -->
+<div id="accessUrlModalBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+            <div>
+                <h3>Kelola Akses</h3>
+                <p id="accessUrlSubtitle">Atur siapa saja yang bisa melihat &amp; mengelola URL ini.</p>
+            </div>
+            <button id="closeAccessUrlBtn" type="button" class="modal-close">×</button>
+        </div>
+        <form id="accessUrlForm" th:action="@{/admin/0/access}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" id="accessUrlId" name="id">
+            <input type="hidden" id="accessCoManagersHidden" name="coManagers" value="">
+
+            <div class="modal-body">
+                <!-- Banner pemilik -->
+                <div class="owner-banner">
+                    <span class="owner-banner-label">Pemilik:</span>
+                    <span class="owner-banner-value" id="accessOwnerName">—</span>
+                </div>
+
+                <!-- Chip input untuk co-manager + autocomplete LDAP -->
+                <div class="field">
+                    <label>User yang boleh kelola</label>
+                    <div class="chip-wrapper">
+                        <div class="chip-input" id="accessChipInput">
+                            <input type="text" id="accessChipText"
+                                   placeholder="Cari username / nama / email dari AD…"
+                                   autocomplete="off">
+                        </div>
+                        <div class="ldap-dropdown" id="accessLdapDropdown" hidden>
+                            <!-- diisi via JS -->
+                        </div>
+                    </div>
+                    <span class="field-hint">
+                        Ketik minimal 2 huruf untuk cari di Active Directory.
+                        Pilih dari dropdown atau tekan Enter untuk input manual (mis. akun lokal).
+                    </span>
+                </div>
+
+                <!-- Transfer ownership (super-admin / owner only — UI selalu tampil saat modal ini dibuka,
+                     server akan tolak kalau user bukan owner) -->
+                <div class="field">
+                    <label>Pindah kepemilikan <span class="field-hint">opsional</span></label>
+                    <div class="chip-wrapper">
+                        <input type="text" id="accessNewOwner" name="newOwner"
+                               class="ldap-input"
+                               placeholder="Cari user untuk dijadikan owner baru…"
+                               pattern="[a-zA-Z0-9._@\-]{1,100}"
+                               autocomplete="off">
+                        <div class="ldap-dropdown" id="newOwnerLdapDropdown" hidden></div>
+                    </div>
+                    <span class="field-hint">⚠ Setelah transfer, Anda tidak lagi menjadi pemilik.</span>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn btn-ghost btn-sm" id="cancelAccessUrlBtn">Batal</button>
+                <button type="submit" class="btn btn-accent btn-sm">Simpan Akses</button>
             </div>
         </form>
     </div>
@@ -2138,6 +2419,306 @@
                     code: b.dataset.code,
                     title: b.dataset.title,
                     url: b.dataset.url
+                });
+            }
+        });
+
+        /* ═══ KELOLA AKSES MODAL ═══ */
+        const accessBackdrop = $('accessUrlModalBackdrop');
+        const accessForm = $('accessUrlForm');
+        const accessChipInput = $('accessChipInput');
+        const accessChipText = $('accessChipText');
+        const accessHidden = $('accessCoManagersHidden');
+
+        // State daftar co-manager (Set string lowercase, urutan dipertahankan)
+        let _accessChips = new Set();
+
+        function renderAccessChips() {
+            // Hapus semua chip lama (sisakan input)
+            accessChipInput.querySelectorAll('.chip').forEach(c => c.remove());
+            // Insert chip baru sebelum input
+            [..._accessChips].forEach(name => {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.innerHTML = '';
+                chip.appendChild(document.createTextNode(name));
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = '×';
+                btn.setAttribute('aria-label', 'Hapus ' + name);
+                btn.addEventListener('click', () => {
+                    _accessChips.delete(name);
+                    syncAccessHidden();
+                    renderAccessChips();
+                    accessChipText.focus();
+                });
+                chip.appendChild(btn);
+                accessChipInput.insertBefore(chip, accessChipText);
+            });
+        }
+
+        function syncAccessHidden() {
+            accessHidden.value = [..._accessChips].join(',');
+        }
+
+        function addAccessChipFromText() {
+            const raw = accessChipText.value;
+            if (!raw) return;
+            // Pisah dengan koma/titik koma/whitespace
+            raw.split(/[,;\s]+/).forEach(piece => {
+                const p = piece.trim().toLowerCase();
+                if (!p) return;
+                // Validasi sederhana di client
+                if (!/^[a-z0-9._@\-]{1,100}$/i.test(p)) return;
+                _accessChips.add(p);
+            });
+            accessChipText.value = '';
+            syncAccessHidden();
+            renderAccessChips();
+        }
+
+        /* ─── LDAP autocomplete shared infra ─── */
+        const ldapDropdownChip = $('accessLdapDropdown');
+        const ldapDropdownOwner = $('newOwnerLdapDropdown');
+
+        // Pasangan input ↔ dropdown ↔ mode (chip vs single)
+        const ldapBindings = [
+            {
+                input: accessChipText,
+                dropdown: ldapDropdownChip,
+                mode: 'chip',  // hasil pilih → addAccessChip(username)
+            },
+            {
+                input: $('accessNewOwner'),
+                dropdown: ldapDropdownOwner,
+                mode: 'single', // hasil pilih → set value input ke username
+            }
+        ];
+
+        // State per binding (active highlight index, current request token)
+        const ldapState = new WeakMap();
+        ldapBindings.forEach(b => ldapState.set(b, { active: -1, token: 0, items: [] }));
+
+        let ldapDebounceTimer = null;
+
+        function showDropdownHTML(dropdown, html) {
+            dropdown.innerHTML = html;
+            dropdown.hidden = false;
+        }
+        function hideDropdown(dropdown) {
+            dropdown.hidden = true;
+            dropdown.innerHTML = '';
+        }
+
+        async function fetchLdap(binding, query) {
+            const st = ldapState.get(binding);
+            st.token++;
+            const myToken = st.token;
+            binding.dropdown.classList.add('is-loading');
+            showDropdownHTML(binding.dropdown, '');
+
+            try {
+                const res = await fetch('/admin/ldap/search?q=' + encodeURIComponent(query), {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (st.token !== myToken) return; // request usang, abaikan
+                binding.dropdown.classList.remove('is-loading');
+
+                if (!res.ok) {
+                    showDropdownHTML(binding.dropdown,
+                        '<div class="ldap-error">Gagal menghubungi LDAP (HTTP ' + res.status + '). Anda tetap bisa mengetik username manual lalu tekan Enter.</div>');
+                    return;
+                }
+                const data = await res.json();
+                if (!data.available) {
+                    showDropdownHTML(binding.dropdown,
+                        '<div class="ldap-empty">LDAP tidak aktif di server ini. Ketik username manual lalu tekan Enter.</div>');
+                    return;
+                }
+                const users = data.users || [];
+                st.items = users;
+                st.active = -1;
+
+                if (users.length === 0) {
+                    showDropdownHTML(binding.dropdown,
+                        '<div class="ldap-empty">Tidak ada user yang cocok dengan "<strong>' + escapeHtml(query) + '</strong>". Anda bisa tetap memakai username ini secara manual (Enter).</div>');
+                    return;
+                }
+
+                const html = users.map((u, i) => {
+                    const meta = [u.displayName, u.email].filter(Boolean).join(' · ');
+                    return '<div class="ldap-item" data-index="' + i + '" data-username="' + escapeAttr(u.username) + '">' +
+                           '<span class="ldap-username">' + escapeHtml(u.username) + '</span>' +
+                           (meta ? '<span class="ldap-meta">' + escapeHtml(meta) + '</span>' : '') +
+                           '</div>';
+                }).join('');
+                showDropdownHTML(binding.dropdown, html);
+
+                // Pasang click handler
+                binding.dropdown.querySelectorAll('.ldap-item').forEach(item => {
+                    item.addEventListener('mousedown', e => {
+                        e.preventDefault(); // jangan biarkan input kehilangan fokus dulu
+                        pickLdapItem(binding, item.dataset.username);
+                    });
+                });
+            } catch (err) {
+                if (st.token !== myToken) return;
+                binding.dropdown.classList.remove('is-loading');
+                showDropdownHTML(binding.dropdown,
+                    '<div class="ldap-error">Error: ' + escapeHtml(err.message || String(err)) + '</div>');
+            }
+        }
+
+        function pickLdapItem(binding, username) {
+            if (!username) return;
+            if (binding.mode === 'chip') {
+                _accessChips.add(username.toLowerCase());
+                syncAccessHidden();
+                renderAccessChips();
+                binding.input.value = '';
+                hideDropdown(binding.dropdown);
+                binding.input.focus();
+            } else {
+                binding.input.value = username;
+                hideDropdown(binding.dropdown);
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;');
+        }
+        function escapeAttr(s) {
+            return escapeHtml(s).replaceAll("'", '&#39;');
+        }
+
+        function moveActive(binding, delta) {
+            const st = ldapState.get(binding);
+            const items = binding.dropdown.querySelectorAll('.ldap-item');
+            if (items.length === 0) return;
+            st.active = (st.active + delta + items.length) % items.length;
+            items.forEach((el, i) => el.classList.toggle('is-active', i === st.active));
+            // scroll into view
+            items[st.active].scrollIntoView({ block: 'nearest' });
+        }
+
+        function commitActiveOrText(binding) {
+            const st = ldapState.get(binding);
+            const items = binding.dropdown.querySelectorAll('.ldap-item');
+            if (st.active >= 0 && items[st.active]) {
+                pickLdapItem(binding, items[st.active].dataset.username);
+                return true;
+            }
+            return false;
+        }
+
+        ldapBindings.forEach(binding => {
+            binding.input.addEventListener('input', () => {
+                clearTimeout(ldapDebounceTimer);
+                const q = binding.input.value.trim();
+                if (q.length < 2) {
+                    hideDropdown(binding.dropdown);
+                    return;
+                }
+                ldapDebounceTimer = setTimeout(() => fetchLdap(binding, q), 220);
+            });
+
+            binding.input.addEventListener('keydown', e => {
+                const visible = !binding.dropdown.hidden;
+                if (e.key === 'ArrowDown' && visible) {
+                    e.preventDefault(); moveActive(binding, +1);
+                } else if (e.key === 'ArrowUp' && visible) {
+                    e.preventDefault(); moveActive(binding, -1);
+                } else if (e.key === 'Escape' && visible) {
+                    e.preventDefault(); hideDropdown(binding.dropdown);
+                } else if (e.key === 'Enter' && visible && commitActiveOrText(binding)) {
+                    e.preventDefault();
+                }
+            });
+
+            binding.input.addEventListener('blur', () => {
+                // Delay supaya click dropdown sempat di-process
+                setTimeout(() => hideDropdown(binding.dropdown), 150);
+            });
+        });
+
+        accessChipText.addEventListener('keydown', e => {
+            // Kalau dropdown LDAP terbuka dan ada item highlighted, Enter akan
+            // di-handle oleh handler binding di atas (yang commit pick).
+            // Sisanya: comma/semicolon/Enter manual → add chip dari text.
+            if (e.key === ',' || e.key === ';') {
+                e.preventDefault();
+                addAccessChipFromText();
+                hideDropdown(ldapDropdownChip);
+            } else if (e.key === 'Enter' && ldapDropdownChip.hidden) {
+                e.preventDefault();
+                addAccessChipFromText();
+            } else if (e.key === 'Backspace' && !accessChipText.value && _accessChips.size > 0) {
+                // Hapus chip terakhir
+                const last = [..._accessChips].pop();
+                _accessChips.delete(last);
+                syncAccessHidden();
+                renderAccessChips();
+            }
+        });
+        accessChipText.addEventListener('blur', () => {
+            // Commit yang masih nyangkut di input saat user click luar
+            // (delay supaya pickLdapItem sempat jalan)
+            setTimeout(() => {
+                if (accessChipText.value.trim() && ldapDropdownChip.hidden) addAccessChipFromText();
+            }, 160);
+        });
+        accessChipInput.addEventListener('click', () => accessChipText.focus());
+
+        function openAccessUrlModal({ id, code, title, owner, comanagers }) {
+            $('accessUrlId').value = id;
+            accessForm.setAttribute('action', '/admin/' + id + '/access');
+            $('accessUrlSubtitle').textContent = code
+                ? ('Kode: ' + code + (title && title !== code ? ' · ' + title : ''))
+                : '—';
+            $('accessOwnerName').textContent = owner || '— (yatim)';
+            $('accessNewOwner').value = '';
+            hideDropdown(ldapDropdownChip);
+            hideDropdown(ldapDropdownOwner);
+
+            _accessChips = new Set();
+            if (comanagers && comanagers.trim()) {
+                comanagers.split(/[,;\s]+/).forEach(p => {
+                    const x = p.trim().toLowerCase();
+                    if (x) _accessChips.add(x);
+                });
+            }
+            accessChipText.value = '';
+            syncAccessHidden();
+            renderAccessChips();
+            accessBackdrop.classList.add('show');
+            setTimeout(() => accessChipText.focus(), 50);
+        }
+        function closeAccessUrlModal() { accessBackdrop.classList.remove('show'); }
+
+        accessBackdrop.addEventListener('click', e => { if (e.target === accessBackdrop) closeAccessUrlModal(); });
+        $('closeAccessUrlBtn').addEventListener('click', closeAccessUrlModal);
+        $('cancelAccessUrlBtn').addEventListener('click', closeAccessUrlModal);
+
+        // Pastikan chip-text yang masih kebuka ke-commit saat submit
+        accessForm.addEventListener('submit', () => {
+            if (accessChipText.value.trim()) addAccessChipFromText();
+        });
+
+        document.addEventListener('click', e => {
+            const b = e.target.closest('.js-access-url');
+            if (b) {
+                e.preventDefault();
+                openAccessUrlModal({
+                    id: b.dataset.id,
+                    code: b.dataset.code,
+                    title: b.dataset.title,
+                    owner: b.dataset.owner,
+                    comanagers: b.dataset.comanagers
                 });
             }
         });

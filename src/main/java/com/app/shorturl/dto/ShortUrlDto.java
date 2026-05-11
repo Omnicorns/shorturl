@@ -11,6 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ShortUrlDto {
 
@@ -39,8 +41,8 @@ public class ShortUrlDto {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    @Builder
     @Schema(description = "Response data short URL")
+    @Builder
     public static class Response {
         @Schema(example = "1")
         private Long id;
@@ -67,6 +69,12 @@ public class ShortUrlDto {
 
         private LocalDateTime lastAccessedAt;
 
+        @Schema(description = "Username pembuat URL", example = "budi")
+        private String ownerUsername;
+
+        @Schema(description = "Daftar username yang juga bisa kelola URL ini")
+        private Set<String> coManagers;
+
         public static Response from(ShortUrl s, String baseUrl) {
             return Response.builder()
                     .id(s.getId())
@@ -78,8 +86,21 @@ public class ShortUrlDto {
                     .active(s.getActive())
                     .createdAt(s.getCreatedAt())
                     .lastAccessedAt(s.getLastAccessedAt())
+                    .ownerUsername(s.getOwnerUsername())
+                    .coManagers(s.getCoManagers() != null ? new HashSet<>(s.getCoManagers()) : new HashSet<>())
                     .build();
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "Request untuk update daftar co-manager")
+    public static class AccessRequest {
+        @Schema(description = "Daftar username (CSV) yang boleh kelola URL ini, " +
+                "dipisah koma/titik-koma/spasi",
+                example = "budi, siti, ahmad@sarinah.net")
+        private String coManagers;
     }
 
     @Data

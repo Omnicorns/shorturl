@@ -8,24 +8,20 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 
 /**
- * LDAP Context Configuration
+ * LDAP Context Configuration.
  *
- * SECURITY NOTES - Addressing "Single Point of Compromise":
+ * Mode operasi:
+ *   - Kalau {@code ldap.manager-dn} dan {@code ldap.manager-password} di-set,
+ *     pakai bind credentials tsb untuk semua operasi search.
+ *     Ini WAJIB untuk AD Microsoft karena default-nya menolak anonymous search.
+ *   - Kalau kosong, fallback ke anonymous read (jarang berhasil di AD).
  *
- * 1. JANGAN gunakan akun Administrator sebagai bind user (seperti di osTicket saat ini)
- *    - Buat service account khusus: svc-portal@sarinah.net
- *    - Berikan hanya permission READ pada OU yang dibutuhkan
- *    - Jangan berikan permission write/modify/delete
+ * Service account yang dipakai cukup punya permission READ ke OU users.
+ * Contoh DN: CN=svc-portal,OU=Service Accounts,DC=sarinah,DC=net
  *
- * 2. WAJIB gunakan LDAPS (port 636) bukan LDAP (port 389)
- *    - Tanpa TLS, password dikirim PLAINTEXT → bisa di-sniff (NTLM Relay attack)
- *    - Di osTicket saat ini "Use TLS" TIDAK dicentang = VULNERABLE
- *
- * 3. Password bind user JANGAN di-hardcode
- *    - Gunakan environment variable: LDAP_BIND_PASSWORD
- *    - Atau gunakan vault (HashiCorp Vault, Kubernetes secrets)
- *
- * 4. Audit log setiap authentication attempt
+ * Password JANGAN di-hardcode di properties yang di-commit. Set lewat
+ * environment variable LDAP_BIND_PASSWORD lalu di properties tulis:
+ *   ldap.manager-password=${LDAP_BIND_PASSWORD:}
  */
 @Slf4j
 @Configuration
@@ -37,17 +33,36 @@ public class LdapContextConfig {
     @Value("${ldap.base-dn}")
     private String baseDn;
 
+    @Value("${ldap.manager-dn:}")
+    private String managerDn;
+
+    @Value("${ldap.manager-password:}")
+    private String managerPassword;
+
     @Bean
     public LdapContextSource ldapContextSource() {
         LdapContextSource ctx = new LdapContextSource();
         ctx.setUrl(ldapUrl);
         ctx.setBase(baseDn);
-        // Hapus manager DN & password — gak dipakai
         ctx.setPooled(true);
         ctx.setReferral("follow");
-        ctx.setAnonymousReadOnly(true); // read-only tanpa bind
 
-        log.info("LDAP Context configured: url={}, base={}", ldapUrl, baseDn);
+        boolean useBind = managerDn != null && !managerDn.isBlank()
+                && managerPassword != null && !managerPassword.isBlank();
+
+        if (useBind) {
+            ctx.setUserDn(managerDn);
+            ctx.setPassword(managerPassword);
+            ctx.setAnonymousReadOnly(false);
+            log.info("LDAP Context configured WITH bind credentials: url={}, base={}, bindDn={}",
+                    ldapUrl, baseDn, managerDn);
+        } else {
+            ctx.setAnonymousReadOnly(true);
+            log.warn("LDAP Context configured for ANONYMOUS read: url={}, base={}. " +
+                            "Active Directory biasanya menolak anonymous search — " +
+                            "set ldap.manager-dn dan ldap.manager-password kalau hasil kosong.",
+                    ldapUrl, baseDn);
+        }
         return ctx;
     }
 
