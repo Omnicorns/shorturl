@@ -1631,7 +1631,7 @@
                                           th:text="${u.ownerUsername}">owner</span>
                                     <span th:if="${u.ownerUsername == null}"
                                           class="owner-name owner-orphan"
-                                          title="URL ini belum punya pemilik. Super-admin bisa meng-assign via tombol 👥.">— (yatim)</span>
+                                          title="URL ini belum punya pemilik. Super-admin bisa meng-assign via tombol 👥.">— </span>
                                     <span th:if="${u.coManagers != null and !u.coManagers.isEmpty()}"
                                           class="owner-share"
                                           th:title="|Di-share ke: ${#strings.listJoin(u.coManagers, ', ')}|"
@@ -2680,7 +2680,7 @@
             $('accessUrlSubtitle').textContent = code
                 ? ('Kode: ' + code + (title && title !== code ? ' · ' + title : ''))
                 : '—';
-            $('accessOwnerName').textContent = owner || '— (yatim)';
+            $('accessOwnerName').textContent = owner || '—';
             $('accessNewOwner').value = '';
             hideDropdown(ldapDropdownChip);
             hideDropdown(ldapDropdownOwner);
