@@ -98,7 +98,7 @@ public class AuthWebController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
-        return "redirect:/admin#catalogs";
+        return "redirect:/admin?tab=catalogs#catalogs";
     }
 
     private static String baseUrl(HttpServletRequest request) {
