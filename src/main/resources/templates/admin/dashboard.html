@@ -1551,13 +1551,20 @@
                     </form>
                 </div>
                 <div class="search-box" id="searchCatalogs" style="display:none">
-                    <input id="catalogSearchInput" type="search" placeholder="Cari filename…">
+                    <input id="catalogSearchInput" type="search" placeholder="Cari filename / owner / content type…">
+
+                    <select id="catalogSortDirSelect" style="padding:6px 8px;font-size:11px" title="Urut ID">
+                        <option value="desc" selected>ID Desc</option>
+                        <option value="asc">ID Asc</option>
+                    </select>
+
                     <select id="pageSizeSelect" style="padding:6px 8px;font-size:11px">
                         <option value="10" selected>10</option>
                         <option value="20">20</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
                     </select>
+
                     <button id="refreshListBtn" class="btn btn-primary btn-sm" type="button" title="Refresh">↻</button>
                 </div>
             </div>
@@ -3237,9 +3244,21 @@
                 currentSize = parseInt(pageSizeSelect.value, 10) || 10;
                 currentKeyword = searchInput.value.trim();
                 tableBody.innerHTML = '<tr><td colspan="6" class="empty">Memuat…</td></tr>';
+                const sortDirSelect = $('catalogSortDirSelect');
+
                 const p = new URLSearchParams();
-                p.set('page', currentPage); p.set('size', currentSize);
-                if (currentKeyword) p.set('q', currentKeyword);
+                p.set('page', currentPage);
+                p.set('size', currentSize);
+
+                // search
+                if (currentKeyword) {
+                    p.set('q', currentKeyword);
+                }
+
+                // sort ID ASC/DESC
+                p.set('sortBy', 'id');
+                p.set('dir', sortDirSelect ? sortDirSelect.value : 'desc');
+
                 const res = await fetch(`${CATALOG_API}?${p}`, { cache: 'no-store' });
                 if (res.status === 404) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="empty">Endpoint catalog belum tersedia.</td></tr>';

@@ -214,12 +214,35 @@ public class UserImportApi {
     }
 
     @GetMapping("/catalogs")
-    @ResponseBody
-    public Page<CatalogResponse> listCatalogs(@RequestParam(defaultValue = "") String keyword,
-                                              Pageable pageable,
+    public Page<CatalogResponse> listCatalogs(@RequestParam(defaultValue = "") String q,
+                                              @RequestParam(defaultValue = "") String keyword,
+                                              @RequestParam(defaultValue = "0") int page,
+                                              @RequestParam(defaultValue = "10") int size,
+                                              @RequestParam(defaultValue = "id") String sortBy,
+                                              @RequestParam(defaultValue = "desc") String dir,
                                               Authentication authentication) {
+
+        String search = !q.isBlank() ? q : keyword;
+
+        String safeSortBy = "id";
+        if ("filename".equalsIgnoreCase(sortBy)) {
+            safeSortBy = "filename";
+        } else if ("ownerUsername".equalsIgnoreCase(sortBy) || "owner_username".equalsIgnoreCase(sortBy)) {
+            safeSortBy = "ownerUsername";
+        }
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir)
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(
+                Math.max(page, 0),
+                Math.max(size, 1),
+                Sort.by(direction, safeSortBy)
+        );
+
         return catalogAccessService
-                .findVisibleCatalogs(keyword, pageable, authentication)
+                .findVisibleCatalogs(search, pageable, authentication)
                 .map(doc -> catalogAccessService.toResponse(doc, authentication));
     }
     /**
