@@ -20,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.List;
@@ -103,7 +104,7 @@ public class SecurityConfig {
 
     /**
      * API chain khusus /api/v1/**
-     *
+     * <p>
      * Penting:
      * Jangan pakai /api/** di sini, karena /api/admin/users/**
      * dipakai dashboard admin dan harus lewat session login web.
@@ -121,7 +122,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/**").permitAll()
                 )
-                .httpBasic(basic -> {})
+                .httpBasic(basic -> {
+                })
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -134,7 +136,7 @@ public class SecurityConfig {
      * Web chain:
      * - /admin/** pakai session login
      * - /api/admin/users/** juga pakai session login
-     *
+     * <p>
      * Jadi upload catalog dari halaman admin akan punya Authentication.
      */
     @Bean
@@ -144,37 +146,27 @@ public class SecurityConfig {
             AuthenticationManager authenticationManager,
             LogoutSuccessHandler logoutSuccessHandler
     ) throws Exception {
+
+        // Buat repository + handler eksplisit
+        CookieCsrfTokenRepository tokenRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        // Default-nya sudah set attribute name "_csrf", tidak perlu config tambahan
+
         http
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/login",
-                                "/register",
-                                "/forgot-password",
-                                "/reset-password",
-                                "/css/**",
-                                "/js/**",
-                                "/error",
-                                "/images/**",
-                                "/img.png",
-                                "/favicon.ico"
+                                "/login", "/register", "/forgot-password", "/reset-password",
+                                "/css/**", "/js/**", "/error", "/images/**", "/img.png", "/favicon.ico"
                         ).permitAll()
-
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // API catalog dari dashboard admin.
-                        // Ini harus masuk web chain supaya Authentication tidak null.
                         .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
-
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/shorten").permitAll()
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml"
+                                "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/v3/api-docs.yaml"
                         ).permitAll()
-
                         .anyRequest().permitAll()
                 )
                 .formLogin(form -> form
@@ -187,17 +179,13 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                    .logoutSuccessUrl("/login?logout")
-                    .invalidateHttpSession(true)
-                    .deleteCookies("JSESSIONID", "XSRF-TOKEN", "remember-me")
-                    .permitAll()
-                 )
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                        .ignoringRequestMatchers("/h2-console/**")
+                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .invalidateHttpSession(true)
+                        .logoutSuccessUrl("/login?logout")
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                        .permitAll()
                 )
+                .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 );

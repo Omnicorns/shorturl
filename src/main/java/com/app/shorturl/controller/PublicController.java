@@ -89,7 +89,8 @@ public class PublicController {
     }
 
     @GetMapping("/login")
-    public String login() {
+    public String login(HttpServletRequest request) {
+        request.getSession(true);
         return "login";
     }
 

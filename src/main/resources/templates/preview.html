@@ -1367,7 +1367,7 @@ async function sendTrackData() {
 
     // ============ INI BAGIAN YANG HILANG ============
     try {
-        await fetch('/api/track-ip', {
+        await fetch('/api/v1/track-ip', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: body,

@@ -1374,7 +1374,7 @@
         </div>
         <a href="/" class="btn btn-ghost btn-sm">Lihat Site ↗</a>
         <form th:action="@{/logout}" method="post" style="display:inline">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<!--            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
             <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
         </form>
         <span class="user-chip">
@@ -1411,7 +1411,7 @@
             <div class="sidebar-panel active" id="sp-create">
                 <h2><span class="num">01</span> Short URL</h2>
                 <form th:action="@{/admin/create}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<!--                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
                     <div class="field">
                         <label>URL Asli <span class="req">*</span></label>
                         <input type="url" name="originalUrl" required
@@ -1676,7 +1676,7 @@
                                             th:data-code="${u.shortCode}"
                                             th:data-title="${u.title != null ? u.title : u.shortCode}">Log</button>
                                     <form th:action="@{'/admin/' + ${u.id} + '/toggle'}" method="post" style="display:inline">
-                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<!--                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
                                         <button type="submit" class="btn btn-ghost btn-xs"
                                                 th:text="${u.active} ? '⏸' : '▶'">Toggle</button>
                                     </form>
@@ -1834,7 +1834,7 @@
             <button id="closeEditUrlBtn" type="button" class="modal-close">×</button>
         </div>
         <form id="editUrlForm" th:action="@{/admin/0/update}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<!--            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
             <div class="modal-body">
                 <input type="hidden" id="editUrlId" name="id">
                 <div class="field">
@@ -1870,7 +1870,7 @@
             <button id="closeAccessUrlBtn" type="button" class="modal-close">×</button>
         </div>
         <form id="accessUrlForm" th:action="@{/admin/0/access}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+<!--            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
             <input type="hidden" id="accessUrlId" name="id">
             <input type="hidden" id="accessCoManagersHidden" name="coManagers" value="">
 

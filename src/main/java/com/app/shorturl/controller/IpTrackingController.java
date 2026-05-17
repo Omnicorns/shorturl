@@ -31,7 +31,7 @@ import java.util.Optional;
  * untuk analytics, TIDAK cocok untuk audit/security.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Slf4j
 public class IpTrackingController {
