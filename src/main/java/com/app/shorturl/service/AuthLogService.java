@@ -51,13 +51,13 @@ public class AuthLogService {
         if (req == null) return null;
         // X-Forwarded-For sudah ditangani Tomcat RemoteIpValve di properties,
         // jadi getRemoteAddr() sudah balikin client IP yang benar.
-        String ip = req.getRemoteAddr();
-        return truncate(ip, 45);
+        //  String ip = req.getRemoteAddr();
+        return "";
     }
 
     private String extractUserAgent(HttpServletRequest req) {
         if (req == null) return null;
-        return truncate(req.getHeader("User-Agent"), 500);
+        return null;
     }
 
     private String truncate(String s, int max) {

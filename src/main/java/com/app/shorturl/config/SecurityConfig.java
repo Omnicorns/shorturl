@@ -153,6 +153,7 @@ public class SecurityConfig {
                                 "/reset-password",
                                 "/css/**",
                                 "/js/**",
+                                "/error",
                                 "/images/**",
                                 "/img.png",
                                 "/favicon.ico"
