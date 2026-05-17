@@ -63,7 +63,7 @@ public class AuthWebController {
             redirectAttributes.addFlashAttribute("success", "Jika akun ditemukan, link reset password akan dibuat.");
         });
 
-        return "redirect:/login?resetSent";
+        return "redirect:/admin?tab=users";
     }
 
     @GetMapping("/reset-password")
