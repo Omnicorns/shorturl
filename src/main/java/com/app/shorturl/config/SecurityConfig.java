@@ -1,5 +1,6 @@
 package com.app.shorturl.config;
 
+import com.app.shorturl.service.DatabaseOrFallbackUserDetailsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,13 +13,9 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -26,30 +23,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.List;
 
-/**
- * Security Configuration — Dual Authentication
- *
- * Login URL: POST /login dengan parameter username & password
- *
- * Urutan provider yang dicoba:
- *   1. DaoAuthenticationProvider (akun lokal in-memory: surl/surl123)
- *      → fallback / emergency kalau LDAP server down
- *   2. ActiveDirectoryLdapAuthenticationProvider (domain sarinah.net)
- *      → user AD bind pakai credential sendiri (username@sarinah.net)
- *
- * Kalau user AD sukses, otomatis di-grant ROLE_ADMIN (lihat authoritiesMapper).
- * Kalau mau dibatasi hanya member group AD tertentu, ganti mapper-nya untuk
- * cek nama group dari `authorities` (yang berasal dari attribute memberOf).
- */
 @Slf4j
 @Configuration
 public class SecurityConfig {
-
-    @Value("${app.admin.username}")
-    private String adminUsername;
-
-    @Value("${app.admin.password}")
-    private String adminPassword;
 
     @Value("${ldap.url}")
     private String ldapUrl;
@@ -65,52 +41,39 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ============================================================
-    // Provider 1 — User lokal (in-memory)
-    // ============================================================
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        UserDetails admin = User.builder()
-                .username(adminUsername)
-                .password(encoder.encode(adminPassword))
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(admin);
-    }
-
+    /**
+     * Provider lokal:
+     * 1. user dari database app_users
+     * 2. fallback emergency app.admin.username/app.admin.password
+     */
     @Bean
     public DaoAuthenticationProvider localAuthProvider(
-            UserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
+            DatabaseOrFallbackUserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder
+    ) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
-        // Biarkan default (hideUserNotFoundExceptions=true).
-        // Saat username tidak ada di in-memory, provider lempar
-        // BadCredentialsException → ProviderManager swallow & lanjut ke AD,
-        // tanpa men-trigger event LOGIN_FAILURE dobel.
         return provider;
     }
 
-    // ============================================================
-    // Provider 2 — Active Directory
-    // ============================================================
+    /**
+     * Provider Active Directory.
+     */
     @Bean
     public ActiveDirectoryLdapAuthenticationProvider activeDirectoryProvider() {
         ActiveDirectoryLdapAuthenticationProvider provider =
                 new ActiveDirectoryLdapAuthenticationProvider(ldapDomain, ldapUrl, ldapBaseDn);
+
         provider.setConvertSubErrorCodesToExceptions(true);
         provider.setUseAuthenticationRequestCredentials(true);
-        // Terima input baik sAMAccountName (mis. "budi") maupun
-        // userPrincipalName (mis. "budi@sarinah.net")
-        provider.setSearchFilter(
-                "(&(objectClass=user)(|(sAMAccountName={1})(userPrincipalName={0})))");
 
-        // Mapping role: semua user yang lulus AD bind => ROLE_ADMIN.
-        // Kalau mau granular per-group AD, ganti logic di sini:
-        //   - cek apakah `authorities` (dari memberOf) mengandung group tertentu,
-        //     misal "CN=ShortURL_Admins,OU=Groups,DC=sarinah,DC=net"
-        //   - kalau iya → ROLE_ADMIN, kalau tidak → ROLE_USER atau tolak
+        provider.setSearchFilter(
+                "(&(objectClass=user)(|(sAMAccountName={1})(userPrincipalName={0})))"
+        );
+
+        // Semua user AD yang sukses bind diberi ROLE_ADMIN.
+        // Untuk production, sebaiknya batasi berdasarkan group AD tertentu.
         provider.setAuthoritiesMapper(authorities -> {
             log.info("AD authorities raw: {}", authorities);
             return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -118,84 +81,121 @@ public class SecurityConfig {
 
         log.info("AD provider configured: domain={}, url={}, baseDn={}",
                 ldapDomain, ldapUrl, ldapBaseDn);
+
         return provider;
     }
 
-    // ============================================================
-    // AuthenticationManager — gabungkan kedua provider
-    //   urutan: lokal dulu, baru AD
-    //
-    //   PENTING: inject AuthenticationEventPublisher supaya event
-    //   AuthenticationSuccessEvent / AbstractAuthenticationFailureEvent
-    //   ke-publish (default ProviderManager pakai NullEventPublisher
-    //   yang nggak fire event apapun → audit listener nggak jalan).
-    // ============================================================
     @Bean
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider localAuthProvider,
             ActiveDirectoryLdapAuthenticationProvider activeDirectoryProvider,
-            AuthenticationEventPublisher eventPublisher) {
-        ProviderManager pm = new ProviderManager(localAuthProvider, activeDirectoryProvider);
-        pm.setAuthenticationEventPublisher(eventPublisher);
-        pm.setEraseCredentialsAfterAuthentication(true);
-        return pm;
+            AuthenticationEventPublisher eventPublisher
+    ) {
+        ProviderManager providerManager =
+                new ProviderManager(localAuthProvider, activeDirectoryProvider);
+
+        providerManager.setAuthenticationEventPublisher(eventPublisher);
+        providerManager.setEraseCredentialsAfterAuthentication(true);
+
+        return providerManager;
     }
 
-    // ============================================================
-    // Filter Chain — REST API (Basic Auth, stateless)
-    // ============================================================
+    /**
+     * API chain khusus /api/v1/**
+     *
+     * Penting:
+     * Jangan pakai /api/** di sini, karena /api/admin/users/**
+     * dipakai dashboard admin dan harus lewat session login web.
+     */
     @Bean
     @Order(1)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http,
-                                              AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain apiFilterChain(
+            HttpSecurity http,
+            AuthenticationManager authenticationManager
+    ) throws Exception {
         http
-                .securityMatcher("/api/**")
+                .securityMatcher("/api/v1/**")
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers("/api/v1/**").permitAll()
                 )
                 .httpBasic(basic -> {})
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                );
 
         return http.build();
     }
 
-    // ============================================================
-    // Filter Chain — Web UI (form login + CSRF)
-    // ============================================================
+    /**
+     * Web chain:
+     * - /admin/** pakai session login
+     * - /api/admin/users/** juga pakai session login
+     *
+     * Jadi upload catalog dari halaman admin akan punya Authentication.
+     */
     @Bean
     @Order(2)
-    public SecurityFilterChain webFilterChain(HttpSecurity http,
-                                              AuthenticationManager authenticationManager,
-                                              LogoutSuccessHandler logoutSuccessHandler) throws Exception {
+    public SecurityFilterChain webFilterChain(
+            HttpSecurity http,
+            AuthenticationManager authenticationManager,
+            LogoutSuccessHandler logoutSuccessHandler
+    ) throws Exception {
         http
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/login",
+                                "/register",
+                                "/forgot-password",
+                                "/reset-password",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/img.png",
+                                "/favicon.ico"
+                        ).permitAll()
+
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // API catalog dari dashboard admin.
+                        // Ini harus masuk web chain supaya Authentication tidak null.
+                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
+
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/shorten").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml"
+                        ).permitAll()
+
                         .anyRequest().permitAll()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
                         .defaultSuccessUrl("/admin", true)
                         .failureUrl("/login?error")
                         .permitAll()
                 )
                 .logout(logout -> logout
                         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-                        .logoutSuccessHandler(logoutSuccessHandler)   // ⬅ catat audit, lalu redirect
+                        .logoutSuccessHandler(logoutSuccessHandler)
                         .permitAll()
                 )
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/h2-console/**"))
-                .headers(h -> h.frameOptions(f -> f.sameOrigin()));
+                        .ignoringRequestMatchers("/h2-console/**")
+                )
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.sameOrigin())
+                );
 
         return http.build();
     }

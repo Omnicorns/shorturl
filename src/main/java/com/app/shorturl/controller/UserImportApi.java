@@ -5,6 +5,8 @@ import com.app.shorturl.model.PdfDocs;
 import com.app.shorturl.projection.PdfDocSummary;
 import com.app.shorturl.repository.PdfDocRepository;
 import com.app.shorturl.repository.ShortUrlRepository;
+import com.app.shorturl.response.CatalogResponse;
+import com.app.shorturl.service.CatalogAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +32,7 @@ public class UserImportApi {
 
     private final PdfDocRepository pdfDocRepository;
     private final ShortUrlRepository shortUrlRepository;
+    private final CatalogAccessService catalogAccessService;
 
     // Import CSV (multipart/form-data)
 
@@ -47,25 +51,31 @@ public class UserImportApi {
 
 
     @PostMapping(value = "/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Map<String, Object> upload(@RequestPart("file") MultipartFile file) throws IOException {
+    public Map<String, Object> upload(@RequestPart("file") MultipartFile file,
+                                      Authentication authentication) throws IOException {
         if (file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File kosong");
-        if (!Objects.equals(file.getContentType(), "application/pdf"))
-            throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Harus PDF");
+        if (!isPdf(file)) throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Harus PDF");
+
         validateSize(file);
 
         PdfDocs doc = new PdfDocs();
         doc.setFilename(file.getOriginalFilename());
-        doc.setContentType(file.getContentType());
+        doc.setContentType("application/pdf");
         doc.setData(file.getBytes());
+
+        // INI WAJIB
+        doc.setOwnerUsername(authentication.getName().toLowerCase());
+
         doc = pdfDocRepository.save(doc);
 
         return Map.of(
                 "id", doc.getId(),
                 "filename", doc.getFilename(),
-                "url", "/pdf/" + doc.getId(),          // endpoint baca yang sudah kita buat
-                "open_in_viewer", "/catalogue?id=" + doc.getId()
+                "url", "/api/v1/admin/pdf/" + doc.getId(),
+                "open_in_viewer", "/catalogue?id=" + doc.getId(),
+                "ownerUsername", doc.getOwnerUsername(),
+                "coManagers", doc.getCoManagers()
         );
-
     }
 
 
@@ -117,7 +127,8 @@ public class UserImportApi {
     @PostMapping(value = "/pdf/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, Object> uploadBulk(
             @RequestPart("files") List<MultipartFile> files,
-            @RequestParam(value = "filenames", required = false) List<String> filenames) {
+            @RequestParam(value = "filenames", required = false) List<String> filenames,
+            Authentication authentication) {
 
         if (files == null || files.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tidak ada file yang diunggah");
@@ -164,6 +175,9 @@ public class UserImportApi {
                 doc.setFilename(fname);
                 doc.setContentType("application/pdf");
                 doc.setData(file.getBytes());
+                if (authentication != null && authentication.getName() != null) {
+                    doc.setOwnerUsername(authentication.getName().toLowerCase());
+                }
 
                 doc = pdfDocRepository.save(doc);
 
@@ -171,7 +185,10 @@ public class UserImportApi {
                 ok.put("index", i);
                 ok.put("filename", doc.getFilename());
                 ok.put("id", doc.getId());
-                ok.put("url", "/pdf/" + doc.getId());
+
+                ok.put("url", "/api/admin/users/pdf/" + doc.getId());
+                ok.put("ownerUsername", doc.getOwnerUsername());
+                ok.put("coManagers", doc.getCoManagers());
                 ok.put("open_in_viewer", "/catalogue?id=" + doc.getId());
                 ok.put("status", "OK");
                 items.add(ok);
@@ -197,43 +214,13 @@ public class UserImportApi {
     }
 
     @GetMapping("/catalogs")
-    public Map<String, Object> getCatalogs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String q
-    ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
-
-        // Pakai projection yang TIDAK select kolom data
-        Page<PdfDocSummary> result;
-        if (q != null && !q.isBlank()) {
-            result = pdfDocRepository.searchByFilename(q.trim(), pageable);
-        } else {
-            result = pdfDocRepository.findAllSummary(pageable);
-        }
-
-        List<Map<String, Object>> items = result.getContent().stream()
-                .map(doc -> {
-                    Map<String, Object> item = new LinkedHashMap<>();
-                    item.put("id", doc.getId());
-                    item.put("filename", doc.getFilename());
-                    item.put("contentType", doc.getContentType());
-                    item.put("url", "/api/admin/users/pdf/" + doc.getId());
-                    item.put("open_in_viewer", "/catalogue?id=" + doc.getId());
-                    return item;
-                })
-                .toList();
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("content", items);
-        response.put("page", result.getNumber());
-        response.put("size", result.getSize());
-        response.put("totalElements", result.getTotalElements());
-        response.put("totalPages", result.getTotalPages());
-        response.put("first", result.isFirst());
-        response.put("last", result.isLast());
-
-        return response;
+    @ResponseBody
+    public Page<CatalogResponse> listCatalogs(@RequestParam(defaultValue = "") String keyword,
+                                              Pageable pageable,
+                                              Authentication authentication) {
+        return catalogAccessService
+                .findVisibleCatalogs(keyword, pageable, authentication)
+                .map(doc -> catalogAccessService.toResponse(doc, authentication));
     }
     /**
      * Deteksi cepat PDF:

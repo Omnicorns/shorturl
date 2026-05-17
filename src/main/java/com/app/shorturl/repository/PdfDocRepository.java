@@ -18,4 +18,48 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
     Page<PdfDocSummary> findAllSummary(Pageable pageable);
 
     Page<PdfDocs> findByFilenameContainingIgnoreCase(String q, Pageable pageable);
+
+    @Query(
+            value = """
+                    select distinct p
+                    from PdfDocs p
+                    left join p.coManagers cm
+                    where lower(p.ownerUsername) = lower(:username)
+                       or lower(cm) = lower(:username)
+                    """,
+            countQuery = """
+                    select count(distinct p)
+                    from PdfDocs p
+                    left join p.coManagers cm
+                    where lower(p.ownerUsername) = lower(:username)
+                       or lower(cm) = lower(:username)
+                    """
+    )
+    Page<PdfDocs> findVisibleForUser(@Param("username") String username, Pageable pageable);
+
+    @Query(
+            value = """
+                    select distinct p
+                    from PdfDocs p
+                    left join p.coManagers cm
+                    where (
+                        lower(p.ownerUsername) = lower(:username)
+                        or lower(cm) = lower(:username)
+                    )
+                    and lower(p.filename) like lower(concat('%', :keyword, '%'))
+                    """,
+            countQuery = """
+                    select count(distinct p)
+                    from PdfDocs p
+                    left join p.coManagers cm
+                    where (
+                        lower(p.ownerUsername) = lower(:username)
+                        or lower(cm) = lower(:username)
+                    )
+                    and lower(p.filename) like lower(concat('%', :keyword, '%'))
+                    """
+    )
+    Page<PdfDocs> findVisibleForUserByKeyword(@Param("username") String username,
+                                              @Param("keyword") String keyword,
+                                              Pageable pageable);
 }

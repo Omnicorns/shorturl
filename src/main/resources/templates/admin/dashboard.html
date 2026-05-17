@@ -1631,7 +1631,7 @@
                                           th:text="${u.ownerUsername}">owner</span>
                                     <span th:if="${u.ownerUsername == null}"
                                           class="owner-name owner-orphan"
-                                          title="URL ini belum punya pemilik. Super-admin bisa meng-assign via tombol 👥.">— </span>
+                                          title="URL ini belum punya pemilik. Super-admin bisa meng-assign via tombol 👥."> — )</span>
                                     <span th:if="${u.coManagers != null and !u.coManagers.isEmpty()}"
                                           class="owner-share"
                                           th:title="|Di-share ke: ${#strings.listJoin(u.coManagers, ', ')}|"
@@ -1673,11 +1673,11 @@
                                         <button type="submit" class="btn btn-ghost btn-xs"
                                                 th:text="${u.active} ? '⏸' : '▶'">Toggle</button>
                                     </form>
-                                    <form th:action="@{'/admin/' + ${u.id} + '/delete'}" method="post" style="display:inline"
-                                          onsubmit="return confirm('Hapus short URL ini?');">
-                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                        <button type="submit" class="btn btn-danger btn-xs">✕</button>
-                                    </form>
+                                    <!--                                    <form th:action="@{'/admin/' + ${u.id} + '/delete'}" method="post" style="display:inline"-->
+                                    <!--                                          onsubmit="return confirm('Hapus short URL ini?');">-->
+                                    <!--                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->
+                                    <!--                                        <button type="submit" class="btn btn-danger btn-xs">✕</button>-->
+                                    <!--                                    </form>-->
                                 </div>
                             </td>
                         </tr>
@@ -1730,12 +1730,13 @@
                             <th class="th-check"><input type="checkbox" id="checkAllHead"></th>
                             <th style="width:60px">ID</th>
                             <th>Filename</th>
+                            <th>Pemilik</th>
                             <th style="width:130px">Content Type</th>
-                            <th style="width:380px">Aksi</th>
+                            <th style="width:430px">Aksi</th>
                         </tr>
                         </thead>
                         <tbody id="catalogTableBody">
-                        <tr><td colspan="5" class="empty">Memuat data catalog…</td></tr>
+                        <tr><td colspan="6" class="empty">Memuat data catalog…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1857,7 +1858,7 @@
         <div class="modal-head">
             <div>
                 <h3>Kelola Akses</h3>
-                <p id="accessUrlSubtitle">Atur siapa saja yang bisa melihat &amp; mengelola URL ini.</p>
+                <p id="accessUrlSubtitle">Atur siapa saja yang bisa melihat &amp; mengelola item ini.</p>
             </div>
             <button id="closeAccessUrlBtn" type="button" class="modal-close">×</button>
         </div>
@@ -1956,6 +1957,8 @@
         const CATALOG_BULK = /*[[@{/api/admin/users/pdf/bulk}]]*/ '/api/admin/users/pdf/bulk';
         const URL_LOGS_API = /*[[@{/admin/logs/data}]]*/ '/admin/logs/data';
         const BASE_URL = /*[[${baseUrl}]]*/ 'http://localhost:8080';
+        const CURRENT_USER = /*[[${currentUser}]]*/ '';
+        const IS_SUPER_ADMIN = /*[[${isSuperAdmin}]]*/ false;
 
         const _cTok = document.querySelector('meta[name="_csrf"]');
         const _cHdr = document.querySelector('meta[name="_csrf_header"]');
@@ -2674,11 +2677,12 @@
         });
         accessChipInput.addEventListener('click', () => accessChipText.focus());
 
-        function openAccessUrlModal({ id, code, title, owner, comanagers }) {
+        function openAccessUrlModal({ id, code, title, owner, comanagers, action, label }) {
             $('accessUrlId').value = id;
-            accessForm.setAttribute('action', '/admin/' + id + '/access');
+            accessForm.setAttribute('action', action || ('/admin/' + id + '/access'));
+            const prefix = label || 'Kode';
             $('accessUrlSubtitle').textContent = code
-                ? ('Kode: ' + code + (title && title !== code ? ' · ' + title : ''))
+                ? (prefix + ': ' + code + (title && title !== code ? ' · ' + title : ''))
                 : '—';
             $('accessOwnerName').textContent = owner || '—';
             $('accessNewOwner').value = '';
@@ -2718,7 +2722,9 @@
                     code: b.dataset.code,
                     title: b.dataset.title,
                     owner: b.dataset.owner,
-                    comanagers: b.dataset.comanagers
+                    comanagers: b.dataset.comanagers,
+                    action: b.dataset.action,
+                    label: b.dataset.label
                 });
             }
         });
@@ -3063,15 +3069,49 @@
             if (e.target.classList.contains('js-row-check')) toggleSel(e.target.dataset.id, e.target.checked);
         });
 
+        function splitAccessUsers(v) {
+            if (Array.isArray(v)) return v.map(x => String(x || '').trim()).filter(Boolean);
+            return String(v || '').split(/[,;\s]+/).map(x => x.trim()).filter(Boolean);
+        }
+        function getCatalogOwner(item) {
+            return String(item.ownerUsername || item.owner || item.createdBy || item.createdByUsername || item.username || '').trim();
+        }
+        function getCatalogCoManagers(item) {
+            return splitAccessUsers(item.coManagers || item.coManagerUsernames || item.sharedUsers || item.allowedUsers);
+        }
+        function canManageCatalogAccess(item) {
+            const me = String(CURRENT_USER || '').trim().toLowerCase();
+            const owner = getCatalogOwner(item).toLowerCase();
+            return !!IS_SUPER_ADMIN || (!!me && !!owner && me === owner);
+        }
+        function renderCatalogOwnerCell(item) {
+            const owner = getCatalogOwner(item);
+            const coManagers = getCatalogCoManagers(item);
+            const ownerClass = owner && CURRENT_USER && owner.toLowerCase() === String(CURRENT_USER).toLowerCase()
+                ? 'owner-name owner-me'
+                : 'owner-name';
+            const ownerHtml = owner
+                ? `<span class="${ownerClass}" title="${escapeHtml(owner)}">${escapeHtml(owner)}</span>`
+                : '<span class="owner-name owner-orphan" title="Catalog ini belum punya pemilik">—</span>';
+            const sharedHtml = coManagers.length
+                ? `<span class="owner-share" title="Di-share ke: ${escapeHtml(coManagers.join(', '))}">+ ${coManagers.length}</span>`
+                : '';
+            return `<div class="owner-cell">${ownerHtml}${sharedHtml}</div>`;
+        }
+
         function renderCatalogs(items) {
             if (!items?.length) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="empty"><span class="empty-emoji">∅</span>Belum ada catalog.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="empty"><span class="empty-emoji">∅</span>Belum ada catalog.</td></tr>';
                 updateBulkBar(); return;
             }
             tableBody.innerHTML = items.map(item => {
                 const pdfUrl = withCacheBuster(item.url || (CATALOG_API.replace('/catalogs', '/pdf/') + item.id));
                 const viewerUrl = buildViewerUrl(item);
                 const sel = selectedIds.has(String(item.id));
+                const owner = getCatalogOwner(item);
+                const coManagers = getCatalogCoManagers(item);
+                const canAccess = canManageCatalogAccess(item);
+                const accessAction = '/admin/catalog/' + encodeURIComponent(item.id) + '/access';
                 return `<tr data-id="${escapeHtml(item.id)}" class="${sel ? 'selected' : ''}">
                     <td class="td-check"><input type="checkbox" class="js-row-check" data-id="${escapeHtml(item.id)}" ${sel ? 'checked' : ''}></td>
                     <td><span class="code-chip" style="cursor:default">${escapeHtml(item.id)}</span></td>
@@ -3079,6 +3119,7 @@
                         <strong>${escapeHtml(item.filename ?? '-')}</strong>
                         <a href="${escapeHtml(viewerUrl)}" target="_blank" class="url-link">${escapeHtml(viewerUrl)}</a>
                     </td>
+                    <td>${renderCatalogOwnerCell(item)}</td>
                     <td><span class="field-hint">${escapeHtml(item.contentType ?? 'application/pdf')}</span></td>
                     <td><div class="row-actions">
                         <a class="btn btn-ghost btn-xs" href="${escapeHtml(pdfUrl)}" target="_blank">PDF</a>
@@ -3087,11 +3128,20 @@
                         <button class="btn btn-ghost btn-xs js-edit-cat" type="button"
                                 data-id="${escapeHtml(item.id)}"
                                 data-filename="${escapeHtml(item.filename ?? '')}">✎</button>
+                        ${canAccess ? `<button class="btn btn-ghost btn-xs js-access-url js-access-catalog" type="button"
+                                data-id="${escapeHtml(item.id)}"
+                                data-code="CAT-${escapeHtml(item.id)}"
+                                data-label="Catalog"
+                                data-action="${escapeHtml(accessAction)}"
+                                data-title="${escapeHtml(item.filename ?? ('Catalog #' + item.id))}"
+                                data-owner="${escapeHtml(owner)}"
+                                data-comanagers="${escapeHtml(coManagers.join(', '))}"
+                                title="Kelola siapa yang bisa lihat catalog ini">👥</button>` : ''}
                         <button class="btn btn-ghost btn-xs js-qr-cat" type="button"
                                 data-url="${escapeHtml(viewerUrl)}"
                                 data-title="${escapeHtml(item.filename ?? '')}"
                                 data-filename="${escapeHtml(item.filename ?? 'catalog')}">QR</button>
-                        <button class="btn btn-danger btn-xs js-del-cat" type="button" data-id="${escapeHtml(item.id)}">✕</button>
+<!--                        <button class="btn btn-danger btn-xs js-del-cat" type="button" data-id="${escapeHtml(item.id)}">✕</button>-->
                     </div></td>
                 </tr>`;
             }).join('');
@@ -3186,13 +3236,13 @@
                 currentPage = page;
                 currentSize = parseInt(pageSizeSelect.value, 10) || 10;
                 currentKeyword = searchInput.value.trim();
-                tableBody.innerHTML = '<tr><td colspan="5" class="empty">Memuat…</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="empty">Memuat…</td></tr>';
                 const p = new URLSearchParams();
                 p.set('page', currentPage); p.set('size', currentSize);
                 if (currentKeyword) p.set('q', currentKeyword);
                 const res = await fetch(`${CATALOG_API}?${p}`, { cache: 'no-store' });
                 if (res.status === 404) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="empty">Endpoint catalog belum tersedia.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="6" class="empty">Endpoint catalog belum tersedia.</td></tr>';
                     updatePagUI(); return;
                 }
                 const data = await handleJson(res);
@@ -3212,7 +3262,7 @@
                 renderCatalogs(items);
                 updatePagUI();
             } catch (e) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="empty">Gagal memuat: ${escapeHtml(e.message)}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty">Gagal memuat: ${escapeHtml(e.message)}</td></tr>`;
             }
         }
 

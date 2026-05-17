@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Admin</title>
+    <title>Login & Register — Admin</title>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --bg: #FAFAF9;
             --surface: #FFFFFF;
+            --surface-soft: #F5F5F4;
             --border: #E7E5E4;
             --border-strong: #D6D3D1;
             --text: #1C1917;
@@ -18,112 +20,261 @@
             --primary: #0F172A;
             --primary-hover: #1E293B;
             --accent: #4F46E5;
+            --success-bg: #ECFDF5;
+            --success-border: #A7F3D0;
+            --success-text: #065F46;
             --error-bg: #FEF2F2;
             --error-border: #FECACA;
             --error-text: #991B1B;
+            --warning-bg: #FFFBEB;
+            --warning-border: #FDE68A;
+            --warning-text: #92400E;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             background-image:
-                radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(15, 23, 42, 0.03) 0%, transparent 50%);
-            min-height: 100vh;
+                radial-gradient(circle at 16% 18%, rgba(79, 70, 229, 0.08) 0%, transparent 34%),
+                radial-gradient(circle at 86% 82%, rgba(15, 23, 42, 0.06) 0%, transparent 36%);
+            min-height: 100svh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 24px;
+            padding: 16px;
             color: var(--text);
             -webkit-font-smoothing: antialiased;
         }
 
-        .login-box {
-            background: var(--surface);
-            padding: 40px 36px 32px;
-            border-radius: 16px;
+        .auth-shell {
+            width: 100%;
+            max-width: 880px;
+            height: min(760px, calc(100svh - 32px));
+            max-height: calc(100svh - 32px);
+            min-height: 0;
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            background: rgba(255,255,255,.78);
             border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
             box-shadow:
                 0 1px 2px rgba(0, 0, 0, 0.04),
-                0 8px 24px rgba(0, 0, 0, 0.04);
-            width: 100%;
-            max-width: 400px;
+                0 18px 50px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
         }
 
-        .logo {
+        .hero-panel {
+            padding: 42px;
+            background:
+                linear-gradient(145deg, rgba(15, 23, 42, .96), rgba(30, 41, 59, .94)),
+                radial-gradient(circle at top left, rgba(99,102,241,.5), transparent 42%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-panel::after {
+            content: "";
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            right: -130px;
+            bottom: -130px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .hero-logo-line {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-logo {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: rgba(255,255,255,.96);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,.2);
+            box-shadow: 0 12px 28px rgba(0,0,0,.18);
+            overflow: hidden;
+        }
+
+        .hero-logo img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .hero-kicker {
+            font-size: 12px;
+            color: rgba(255,255,255,.72);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .hero-brand {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+        }
+
+        .hero-copy {
+            position: relative;
+            z-index: 1;
+            max-width: 330px;
+        }
+
+        .hero-copy h2 {
+            font-size: 32px;
+            line-height: 1.08;
+            letter-spacing: -.04em;
+            margin-bottom: 14px;
+        }
+
+        .hero-copy p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: rgba(255,255,255,.75);
+        }
+
+        .auth-panel {
+            background: var(--surface);
+            padding: 26px 34px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+
+        .mobile-logo {
             width: 76px;
             height: 76px;
             margin: 0 auto 20px;
             border-radius: 18px;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             background: #ffffff;
             border: 1px solid var(--border);
-            box-shadow:
-                0 1px 2px rgba(0, 0, 0, 0.04),
-                0 8px 20px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 8px 20px rgba(0,0,0,.06);
             overflow: hidden;
         }
 
-        .logo img {
+        .mobile-logo img {
             width: 58px;
             height: 58px;
             object-fit: contain;
             display: block;
         }
 
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            padding: 4px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 16px;
+        }
+
+        .auth-tab {
+            border: 0;
+            background: transparent;
+            border-radius: 10px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: .15s ease;
+        }
+
+        .auth-tab:hover { color: var(--text); }
+
+        .auth-tab.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: 0 1px 3px rgba(15,23,42,.08);
+        }
+
+        .auth-form { display: none; }
+        .auth-form.active { display: block; animation: fadeIn .18s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: none; }
+        }
+
         h1 {
             text-align: center;
             color: var(--text);
             margin-bottom: 6px;
-            font-size: 22px;
-            font-weight: 600;
-            letter-spacing: -0.01em;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
         }
 
         .subtitle {
             text-align: center;
             color: var(--text-muted);
-            margin-bottom: 28px;
+            margin-bottom: 14px;
             font-size: 14px;
         }
 
-        .field {
-            margin-bottom: 14px;
-        }
+        .field { margin-bottom: 10px; }
+
+        #registerFormPanel .field { margin-bottom: 8px; }
 
         label {
             display: block;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--text);
             margin-bottom: 6px;
         }
 
-        .input-wrap {
-            position: relative;
-        }
+        .input-wrap { position: relative; }
 
         input {
             width: 100%;
-            padding: 11px 13px;
+            padding: 9px 12px;
             border: 1px solid var(--border-strong);
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 14px;
             font-family: inherit;
             color: var(--text);
             background: var(--surface);
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
         }
 
-        input::placeholder {
-            color: var(--text-subtle);
+        #registerFormPanel input {
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
 
-        input:hover {
-            border-color: #A8A29E;
-        }
+        input::placeholder { color: var(--text-subtle); }
+        input:hover { border-color: #A8A29E; }
 
         input:focus {
             outline: none;
@@ -151,13 +302,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            border-radius: 8px;
             transition: color 0.15s ease, background 0.15s ease;
         }
 
         .toggle-btn:hover {
             color: var(--text);
-            background: var(--bg);
+            background: var(--surface-soft);
         }
 
         .toggle-btn svg {
@@ -165,52 +316,120 @@
             height: 18px;
         }
 
-        button[type="submit"] {
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin: 4px 0 12px;
+            font-size: 13px;
+        }
+
+        .remember {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember input {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--accent);
+        }
+
+        .link-btn {
+            border: 0;
+            background: transparent;
+            padding: 0;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .link-btn:hover { text-decoration: underline; }
+
+        button[type="submit"],
+        .submit-btn {
             width: 100%;
             background: var(--primary);
             color: white;
             border: none;
-            padding: 11px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
             font-family: inherit;
             margin-top: 8px;
-            transition: background 0.15s ease, transform 0.05s ease;
+            transition: background 0.15s ease, transform 0.05s ease, box-shadow .15s ease;
+            box-shadow: 0 8px 18px rgba(15,23,42,.14);
         }
 
-        button[type="submit"]:hover {
+        button[type="submit"]:hover,
+        .submit-btn:hover {
             background: var(--primary-hover);
         }
 
-        button[type="submit"]:active {
+        button[type="submit"]:active,
+        .submit-btn:active {
             transform: scale(0.99);
         }
 
-        .error {
-            background: var(--error-bg);
-            color: var(--error-text);
-            border: 1px solid var(--error-border);
+        .alert {
+            border: 1px solid;
             padding: 10px 12px;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 13px;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
+            line-height: 1.45;
         }
 
-        .error svg {
+        .alert svg {
             width: 16px;
             height: 16px;
             flex-shrink: 0;
         }
 
+        .alert-error {
+            background: var(--error-bg);
+            color: var(--error-text);
+            border-color: var(--error-border);
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-color: var(--success-border);
+        }
+
+        .alert-warning {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border-color: var(--warning-border);
+        }
+
+        .switch-copy {
+            margin-top: 11px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .switch-copy button { margin-left: 4px; }
+
         .back {
             text-align: center;
-            margin-top: 24px;
-            padding-top: 20px;
+            margin-top: 13px;
+            padding-top: 13px;
             border-top: 1px solid var(--border);
             font-size: 13px;
         }
@@ -221,74 +440,675 @@
             transition: color 0.15s ease;
         }
 
-        .back a:hover {
+        .back a:hover { color: var(--text); }
+
+        .password-help {
+            margin-top: 5px;
+            color: var(--text-subtle);
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, .54);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+            animation: fadeIn .15s ease;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 430px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+            overflow: hidden;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 22px 22px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-head h3 {
+            font-size: 20px;
+            letter-spacing: -.03em;
+            margin-bottom: 4px;
+        }
+
+        .modal-head p {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .modal-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 22px;
+            line-height: 1;
+            display: grid;
+            place-items: center;
+        }
+
+        .modal-close:hover {
             color: var(--text);
+            background: var(--surface-soft);
+        }
+
+        .modal-body {
+            padding: 18px 22px 22px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .modal-actions .secondary-btn,
+        .modal-actions button[type="submit"],
+        .modal-actions .submit-btn {
+            margin-top: 0;
+        }
+
+        .secondary-btn {
+            width: 100%;
+            border: 1px solid var(--border-strong);
+            background: var(--surface);
+            color: var(--text);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .15s ease;
+        }
+
+        .secondary-btn:hover { background: var(--surface-soft); }
+
+        .copy-hint {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        @media (max-height: 720px) and (min-width: 821px) {
+            body {
+                padding: 8px;
+            }
+
+            .auth-shell {
+                height: calc(100svh - 16px);
+                max-height: calc(100svh - 16px);
+            }
+
+            .auth-panel {
+                padding: 18px 28px 12px;
+            }
+
+            .auth-tabs {
+                margin-bottom: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .subtitle {
+                margin-bottom: 9px;
+                font-size: 13px;
+            }
+
+            #registerFormPanel .field {
+                margin-bottom: 5px;
+            }
+
+            input {
+                padding: 7px 10px;
+                font-size: 13px;
+            }
+
+            .password-help {
+                display: none;
+            }
+
+            .back {
+                margin-top: 8px;
+                padding-top: 8px;
+            }
+        }
+
+        @media (max-width: 820px) {
+            html,
+            body {
+                overflow: auto;
+            }
+
+            body {
+                padding: 16px;
+                align-items: flex-start;
+            }
+
+            .auth-shell {
+                grid-template-columns: 1fr;
+                max-width: 430px;
+                height: auto;
+                max-height: none;
+                min-height: auto;
+            }
+
+            .hero-panel { display: none; }
+
+            .auth-panel {
+                padding: 32px 24px 24px;
+                overflow: visible;
+            }
+
+            .mobile-logo { display: flex; }
+        }
+
+        @media (max-width: 420px) {
+            body { padding: 12px; }
+
+            .auth-panel {
+                padding: 26px 18px 20px;
+            }
+
+            .auth-tabs { margin-bottom: 20px; }
+
+            .modal-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
+
 <body>
-<div class="login-box">
-
-    <!-- LOGO PNG -->
-    <div class="logo" aria-label="Logo">
-        <img th:src="@{/img.png}" src="/img.png" alt="Logo Admin">
-    </div>
-
-    <h1>Admin Login</h1>
-    <p class="subtitle">Masuk untuk mengelola short URL</p>
-
-    <div th:if="${param.error}" class="error">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <span>Username atau password salah.</span>
-    </div>
-
-    <form th:action="@{/login}" method="post">
-        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-
-        <div class="field">
-            <label for="username">Username</label>
-            <div class="input-wrap">
-                <input type="text" id="username" name="username" placeholder="admin" required autofocus autocomplete="username">
+<div class="auth-shell">
+    <aside class="hero-panel">
+        <div class="hero-logo-line">
+            <div class="hero-logo" aria-label="Logo">
+                <img th:src="@{/img.png}" src="/img.png" alt="Logo Admin">
+            </div>
+            <div>
+                <div class="hero-kicker">Admin Console</div>
+                <div class="hero-brand">Short URL & Catalog</div>
             </div>
         </div>
 
-        <div class="field">
-            <label for="password">Password</label>
-            <div class="input-wrap">
-                <input type="password" id="password" name="password" class="has-toggle" placeholder="••••••••" required autocomplete="current-password">
-                <button type="button" class="toggle-btn" id="togglePassword" aria-label="Tampilkan password">
-                    <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
+        <div class="hero-copy">
+            <h2>Kelola akses dengan lebih aman dan rapi.</h2>
+            <p>Masuk untuk mengatur short URL, catalog PDF, QR code, log akses, dan user admin dalam satu halaman.</p>
+        </div>
+    </aside>
+
+    <main class="auth-panel">
+        <div class="mobile-logo" aria-label="Logo">
+            <img th:src="@{/img.png}" src="/img.png" alt="Logo Admin">
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Pilih form autentikasi">
+            <button type="button" class="auth-tab active" id="loginTab" data-target="loginFormPanel" role="tab" aria-selected="true">Login</button>
+            <button type="button" class="auth-tab" id="registerTab" data-target="registerFormPanel" role="tab" aria-selected="false">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <section class="auth-form active" id="loginFormPanel" role="tabpanel" aria-labelledby="loginTab">
+            <h1>Admin Login</h1>
+            <p class="subtitle">Masuk untuk mengelola short URL</p>
+
+            <div th:if="${param.error}" class="alert alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Username atau password salah.</span>
+            </div>
+
+            <div th:if="${param.logout}" class="alert alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span>Anda berhasil logout.</span>
+            </div>
+
+            <div th:if="${param.registered}" class="alert alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span>Registrasi berhasil. Silakan login.</span>
+            </div>
+
+            <div th:if="${param.passwordChanged}" class="alert alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span>Password berhasil diganti. Silakan login.</span>
+            </div>
+
+            <div th:if="${param.resetSent}" class="alert alert-success">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span>Permintaan reset password berhasil diproses.</span>
+            </div>
+
+            <form th:action="@{/login}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                <div class="field">
+                    <label for="username">Username</label>
+                    <div class="input-wrap">
+                        <input type="text" id="username" name="username" placeholder="admin" required autofocus autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="input-wrap">
+                        <input type="password" id="password" name="password" class="has-toggle js-password"
+                               placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="toggle-btn js-toggle-password" aria-label="Tampilkan password" data-target="password">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="remember">
+                        <input type="checkbox" name="remember-me">
+                        <span>Ingat saya</span>
+                    </label>
+                    <button type="button" class="link-btn" id="openForgotBtn">Forgot password?</button>
+                </div>
+
+                <button type="submit">Login</button>
+            </form>
+
+            <div class="switch-copy">
+                Belum punya akun?
+                <button type="button" class="link-btn js-switch-register">Register sekarang</button>
+            </div>
+        </section>
+
+        <!-- REGISTER FORM -->
+        <section class="auth-form" id="registerFormPanel" role="tabpanel" aria-labelledby="registerTab">
+            <h1>Register Admin</h1>
+            <p class="subtitle">Buat akun baru untuk masuk ke dashboard</p>
+
+            <div th:if="${param.registerError}" class="alert alert-error">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span th:text="${error != null ? error : 'Registrasi gagal. Cek username/email/password.'}">
+                    Registrasi gagal.
+                </span>
+            </div>
+
+            <form th:action="@{/register}" method="post" id="registerForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                <div class="field">
+                    <label for="fullName">Nama Lengkap</label>
+                    <div class="input-wrap">
+                        <input type="text" id="fullName" name="fullName" placeholder="Nama lengkap" required autocomplete="name">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="registerUsername">Username</label>
+                    <div class="input-wrap">
+                        <input type="text" id="registerUsername" name="username" placeholder="contoh: aloysius" required autocomplete="username" minlength="3">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="registerEmail">Email</label>
+                    <div class="input-wrap">
+                        <input type="email" id="registerEmail" name="email" placeholder="nama@company.com" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="registerPassword">Password</label>
+                    <div class="input-wrap">
+                        <input type="password" id="registerPassword" name="password" class="has-toggle js-password"
+                               placeholder="Minimal 8 karakter" required autocomplete="new-password" minlength="8">
+                        <button type="button" class="toggle-btn js-toggle-password" aria-label="Tampilkan password" data-target="registerPassword">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="password-help">Gunakan minimal 8 karakter. Lebih aman jika memakai huruf besar, kecil, angka, dan simbol.</div>
+                </div>
+
+                <div class="field">
+                    <label for="confirmPassword">Konfirmasi Password</label>
+                    <div class="input-wrap">
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="has-toggle js-password"
+                               placeholder="Ulangi password" required autocomplete="new-password" minlength="8">
+                        <button type="button" class="toggle-btn js-toggle-password" aria-label="Tampilkan password" data-target="confirmPassword">
+                            <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit">Buat Akun</button>
+            </form>
+
+            <div class="switch-copy">
+                Sudah punya akun?
+                <button type="button" class="link-btn js-switch-login">Login</button>
+            </div>
+        </section>
+
+        <p class="back"><a href="/">← Kembali ke Beranda</a></p>
+    </main>
+</div>
+
+<!-- FORGOT PASSWORD POPUP -->
+<div id="forgotModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+        <div class="modal-head">
+            <div>
+                <h3 id="forgotTitle">Forgot Password</h3>
+                <p>Masukkan username atau email. Sistem akan membuat link reset password jika akun ditemukan.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeForgotBtn" aria-label="Tutup popup">×</button>
+        </div>
+
+        <form th:action="@{/forgot-password}" method="post" id="forgotForm">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
-                </button>
+                    <span>Untuk keamanan, pesan sukses tetap sama walaupun akun tidak ditemukan.</span>
+                </div>
+
+                <div class="field">
+                    <label for="forgotIdentity">Username / Email</label>
+                    <div class="input-wrap">
+                        <input type="text" id="forgotIdentity" name="identity" placeholder="username atau email" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="secondary-btn" id="cancelForgotBtn">Batal</button>
+                    <button type="submit">Buat Link Reset</button>
+                </div>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- RESET LINK POPUP - TANPA HARDCODE -->
+<div id="resetLinkModal"
+     class="modal-backdrop"
+     th:classappend="${resetUrl != null} ? ' show' : ''"
+     th:attr="aria-hidden=${resetUrl != null} ? 'false' : 'true'">
+
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="resetLinkTitle">
+        <div class="modal-head">
+            <div>
+                <h3 id="resetLinkTitle">Link Reset Password</h3>
+                <p>Link reset berhasil dibuat. Buka link ini untuk mengganti password.</p>
+            </div>
+            <button type="button" class="modal-close" id="closeResetLinkBtn" aria-label="Tutup popup">×</button>
         </div>
 
-        <button type="submit">Login</button>
-    </form>
+        <div class="modal-body">
+            <div class="alert alert-warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Mode development tanpa SMTP. Untuk production, link ini sebaiknya dikirim via email.</span>
+            </div>
 
-    <p class="back"><a href="/">← Kembali ke Beranda</a></p>
+            <div class="field">
+                <label for="resetUrlInput">Reset URL</label>
+                <div class="input-wrap">
+                    <input id="resetUrlInput" type="text" th:value="${resetUrl}" readonly>
+                </div>
+                <div class="copy-hint">Link di atas berasal dari backend `${resetUrl}`, bukan hardcode HTML.</div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="secondary-btn" id="copyResetLinkBtn">Copy Link</button>
+                <a th:href="${resetUrl}"
+                   class="submit-btn"
+                   target="_blank"
+                   rel="noopener"
+                   style="text-align:center;text-decoration:none;margin-top:0;">
+                    Buka Reset
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
     (function () {
-        const toggleBtn = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eyeIcon');
-
         const eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
         const eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
 
-        toggleBtn.addEventListener('click', function () {
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            eyeIcon.innerHTML = isPassword ? eyeOff : eyeOpen;
-            toggleBtn.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
+        function setActivePanel(panelId) {
+            document.querySelectorAll('.auth-tab').forEach(function (tab) {
+                const isActive = tab.dataset.target === panelId;
+                tab.classList.toggle('active', isActive);
+                tab.setAttribute('aria-selected', String(isActive));
+            });
+
+            document.querySelectorAll('.auth-form').forEach(function (panel) {
+                panel.classList.toggle('active', panel.id === panelId);
+            });
+
+            const query = panelId === 'registerFormPanel' ? '#register' : '#login';
+            if (window.location.hash !== query) {
+                window.history.replaceState(null, '', query);
+            }
+        }
+
+        document.querySelectorAll('.auth-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                setActivePanel(tab.dataset.target);
+            });
+        });
+
+        document.querySelectorAll('.js-switch-register').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setActivePanel('registerFormPanel');
+            });
+        });
+
+        document.querySelectorAll('.js-switch-login').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setActivePanel('loginFormPanel');
+            });
+        });
+
+        if (window.location.hash === '#register') {
+            setActivePanel('registerFormPanel');
+        }
+
+        document.querySelectorAll('.js-toggle-password').forEach(function (toggleBtn) {
+            toggleBtn.addEventListener('click', function () {
+                const input = document.getElementById(toggleBtn.dataset.target);
+                const icon = toggleBtn.querySelector('.eye-icon');
+                if (!input || !icon) return;
+
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                icon.innerHTML = isPassword ? eyeOff : eyeOpen;
+                toggleBtn.setAttribute('aria-label', isPassword ? 'Sembunyikan password' : 'Tampilkan password');
+            });
+        });
+
+        const registerForm = document.getElementById('registerForm');
+        const registerPassword = document.getElementById('registerPassword');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        function validatePasswordMatch() {
+            if (!registerPassword || !confirmPassword) return true;
+
+            if (confirmPassword.value && registerPassword.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Konfirmasi password tidak sama.');
+                return false;
+            }
+
+            confirmPassword.setCustomValidity('');
+            return true;
+        }
+
+        if (registerPassword && confirmPassword) {
+            registerPassword.addEventListener('input', validatePasswordMatch);
+            confirmPassword.addEventListener('input', validatePasswordMatch);
+        }
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', function (event) {
+                if (!validatePasswordMatch()) {
+                    event.preventDefault();
+                    confirmPassword.reportValidity();
+                }
+            });
+        }
+
+        const forgotModal = document.getElementById('forgotModal');
+        const openForgotBtn = document.getElementById('openForgotBtn');
+        const closeForgotBtn = document.getElementById('closeForgotBtn');
+        const cancelForgotBtn = document.getElementById('cancelForgotBtn');
+        const forgotIdentity = document.getElementById('forgotIdentity');
+
+        function openForgotModal() {
+            if (!forgotModal) return;
+            forgotModal.classList.add('show');
+            forgotModal.setAttribute('aria-hidden', 'false');
+
+            setTimeout(function () {
+                if (forgotIdentity) forgotIdentity.focus();
+            }, 50);
+        }
+
+        function closeForgotModal() {
+            if (!forgotModal) return;
+            forgotModal.classList.remove('show');
+            forgotModal.setAttribute('aria-hidden', 'true');
+        }
+
+        if (openForgotBtn) openForgotBtn.addEventListener('click', openForgotModal);
+        if (closeForgotBtn) closeForgotBtn.addEventListener('click', closeForgotModal);
+        if (cancelForgotBtn) cancelForgotBtn.addEventListener('click', closeForgotModal);
+
+        if (forgotModal) {
+            forgotModal.addEventListener('click', function (event) {
+                if (event.target === forgotModal) closeForgotModal();
+            });
+        }
+
+        const resetLinkModal = document.getElementById('resetLinkModal');
+        const closeResetLinkBtn = document.getElementById('closeResetLinkBtn');
+        const copyResetLinkBtn = document.getElementById('copyResetLinkBtn');
+        const resetUrlInput = document.getElementById('resetUrlInput');
+
+        function closeResetLinkModal() {
+            if (!resetLinkModal) return;
+            resetLinkModal.classList.remove('show');
+            resetLinkModal.setAttribute('aria-hidden', 'true');
+        }
+
+        if (closeResetLinkBtn) {
+            closeResetLinkBtn.addEventListener('click', closeResetLinkModal);
+        }
+
+        if (resetLinkModal) {
+            resetLinkModal.addEventListener('click', function (event) {
+                if (event.target === resetLinkModal) closeResetLinkModal();
+            });
+        }
+
+        if (copyResetLinkBtn && resetUrlInput) {
+            copyResetLinkBtn.addEventListener('click', function () {
+                const value = resetUrlInput.value || '';
+                if (!value) return;
+
+                function copied() {
+                    copyResetLinkBtn.textContent = 'Copied!';
+                    setTimeout(function () {
+                        copyResetLinkBtn.textContent = 'Copy Link';
+                    }, 1200);
+                }
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(copied);
+                } else {
+                    resetUrlInput.select();
+                    document.execCommand('copy');
+                    copied();
+                }
+            });
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('forgot') === 'true') {
+            openForgotModal();
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeForgotModal();
+                closeResetLinkModal();
+            }
         });
     })();
 </script>
