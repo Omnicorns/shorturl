@@ -160,7 +160,7 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/error", "/images/**", "/img.png", "/favicon.ico"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/users/pdf/*").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/shorten").permitAll()
                         .requestMatchers(

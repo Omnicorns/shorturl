@@ -80,7 +80,7 @@ public class CatalogAccessService {
                 .id(doc.getId())
                 .filename(doc.getFilename())
                 .contentType(doc.getContentType())
-                .url("/api/v1/admin/pdf/" + doc.getId())
+                .url("/api/admin/users/pdf/" + doc.getId())
                 .open_in_viewer("/catalogue?id=" + doc.getId())
                 .ownerUsername(doc.getOwnerUsername())
                 .coManagers(doc.getCoManagers())
