@@ -3455,7 +3455,7 @@
                 const items = Array.isArray(data.content) ? data.content : [];
                 currentTotalElements = Number(data.totalElements ?? items.length);
                 currentTotalPages = Math.max(1, Number(data.totalPages ?? 1));
-                currentPage = Number(data.page ?? 0);
+                currentPage = Number(data.number ?? data.page ?? page ?? 0)
                 renderCatalogs(items);
                 updatePagUI();
             } catch (e) {
