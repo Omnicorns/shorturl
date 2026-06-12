@@ -71,8 +71,15 @@ public class SecurityConfig {
         provider.setUseAuthenticationRequestCredentials(true);
 
         provider.setSearchFilter(
-                "(&(objectClass=user)(|(sAMAccountName={1})(userPrincipalName={0})))"
+                "(&(objectClass=user)(|" +
+                        "(sAMAccountName={1})" +
+                        "(userPrincipalName={0})" +
+                        "(userPrincipalName={1})" +
+                        "(mail={0})" +
+                        "(mail={1})" +
+                        "))"
         );
+
 
         // Semua user AD yang sukses bind diberi ROLE_ADMIN.
         // Untuk production, sebaiknya batasi berdasarkan group AD tertentu.

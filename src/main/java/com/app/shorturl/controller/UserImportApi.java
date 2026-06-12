@@ -1,7 +1,9 @@
 package com.app.shorturl.controller;
 
 
+import com.app.shorturl.config.AccessControlHelper;
 import com.app.shorturl.model.PdfDocs;
+import com.app.shorturl.model.ShortUrl;
 import com.app.shorturl.projection.PdfDocSummary;
 import com.app.shorturl.repository.PdfDocRepository;
 import com.app.shorturl.repository.ShortUrlRepository;
@@ -28,7 +30,7 @@ import java.util.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/users")
 public class UserImportApi {
-
+    private final AccessControlHelper accessControl;
 
     private final PdfDocRepository pdfDocRepository;
     private final ShortUrlRepository shortUrlRepository;
@@ -302,7 +304,19 @@ public class UserImportApi {
     @GetMapping(value = "/click-counts", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public List<Map<String, Object>> clickCounts() {
-        return shortUrlRepository.findAll().stream()
+
+        boolean isSuperAdmin = accessControl.isCurrentUserSuperAdmin();
+        String currentUser = accessControl.currentUsername();
+
+        List<ShortUrl> data;
+
+        if (isSuperAdmin) {
+            data = shortUrlRepository.findAll();
+        } else {
+            data = shortUrlRepository.findAccessibleByUsername(currentUser);
+        }
+
+        return data.stream()
                 .map(u -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("shortCode", u.getShortCode());

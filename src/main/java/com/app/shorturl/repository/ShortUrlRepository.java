@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -67,4 +68,14 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
             "  WHERE LOWER(s2.ownerUsername) = LOWER(:user) OR LOWER(cm) = LOWER(:user)" +
             ")")
     Long totalClicksByUser(@Param("user") String user);
+
+    @Query("""
+    select distinct s
+    from ShortUrl s
+    left join s.coManagers cm
+    where lower(s.ownerUsername) = lower(:username)
+       or lower(cm) = lower(:username)
+    order by s.id desc
+""")
+    List<ShortUrl> findAccessibleByUsername(@Param("username") String username);
 }
