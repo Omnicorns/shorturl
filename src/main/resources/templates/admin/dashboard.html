@@ -2942,7 +2942,7 @@
             logDrawer.classList.add('show');
 
             try {
-                const res = await fetch(`${URL_LOGS_API}?code=${encodeURIComponent(code)}&size=100`, {
+                const res = await fetch(`${URL_LOGS_API}?code=${encodeURIComponent(code)}&size=500`, {
                     cache: 'no-store',
                     headers: { 'Accept': 'application/json' }
                 });
