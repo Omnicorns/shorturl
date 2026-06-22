@@ -69,12 +69,16 @@ public class ShortUrl {
     @Builder.Default
     private Set<String> coManagers = new HashSet<>();
 
+    @Column(nullable = false, columnDefinition = "boolean not null default false")
+    private Boolean noAds = false;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (clickCount == null) clickCount = 0L;
         if (active == null) active = true;
         if (coManagers == null) coManagers = new HashSet<>();
+        if (noAds == null) noAds = false;
     }
 
     /**

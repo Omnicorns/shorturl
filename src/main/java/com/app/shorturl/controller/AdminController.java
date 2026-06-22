@@ -120,6 +120,22 @@ public class AdminController {
         );
     }
 
+    @PostMapping("/{id}/toggle-ads")
+    public String toggleAds(@PathVariable Long id, RedirectAttributes ra) {
+        try {
+            ShortUrl s = service.toggleNoAds(id);
+            ra.addFlashAttribute("success",
+                    Boolean.TRUE.equals(s.getNoAds())
+                            ? "Iklan dimatikan untuk " + s.getShortCode()
+                            : "Iklan diaktifkan untuk " + s.getShortCode());
+        } catch (AccessDeniedException e) {
+            ra.addFlashAttribute("error", "Akses ditolak: " + e.getMessage());
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Gagal: " + e.getMessage());
+        }
+        return "redirect:/admin";
+    }
+
     private String resolveBaseUrl(HttpServletRequest request) {
         if (baseUrl != null && !baseUrl.isBlank()) {
             return baseUrl.replaceAll("/+$", "");

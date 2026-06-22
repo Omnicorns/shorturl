@@ -1763,6 +1763,13 @@
                                         <button type="submit" class="btn btn-ghost btn-xs"
                                                 th:text="${u.active} ? '⏸' : '▶'">Toggle</button>
                                     </form>
+                                    <form th:action="@{'/admin/' + ${u.id} + '/toggle-ads'}" method="post" style="display:inline">
+                                        <button type="submit" class="btn btn-ghost btn-xs"
+                                                th:classappend="${u.noAds} ? ' btn-accent' : ''"
+                                                th:title="${u.noAds} ? 'Tanpa iklan — klik untuk aktifkan iklan lagi' : 'Iklan aktif — klik untuk matikan'"
+                                                th:text="${u.noAds} ? '🚫 Ads' : 'Ads'">Ads</button>
+                                    </form>
+
                                     <!--                                    <form th:action="@{'/admin/' + ${u.id} + '/delete'}" method="post" style="display:inline"-->
                                     <!--                                          onsubmit="return confirm('Hapus short URL ini?');">-->
                                     <!--                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">-->

@@ -127,6 +127,11 @@ public class PublicController {
                 ClickLogService.snapshot(request)
         );
 
+        if (Boolean.TRUE.equals(s.getNoAds())) {
+            return "redirect:" + s.getOriginalUrl();
+        }
+
+
         model.addAttribute("shortCode", s.getShortCode());
         model.addAttribute("originalUrl", s.getOriginalUrl());
         model.addAttribute("title", s.getTitle());

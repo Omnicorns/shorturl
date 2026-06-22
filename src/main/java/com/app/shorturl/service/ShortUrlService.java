@@ -83,6 +83,13 @@ public class ShortUrlService {
         return Optional.of(opt.get().getOriginalUrl());
     }
 
+    @Transactional
+    public ShortUrl toggleNoAds(Long id) {
+        ShortUrl s = loadAndAuthorize(id);
+        s.setNoAds(!Boolean.TRUE.equals(s.getNoAds()));
+        return repository.save(s);
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     //  LIST — owner-aware
     // ═══════════════════════════════════════════════════════════════════
