@@ -2197,6 +2197,42 @@
             if (!res.ok) throw new Error((data && (data.message || data.error)) || text || ('HTTP ' + res.status));
             return data;
         }
+
+        function xhrUpload(url, formData, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url);
+
+                if (CSRF_TOKEN && CSRF_HEADER) {
+                    xhr.setRequestHeader(CSRF_HEADER, CSRF_TOKEN);
+                }
+
+                xhr.upload.onprogress = e => {
+                    if (e.lengthComputable && typeof onProgress === 'function') {
+                        onProgress(e.loaded, e.total);
+                    }
+                };
+
+                xhr.onload = () => {
+                    let data = {};
+                    try {
+                        data = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+                    } catch {
+                        data = { raw: xhr.responseText };
+                    }
+
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(data);
+                    } else {
+                        reject(new Error((data.message || data.error) || ('HTTP ' + xhr.status)));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.send(formData);
+            });
+        }
+
         function csrfHeaders() {
             const h = {};
             if (CSRF_TOKEN && CSRF_HEADER) h[CSRF_HEADER] = CSRF_TOKEN;
@@ -3880,22 +3916,52 @@
                 const f = $('createPdfFile').files[0];
                 if (!f) throw new Error('File belum dipilih');
                 if (f.size > MAX_FILE_BYTES) throw new Error(`File terlalu besar (${fmtMB(f.size)}). Maksimal 50 MB per file.`);
+
                 const customName = $('createFilename').value.trim();
                 const autoSU = $('createAutoShortUrl').checked;
+
                 const fd = new FormData();
                 fd.append('file', f);
                 if (customName) fd.append('filename', customName);
-                const res = await fetch(CATALOG_UPLOAD, { method: 'POST', headers: csrfHeaders(), body: fd });
-                const data = await handleJson(res);
+
+                showProgress(true);
+                dlTitle.textContent = 'Mengupload…';
+                dlBar.style.width = '0%';
+                dlPct.textContent = '0%';
+                dlText.textContent = `0 B / ${formatSize(f.size)}`;
+                dlDetail.textContent = f.name;
+
+                const data = await xhrUpload(CATALOG_UPLOAD, fd, (loaded, total) => {
+                    const pct = total ? Math.round(loaded / total * 100) : 0;
+                    dlBar.style.width = pct + '%';
+                    dlPct.textContent = pct + '%';
+                    dlText.textContent = `${formatSize(loaded)} / ${formatSize(total)}`;
+                    dlDetail.textContent = f.name;
+                });
+
+                dlBar.classList.add('done');
+                dlTitle.textContent = 'Upload selesai';
+                dlPct.textContent = '100%';
+                dlBar.style.width = '100%';
+                dlText.textContent = `${formatSize(f.size)} / ${formatSize(f.size)}`;
+
                 if (autoSU && data.id) {
                     const ok = await createShortUrlForCatalog(data.id, data.filename || f.name);
                     toast(ok ? 'Catalog + Short URL ✓' : 'Catalog OK, short URL gagal', ok ? 'success' : 'warning');
                 } else {
                     toast('Catalog berhasil ✓', 'success');
                 }
+
                 e.target.reset();
                 if (_catalogLoaded) loadCatalogs(0);
-            } catch (err) { toast('Gagal: ' + err.message, 'error'); }
+                setTimeout(() => showProgress(false), 1500);
+            } catch (err) {
+                dlBar.classList.add('error');
+                dlTitle.textContent = 'Upload gagal';
+                dlText.textContent = err.message;
+                toast('Gagal: ' + err.message, 'error');
+                setTimeout(() => showProgress(false), 4000);
+            }
         });
 
         /* ═══ Bulk upload ═══ */
