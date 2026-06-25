@@ -142,4 +142,9 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
             "where lower(p.ownerUsername) = lower(:username) or lower(cm) = lower(:username)")
     java.util.List<com.app.shorturl.projection.CatalogCountRow> findAccessCountsVisibleForUser(
             @Param("username") String username);
+
+    @Query("select p.filename as filename, p.contentType as contentType, p.data as data " +
+            "from PdfDocs p where p.id = :id")
+    java.util.Optional<com.app.shorturl.projection.PdfDocContent> findContentById(@Param("id") Long id);
+
 }

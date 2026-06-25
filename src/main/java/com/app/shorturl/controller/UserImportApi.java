@@ -4,7 +4,7 @@ package com.app.shorturl.controller;
 import com.app.shorturl.config.AccessControlHelper;
 import com.app.shorturl.model.PdfDocs;
 import com.app.shorturl.model.ShortUrl;
-import com.app.shorturl.projection.PdfDocSummary;
+
 import com.app.shorturl.repository.PdfDocRepository;
 import com.app.shorturl.repository.ShortUrlRepository;
 import com.app.shorturl.response.CatalogResponse;
@@ -38,15 +38,30 @@ public class UserImportApi {
 
     // Import CSV (multipart/form-data)
 
-    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024; // 10 MB
+    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;        // 50 MB / file (single & tiap file bulk)
+    private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
 
     private void validateSize(MultipartFile file) {
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new ResponseStatusException(
                     HttpStatus.PAYLOAD_TOO_LARGE,
-                    String.format("File '%s' terlalu besar (%.2f MB). Maksimal 10 MB.",
+                    String.format("File '%s' terlalu besar (%.2f MB). Maksimal 50 MB per file.",
                             file.getOriginalFilename(),
                             file.getSize() / 1024.0 / 1024.0)
+            );
+        }
+    }
+
+    private void validateBulkTotalSize(List<MultipartFile> files) {
+        long total = 0L;
+        for (MultipartFile f : files) {
+            total += f.getSize();
+        }
+        if (total > MAX_BULK_TOTAL_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.PAYLOAD_TOO_LARGE,
+                    String.format("Total ukuran semua file terlalu besar (%.2f MB). Maksimal 50 MB total.",
+                            total / 1024.0 / 1024.0)
             );
         }
     }
@@ -86,15 +101,10 @@ public class UserImportApi {
             @PathVariable Long id,
             @RequestHeader HttpHeaders headers) {
 
-        // 1) Ambil entity TANPA langsung sentuh BLOB
-        PdfDocs doc = pdfDocRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        // 2) ETag ringan: berdasarkan id saja
-        //    Asumsi: kalau isi PDF berubah => pakai id baru.
+        // ETag ringan berbasis id saja (isi berubah => pakai id baru).
         String etag = "\"pdf-" + id + "\"";
 
-        // 3) Cek If-None-Match dulu => bisa 304 tanpa baca BLOB
+        // 1) Conditional GET: balas 304 TANPA menyentuh DB sama sekali.
         List<String> ifNoneMatch = headers.getIfNoneMatch();
         if (ifNoneMatch != null && ifNoneMatch.contains(etag)) {
             return ResponseEntity
@@ -104,7 +114,10 @@ public class UserImportApi {
                     .build();
         }
 
-        // 4) Baru sekarang akses data (BLOB) karena memang harus kirim konten
+        // 2) Ambil HANYA isi PDF (tanpa hydrate coManagers/owner).
+        com.app.shorturl.projection.PdfDocContent doc = pdfDocRepository.findContentById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
         byte[] data = Objects.requireNonNull(doc.getData(), "PDF kosong");
         long len = data.length;
 
@@ -119,9 +132,25 @@ public class UserImportApi {
                 .build());
         h.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic());
         h.setETag(etag);
-        h.setContentLength(len);
-        // Nggak perlu ACCEPT_RANGES kalau kamu selalu kirim full body
+        // Beritahu pdf.js bahwa server mendukung range → bisa render halaman awal duluan.
+        h.add(HttpHeaders.ACCEPT_RANGES, "bytes");
 
+        // 3) Range request → kirim potongan (206) supaya buka catalog terasa cepat.
+        List<HttpRange> ranges = headers.getRange();
+        if (ranges != null && !ranges.isEmpty()) {
+            HttpRange r = ranges.get(0);
+            long start = r.getRangeStart(len);
+            long end = r.getRangeEnd(len);
+            long count = end - start + 1;
+
+            byte[] slice = Arrays.copyOfRange(data, (int) start, (int) (end + 1));
+            h.setContentLength(count);
+            h.add(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + len);
+            return new ResponseEntity<>(new ByteArrayResource(slice), h, HttpStatus.PARTIAL_CONTENT);
+        }
+
+        // 4) Full body.
+        h.setContentLength(len);
         return new ResponseEntity<>(new ByteArrayResource(data), h, HttpStatus.OK);
     }
 
@@ -143,6 +172,8 @@ public class UserImportApi {
         for (MultipartFile f : files) {
             validateSize(f);
         }
+        // Validasi TOTAL ukuran seluruh file bulk (maks 50 MB gabungan)
+        validateBulkTotalSize(files);
 
 
         List<Map<String, Object>> items = new ArrayList<>();

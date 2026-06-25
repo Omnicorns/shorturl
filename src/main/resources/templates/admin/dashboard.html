@@ -2137,6 +2137,10 @@
         const CATALOG_API = /*[[@{/api/admin/users/catalogs}]]*/ '/api/admin/users/catalogs';
         const CATALOG_UPLOAD = /*[[@{/api/admin/users/pdf}]]*/ '/api/admin/users/pdf';
         const CATALOG_BULK = /*[[@{/api/admin/users/pdf/bulk}]]*/ '/api/admin/users/pdf/bulk';
+        // Batas ukuran (samakan dengan backend): 50 MB per file, 50 MB total untuk bulk.
+        const MAX_FILE_BYTES = 50 * 1024 * 1024;
+        const MAX_BULK_TOTAL_BYTES = 50 * 1024 * 1024;
+        const fmtMB = (b) => (b / 1024 / 1024).toFixed(2) + ' MB';
         const URL_LOGS_API = /*[[@{/admin/logs/data}]]*/ '/admin/logs/data';
         const BASE_URL = /*[[${baseUrl}]]*/ 'http://localhost:8080';
         const CURRENT_USER = /*[[${currentUser}]]*/ '';
@@ -3875,6 +3879,7 @@
             try {
                 const f = $('createPdfFile').files[0];
                 if (!f) throw new Error('File belum dipilih');
+                if (f.size > MAX_FILE_BYTES) throw new Error(`File terlalu besar (${fmtMB(f.size)}). Maksimal 50 MB per file.`);
                 const customName = $('createFilename').value.trim();
                 const autoSU = $('createAutoShortUrl').checked;
                 const fd = new FormData();
@@ -3933,7 +3938,10 @@
             }
             bulkNamingEl.classList.add('show');
             bulkFileCount.textContent = `${files.length} file`;
-            bulkFileHint.textContent = 'Siap upload';
+            const totalBytes = files.reduce((s, f) => s + f.size, 0);
+            const over = totalBytes > MAX_BULK_TOTAL_BYTES;
+            bulkFileHint.textContent = `Total ${formatSize(totalBytes)} / 50 MB` + (over ? ' — melebihi batas!' : '');
+            bulkFileHint.style.color = over ? '#c0392b' : '';
             const mode = bulkNamingSelect.value;
             bulkFileList.innerHTML = files.map((f, i) => {
                 const dn = getBulkName(i, f.name);
@@ -3967,6 +3975,12 @@
             try {
                 const files = bulkFiles.files;
                 if (!files?.length) throw new Error('Belum ada file');
+                let total = 0;
+                for (let i = 0; i < files.length; i++) {
+                    if (files[i].size > MAX_FILE_BYTES) throw new Error(`"${files[i].name}" terlalu besar (${fmtMB(files[i].size)}). Maksimal 50 MB per file.`);
+                    total += files[i].size;
+                }
+                if (total > MAX_BULK_TOTAL_BYTES) throw new Error(`Total ukuran semua file ${fmtMB(total)} — melebihi batas 50 MB total.`);
                 const autoSU = $('bulkAutoShortUrl').checked;
                 const fd = new FormData();
                 const names = [];
