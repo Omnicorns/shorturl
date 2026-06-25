@@ -42,7 +42,7 @@ public class UserImportApi {
     private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
 
     private void validateSize(MultipartFile file) {
-        if (file.getSize() > MAX_FILE_SIZE) {
+        if (file.getSize() >=MAX_FILE_SIZE) {
             throw new ResponseStatusException(
                     HttpStatus.PAYLOAD_TOO_LARGE,
                     String.format("File '%s' terlalu besar (%.2f MB). Maksimal 50 MB per file.",
