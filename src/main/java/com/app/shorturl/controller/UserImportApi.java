@@ -42,7 +42,7 @@ public class UserImportApi {
     private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
 
     private void validateSize(MultipartFile file) {
-        if (file.getSize() >=MAX_FILE_SIZE) {
+        if (file.getSize() >= MAX_FILE_SIZE) {
             throw new ResponseStatusException(
                     HttpStatus.PAYLOAD_TOO_LARGE,
                     String.format("File '%s' terlalu besar (%.2f MB). Maksimal 50 MB per file.",
@@ -66,17 +66,37 @@ public class UserImportApi {
         }
     }
 
+    /**
+     * Resolve nama file final:
+     * - Pakai custom name dari frontend kalau ada (di-trim, dipastikan ber-ekstensi .pdf)
+     * - Kalau kosong, fallback ke nama asli file upload
+     */
+    private String resolveFilename(String customName, String originalName) {
+        if (customName != null && !customName.isBlank()) {
+            String n = customName.trim();
+            if (!n.toLowerCase().endsWith(".pdf")) {
+                n += ".pdf";
+            }
+            return n;
+        }
+        return originalName;
+    }
+
 
     @PostMapping(value = "/pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Map<String, Object> upload(@RequestPart("file") MultipartFile file,
+                                      @RequestPart(name = "filename", required = false) String filename,
                                       Authentication authentication) throws IOException {
         if (file.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File kosong");
         if (!isPdf(file)) throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Harus PDF");
 
         validateSize(file);
 
+        // FIX: hormati filename custom dari form. Sebelumnya selalu pakai nama asli.
+        String finalName = resolveFilename(filename, file.getOriginalFilename());
+
         PdfDocs doc = new PdfDocs();
-        doc.setFilename(file.getOriginalFilename());
+        doc.setFilename(finalName);
         doc.setContentType("application/pdf");
         doc.setData(file.getBytes());
 
