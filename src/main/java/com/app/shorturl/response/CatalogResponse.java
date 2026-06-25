@@ -17,4 +17,8 @@ public class CatalogResponse {
     private String ownerUsername;
     private Set<String> coManagers;
     private boolean canManageAccess;
+
+    private Long accessCount;
+    private java.time.LocalDateTime lastAccessedAt;
 }
+

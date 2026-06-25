@@ -128,7 +128,12 @@ public class PublicController {
         );
 
         if (Boolean.TRUE.equals(s.getNoAds())) {
-            return "redirect:" + s.getOriginalUrl();
+            // noAds: tanpa halaman iklan, TAPI tetap lewat beacon senyap supaya
+            // lokasi (IP/geo dari browser) tetap terekam sebelum diteruskan.
+            model.addAttribute("originalUrl", s.getOriginalUrl());
+            model.addAttribute("shortCode", s.getShortCode());
+            model.addAttribute("trackId", trackId);
+            return "beacon";
         }
 
 

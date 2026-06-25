@@ -75,6 +75,21 @@ public class CatalogAccessService {
         return pdfDocsRepository.findVisibleForUser(username, pageable);
     }
 
+    /**
+     * Jumlah total catalog yang BISA DILIHAT user saat ini.
+     * Super-admin: semua. User biasa: yang dia miliki / di-share.
+     * Dipakai untuk badge "Catalog PDF (n)" di dashboard.
+     */
+    public long countVisibleCatalogs(Authentication auth) {
+        if (isSuperAdmin(auth)) {
+            return pdfDocsRepository.count();
+        }
+        String username = currentUsername(auth);
+        return pdfDocsRepository
+                .findVisibleForUser(username, org.springframework.data.domain.PageRequest.of(0, 1))
+                .getTotalElements();
+    }
+
     public CatalogResponse toResponse(PdfDocs doc, Authentication auth) {
         return CatalogResponse.builder()
                 .id(doc.getId())
@@ -85,7 +100,71 @@ public class CatalogAccessService {
                 .ownerUsername(doc.getOwnerUsername())
                 .coManagers(doc.getCoManagers())
                 .canManageAccess(canManage(doc, auth))
+                .accessCount(doc.getAccessCount() == null ? 0L : doc.getAccessCount())
+                .lastAccessedAt(doc.getLastAccessedAt())
                 .build();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  LISTING CEPAT — pakai projection (tanpa LOB) + co-manager batch
+    // ═══════════════════════════════════════════════════════════════════
+
+    /**
+     * Versi cepat dari listing catalog: mengembalikan langsung Page<CatalogResponse>.
+     * - Query listing hanya membaca kolom skalar (tanpa byte PDF).
+     * - Co-manager seluruh halaman diambil dalam SATU query (bukan N+1).
+     */
+    @Transactional(readOnly = true)
+    public Page<CatalogResponse> listCatalogResponses(String keyword,
+                                                      Pageable pageable,
+                                                      Authentication auth) {
+        String k = keyword == null ? "" : keyword.trim();
+
+        Page<com.app.shorturl.projection.CatalogListProjection> page;
+        if (isSuperAdmin(auth)) {
+            page = k.isBlank()
+                    ? pdfDocsRepository.findAllProjected(pageable)
+                    : pdfDocsRepository.searchProjected(k, pageable);
+        } else {
+            String username = currentUsername(auth);
+            page = k.isBlank()
+                    ? pdfDocsRepository.findVisibleForUserProjected(username, pageable)
+                    : pdfDocsRepository.findVisibleForUserByKeywordProjected(username, k, pageable);
+        }
+
+        // Ambil co-manager untuk semua id di halaman ini sekaligus.
+        java.util.List<Long> ids = page.getContent().stream()
+                .map(com.app.shorturl.projection.CatalogListProjection::getId)
+                .toList();
+
+        java.util.Map<Long, Set<String>> coManagerMap = new java.util.HashMap<>();
+        if (!ids.isEmpty()) {
+            for (com.app.shorturl.projection.CoManagerRow row : pdfDocsRepository.findCoManagersByDocIds(ids)) {
+                coManagerMap
+                        .computeIfAbsent(row.getDocId(), x -> new LinkedHashSet<>())
+                        .add(row.getUsername());
+            }
+        }
+
+        boolean superAdmin = isSuperAdmin(auth);
+        String me = currentUsername(auth);
+
+        return page.map(p -> {
+            boolean canManage = superAdmin
+                    || (p.getOwnerUsername() != null && p.getOwnerUsername().equalsIgnoreCase(me));
+            return CatalogResponse.builder()
+                    .id(p.getId())
+                    .filename(p.getFilename())
+                    .contentType(p.getContentType())
+                    .url("/api/admin/users/pdf/" + p.getId())
+                    .open_in_viewer("/catalogue?id=" + p.getId())
+                    .ownerUsername(p.getOwnerUsername())
+                    .coManagers(coManagerMap.getOrDefault(p.getId(), new LinkedHashSet<>()))
+                    .canManageAccess(canManage)
+                    .accessCount(p.getAccessCount() == null ? 0L : p.getAccessCount())
+                    .lastAccessedAt(p.getLastAccessedAt())
+                    .build();
+        });
     }
 
     @Transactional
@@ -107,6 +186,24 @@ public class CatalogAccessService {
         }
 
         pdfDocsRepository.save(doc);
+    }
+
+    /**
+     * Hapus catalog (PDF). Hanya owner atau super-admin yang boleh.
+     *
+     * @throws IllegalArgumentException jika catalog tidak ditemukan
+     * @throws AccessDeniedException    jika user bukan owner/super-admin
+     */
+    @Transactional
+    public void deleteCatalog(Long id, Authentication auth) {
+        PdfDocs doc = pdfDocsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Catalog tidak ditemukan."));
+
+        if (!canManage(doc, auth)) {
+            throw new AccessDeniedException("Anda bukan owner atau super admin.");
+        }
+
+        pdfDocsRepository.delete(doc);
     }
 
     private Set<String> parseUsers(String raw) {

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex,nofollow">
+    <!-- Fallback kalau JS mati / lambat: tetap diteruskan ke tujuan -->
+    <meta http-equiv="refresh" th:attr="content='3; url=' + ${originalUrl}">
+    <title>Mengalihkan…</title>
+    <style>
+        html, body {
+            height: 100%; margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff; color: #6b7280;
+        }
+        .wrap {
+            height: 100%; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 14px;
+        }
+        .spin {
+            width: 22px; height: 22px; border-radius: 50%;
+            border: 3px solid #e5e7eb; border-top-color: #9ca3af;
+            animation: s 0.8s linear infinite;
+        }
+        @keyframes s { to { transform: rotate(360deg); } }
+        .t { font-size: 13px; }
+        a { color: #9ca3af; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="spin"></div>
+    <div class="t">Mengalihkan…</div>
+    <noscript>
+        <a th:href="${originalUrl}" th:text="${originalUrl}">Lanjut</a>
+    </noscript>
+</div>
+
+<!-- Data dari server; dibaca oleh JS di bawah -->
+<div id="beaconData"
+     th:attr="data-original-url=${originalUrl},data-short-code=${shortCode},data-track-id=${trackId}"
+     style="display:none"></div>
+
+<script th:inline="none">
+    (function () {
+        'use strict';
+        var el = document.getElementById('beaconData');
+        function readData(k) { return el ? (el.getAttribute('data-' + k.replace(/[A-Z]/g, function (m) { return '-' + m.toLowerCase(); })) || '') : ''; }
+
+        var originalUrl = readData('originalUrl');
+        var shortCode   = readData('shortCode');
+        var trackId     = readData('trackId');
+
+        var redirected = false;
+        function go() {
+            if (redirected) return;
+            redirected = true;
+            if (originalUrl) window.location.replace(originalUrl);
+        }
+
+        // Jaring pengaman: apa pun yang terjadi, jangan biarkan user tertahan.
+        setTimeout(go, 2000);
+
+        function fetchWithTimeout(url, opts, ms) {
+            var controller = new AbortController();
+            var t = setTimeout(function () { controller.abort(); }, ms);
+            return fetch(url, Object.assign({ signal: controller.signal }, opts || {}))
+                .finally(function () { clearTimeout(t); });
+        }
+
+        // Ambil IP + lokasi dari ipapi.co (jalur andalan saat IP di-NAT di server).
+        function getIpInfo() {
+            return fetchWithTimeout('https://ipapi.co/json/', { cache: 'no-store' }, 1200)
+                .then(function (res) { if (!res.ok) throw new Error('ipapi ' + res.status); return res.json(); })
+                .then(function (d) {
+                    return {
+                        clientIp: d.ip || null,
+                        country: d.country_name || null,
+                        countryCode: d.country_code || null,
+                        region: d.region || null,
+                        city: d.city || null,
+                        isp: d.org || null
+                    };
+                })
+                .catch(function () {
+                    return { clientIp: null, country: null, countryCode: null, region: null, city: null, isp: null };
+                });
+        }
+
+        if (!trackId) { go(); return; }
+
+        getIpInfo().then(function (ipInfo) {
+            var payload = {
+                trackId: trackId,
+                shortCode: shortCode || null,
+                clientIp: ipInfo.clientIp,
+                country: ipInfo.country,
+                countryCode: ipInfo.countryCode,
+                region: ipInfo.region,
+                city: ipInfo.city,
+                isp: ipInfo.isp
+            };
+            var body = JSON.stringify(payload);
+
+            // keepalive: request boleh selesai walau halaman sudah pindah.
+            try {
+                fetch('/api/v1/track-ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: body,
+                    keepalive: true,
+                    credentials: 'same-origin'
+                }).catch(function () {
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon('/api/v1/track-ip', new Blob([body], { type: 'application/json' }));
+                    }
+                });
+            } catch (e) {
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon('/api/v1/track-ip', new Blob([body], { type: 'application/json' }));
+                }
+            }
+        }).finally(function () {
+            // Langsung teruskan begitu beacon dikirim (tidak menunggu respons server).
+            go();
+        });
+    })();
+</script>
+</body>
+</html>

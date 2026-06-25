@@ -244,8 +244,7 @@ public class UserImportApi {
         );
 
         return catalogAccessService
-                .findVisibleCatalogs(search, pageable, authentication)
-                .map(doc -> catalogAccessService.toResponse(doc, authentication));
+                .listCatalogResponses(search, pageable, authentication);
     }
     /**
      * Deteksi cepat PDF:
@@ -300,6 +299,27 @@ public class UserImportApi {
         );
     }
 
+    /**
+     * Hapus catalog (PDF) berdasarkan id.
+     * Hanya owner atau super-admin yang diizinkan (dicek di service layer).
+     */
+    @DeleteMapping("/pdf/{id}")
+    public ResponseEntity<Map<String, Object>> deletePdf(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            catalogAccessService.deleteCatalog(id, authentication);
+            return ResponseEntity.ok(Map.of(
+                    "id", id,
+                    "status", "DELETED"
+            ));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
 
     @GetMapping(value = "/click-counts", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -322,6 +342,31 @@ public class UserImportApi {
                     m.put("shortCode", u.getShortCode());
                     m.put("clickCount", u.getClickCount());
                     m.put("active", u.getActive());
+                    return m;
+                })
+                .toList();
+    }
+
+    /**
+     * Counter ringan untuk polling live kolom AKSES di dashboard catalog.
+     * Hanya mengirim id + accessCount + lastAccessedAt (tanpa byte PDF).
+     */
+    @GetMapping(value = "/catalog-access-counts", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> catalogAccessCounts() {
+        boolean isSuperAdmin = accessControl.isCurrentUserSuperAdmin();
+        String currentUser = accessControl.currentUsername();
+
+        List<com.app.shorturl.projection.CatalogCountRow> rows = isSuperAdmin
+                ? pdfDocRepository.findAccessCountsAll()
+                : pdfDocRepository.findAccessCountsVisibleForUser(currentUser == null ? "" : currentUser);
+
+        return rows.stream()
+                .map(r -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", r.getId());
+                    m.put("accessCount", r.getAccessCount() == null ? 0L : r.getAccessCount());
+                    m.put("lastAccessedAt", r.getLastAccessedAt());
                     return m;
                 })
                 .toList();

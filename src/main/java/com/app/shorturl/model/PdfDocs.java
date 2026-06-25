@@ -28,6 +28,12 @@ public class PdfDocs {
     @Column(name = "owner_username", length = 100)
     private String ownerUsername;
 
+    @Column(name = "access_count")
+    private Long accessCount = 0L;
+
+    @Column(name = "last_accessed_at")
+    private java.time.LocalDateTime lastAccessedAt;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "pdf_doc_co_managers",
@@ -44,6 +50,9 @@ public class PdfDocs {
         }
         if (coManagers == null) {
             coManagers = new HashSet<>();
+        }
+        if (accessCount == null) {
+            accessCount = 0L;
         }
         if (ownerUsername != null) {
             ownerUsername = ownerUsername.trim().toLowerCase();

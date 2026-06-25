@@ -1431,7 +1431,7 @@
             <span class="sep">·</span>
             <span>Klik <strong th:text="${totalClicks}">0</strong></span>
             <span class="sep">·</span>
-            <span>Catalog <strong th:text="${totalCatalogs ?: 0}">0</strong></span>
+            <span>Catalog <strong id="topCatalogs" th:text="${totalCatalogs ?: 0}">0</strong></span>
         </div>
         <a href="/" class="btn btn-ghost btn-sm">Lihat Site ↗</a>
         <form th:action="@{/logout}" method="post" style="display:inline">
@@ -1828,12 +1828,13 @@
                             <th style="width:60px">ID</th>
                             <th>Filename</th>
                             <th>Pemilik</th>
+                            <th style="width:90px">Akses</th>
                             <th style="width:130px">Content Type</th>
                             <th style="width:430px">Aksi</th>
                         </tr>
                         </thead>
                         <tbody id="catalogTableBody">
-                        <tr><td colspan="6" class="empty">Memuat data catalog…</td></tr>
+                        <tr><td colspan="7" class="empty">Memuat data catalog…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -3216,6 +3217,20 @@
         const checkAllHead = $('checkAllHead');
 
         function buildViewerUrl(item) { return toAbsoluteUrl(item.open_in_viewer || ('/catalogue?id=' + item.id)); }
+        function formatAccessTime(v) {
+            if (!v) return '';
+            try {
+                let d;
+                if (Array.isArray(v)) {
+                    // Jackson kadang serialisasi LocalDateTime jadi [y,mo,d,h,mi,s,ns]
+                    d = new Date(v[0], (v[1] || 1) - 1, v[2] || 1, v[3] || 0, v[4] || 0, v[5] || 0);
+                } else {
+                    d = new Date(v);
+                }
+                if (isNaN(d.getTime())) return '';
+                return d.toLocaleString();
+            } catch { return ''; }
+        }
         function withCacheBuster(url) {
             try { const u = new URL(url, location.origin); u.searchParams.set('_ts', Date.now()); return u.pathname + u.search; }
             catch { return url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now(); }
@@ -3293,7 +3308,7 @@
 
         function renderCatalogs(items) {
             if (!items?.length) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="empty"><span class="empty-emoji">∅</span>Belum ada catalog.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="empty"><span class="empty-emoji">∅</span>Belum ada catalog.</td></tr>';
                 updateBulkBar(); return;
             }
             tableBody.innerHTML = items.map(item => {
@@ -3308,10 +3323,14 @@
                     <td class="td-check"><input type="checkbox" class="js-row-check" data-id="${escapeHtml(item.id)}" ${sel ? 'checked' : ''}></td>
                     <td><span class="code-chip" style="cursor:default">${escapeHtml(item.id)}</span></td>
                     <td class="url-cell">
-                        <strong>${escapeHtml(item.filename ?? '-')}</strong>
+                        <a href="${escapeHtml(viewerUrl)}" target="_blank" class="js-access-cat" data-url="${escapeHtml(viewerUrl)}" title="Klik untuk membuka catalog"><strong>${escapeHtml(item.filename ?? '-')}</strong></a>
                         <a href="${escapeHtml(viewerUrl)}" target="_blank" class="url-link">${escapeHtml(viewerUrl)}</a>
                     </td>
                     <td>${renderCatalogOwnerCell(item)}</td>
+                    <td class="js-akses-cell">
+                        <span class="code-chip" title="Jumlah kali catalog ini dibuka">${escapeHtml(item.accessCount ?? 0)}</span>
+                        <div class="field-hint" title="Waktu terakhir catalog ini dibuka">${item.lastAccessedAt ? ('terakhir: ' + escapeHtml(formatAccessTime(item.lastAccessedAt))) : '—'}</div>
+                    </td>
                     <td><span class="field-hint">${escapeHtml(item.contentType ?? 'application/pdf')}</span></td>
                     <td><div class="row-actions">
                         <a class="btn btn-ghost btn-xs" href="${escapeHtml(pdfUrl)}" target="_blank">PDF</a>
@@ -3333,7 +3352,7 @@
                                 data-url="${escapeHtml(viewerUrl)}"
                                 data-title="${escapeHtml(item.filename ?? '')}"
                                 data-filename="${escapeHtml(item.filename ?? 'catalog')}">QR</button>
-<!--                        <button class="btn btn-danger btn-xs js-del-cat" type="button" data-id="${escapeHtml(item.id)}">✕</button>-->
+                        ${canAccess ? `<button class="btn btn-danger btn-xs js-del-cat" type="button" data-id="${escapeHtml(item.id)}" title="Hapus catalog ini">✕</button>` : ''}
                     </div></td>
                 </tr>`;
             }).join('');
@@ -3354,7 +3373,7 @@
         async function handleDeleteCatalog(id) {
             if (!confirm('Hapus catalog ID ' + id + '?')) return;
             try {
-                const res = await fetch(CATALOG_API.replace('/catalogs', '') + '/' + encodeURIComponent(id), { method: 'DELETE', headers: csrfHeaders() });
+                const res = await fetch(CATALOG_API.replace('/catalogs', '/pdf/') + encodeURIComponent(id), { method: 'DELETE', headers: csrfHeaders() });
                 await handleJson(res);
                 toast('Catalog dihapus ✓', 'success');
                 loadCatalogs(currentPage);
@@ -3423,12 +3442,22 @@
             $('lastPageBtn').disabled = currentPage >= safe - 1;
         }
 
+        function syncCatalogBadge() {
+            // Jangan timpa total saat sedang mencari (hasil search = subset)
+            if (currentKeyword) return;
+            const n = currentTotalElements;
+            const badge = document.querySelector('[data-ctab="catalogs"] .ctab-badge');
+            if (badge) badge.textContent = n;
+            const top = document.getElementById('topCatalogs');
+            if (top) top.textContent = n;
+        }
+
         async function loadCatalogs(page = currentPage) {
             try {
                 currentPage = page;
                 currentSize = parseInt(pageSizeSelect.value, 10) || 10;
                 currentKeyword = searchInput.value.trim();
-                tableBody.innerHTML = '<tr><td colspan="6" class="empty">Memuat…</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="empty">Memuat…</td></tr>';
                 const sortDirSelect = $('catalogSortDirSelect');
 
                 const p = new URLSearchParams();
@@ -3446,7 +3475,7 @@
 
                 const res = await fetch(`${CATALOG_API}?${p}`, { cache: 'no-store' });
                 if (res.status === 404) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="empty">Endpoint catalog belum tersedia.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="empty">Endpoint catalog belum tersedia.</td></tr>';
                     updatePagUI(); return;
                 }
                 const data = await handleJson(res);
@@ -3457,6 +3486,7 @@
                     if (currentPage < 0) currentPage = 0;
                     renderCatalogs(data.slice(currentPage * currentSize, (currentPage + 1) * currentSize));
                     updatePagUI();
+                    syncCatalogBadge();
                     return;
                 }
                 const items = Array.isArray(data.content) ? data.content : [];
@@ -3465,8 +3495,9 @@
                 currentPage = Number(data.number ?? data.page ?? page ?? 0)
                 renderCatalogs(items);
                 updatePagUI();
+                syncCatalogBadge();
             } catch (e) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty">Gagal memuat: ${escapeHtml(e.message)}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="empty">Gagal memuat: ${escapeHtml(e.message)}</td></tr>`;
             }
         }
 
@@ -3481,6 +3512,47 @@
         $('prevPageBtn').addEventListener('click', () => loadCatalogs(Math.max(0, currentPage - 1)));
         $('nextPageBtn').addEventListener('click', () => loadCatalogs(Math.min(currentTotalPages - 1, currentPage + 1)));
         $('lastPageBtn').addEventListener('click', () => loadCatalogs(Math.max(0, currentTotalPages - 1)));
+
+        /* ═══ Live auto-refresh kolom AKSES (tanpa reload tabel) ═══ */
+        const CATALOG_COUNTS_API = /*[[@{/api/admin/users/catalog-access-counts}]]*/ '/api/admin/users/catalog-access-counts';
+        const CATALOG_POLL_MS = 7000;
+
+        async function pollCatalogCounts() {
+            const panel = document.getElementById('cp-catalogs');
+            if (!panel || !panel.classList.contains('active')) return; // hanya saat tab catalog aktif
+            if (document.hidden) return;
+            try {
+                const res = await fetch(CATALOG_COUNTS_API, { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!Array.isArray(data)) return;
+                data.forEach(item => {
+                    const row = tableBody.querySelector(`tr[data-id="${item.id}"]`);
+                    if (!row) return;
+                    const cell = row.querySelector('.js-akses-cell');
+                    if (!cell) return;
+                    const chip = cell.querySelector('.code-chip');
+                    const hint = cell.querySelector('.field-hint');
+                    const newCount = String(item.accessCount ?? 0);
+                    if (chip && chip.textContent.trim() !== newCount) {
+                        chip.textContent = newCount;
+                        // sorot sebentar biar kelihatan berubah
+                        chip.style.transition = 'background .4s ease';
+                        chip.style.background = 'var(--accent-soft, #ffe9d6)';
+                        setTimeout(() => { chip.style.background = ''; }, 700);
+                    }
+                    if (hint) {
+                        hint.textContent = item.lastAccessedAt
+                            ? ('terakhir: ' + formatAccessTime(item.lastAccessedAt))
+                            : '—';
+                    }
+                });
+            } catch (e) { /* diam saja — ini cuma polling background */ }
+        }
+
+        setInterval(pollCatalogCounts, CATALOG_POLL_MS);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) pollCatalogCounts(); });
+        window.refreshCatalogCounts = pollCatalogCounts;
 
         /* ═══ Download progress helpers ═══ */
         const dlProgress = $('dlProgress');
