@@ -10,8 +10,8 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.mjs">
-    <link rel="preload" as="fetch" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.worker.mjs">
+    <link rel="modulepreload" href="/pdfjs/build/pdf.js">
+    <link rel="modulepreload" href="/pdfjs/build/pdf.worker.js">
 
     <style>
         :root{
@@ -356,8 +356,8 @@
 </script>
 
 <script type="module">
-    import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.mjs";
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/build/pdf.worker.mjs";
+    import * as pdfjsLib from "/pdfjs/build/pdf.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdfjs/build/pdf.worker.js";
     if ("disableCreateObjectURL" in pdfjsLib) pdfjsLib.disableCreateObjectURL = true;
 
     const params = new URLSearchParams(location.search);
@@ -439,21 +439,25 @@
     kebab.addEventListener('click',(e)=>{e.stopPropagation();pop.classList.toggle('show')});
     document.addEventListener('click',closePop);
 
-    // ✅ Download using cached bytes (reliable for secured endpoints)
-    $('miDownload').addEventListener('click', stopThen(()=> {
-      if (!pdfBytesCache) return;
-
-      const blob = new Blob([pdfBytesCache], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-
-      const a=document.createElement('a');
-      a.href=url;
-      a.download='document.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    // ✅ Download: ambil byte saat dibutuhkan (mode streaming tak menyimpan byte penuh di awal)
+    $('miDownload').addEventListener('click', stopThen(async ()=> {
+      try {
+        let bytes = pdfBytesCache;
+        if (!bytes) {
+          if (pdfDoc && pdfDoc.getData) bytes = await pdfDoc.getData();
+          else { const r = await fetch(PDF_URL, { credentials:'same-origin' }); bytes = new Uint8Array(await r.arrayBuffer()); }
+          pdfBytesCache = bytes;
+        }
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;
+        a.download='document.pdf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+      } catch(e) { /* abaikan */ }
     }));
 
     $('miFullscreen').addEventListener('click', stopThen(()=> {
@@ -1103,64 +1107,36 @@
     (async function(){
       const startedAt = performance.now();
       try {
-        const resp = await fetch(PDF_URL, {
-          method: 'GET',
-          headers: { 'Accept': 'application/pdf', 'Cache-Control': 'no-cache' },
-          credentials: 'same-origin'
-        });
+        loadingProgress.textContent = '0%';
+        loadingDetails.textContent = 'Memuat dokumen…';
 
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-
-        const contentLength = resp.headers.get('content-length');
-        const total = contentLength ? parseInt(contentLength, 10) : 0;
-
-        let loaded = 0;
-        const chunks = [];
-        const reader = resp.body.getReader();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          chunks.push(value);
-          loaded += value.length;
-
-          if (total > 0) {
-            const pct = Math.round((loaded / total) * 100);
-            loadingProgress.textContent = pct + '%';
-            loadingDetails.textContent = `${(loaded/1024/1024).toFixed(2)} MB / ${(total/1024/1024).toFixed(2)} MB`;
-          } else {
-            const mb = (loaded/1024/1024).toFixed(2);
-            loadingProgress.textContent = mb + ' MB';
-            loadingDetails.textContent = 'Downloading...';
-          }
-        }
-
-        const pdfBytes = new Uint8Array(loaded);
-        let position = 0;
-        for (const chunk of chunks) {
-          pdfBytes.set(chunk, position);
-          position += chunk.length;
-        }
-
-        // ✅ Save to cache for download
-        pdfBytesCache = pdfBytes;
-
-        loadingProgress.textContent = 'Parsing...';
-        loadingDetails.textContent = 'Processing PDF structure';
-
+        // Stream via URL + range request: halaman pertama tampil sebelum
+        // seluruh file selesai diunduh (server sudah mendukung Accept-Ranges/206).
         const task = pdfjsLib.getDocument({
-          data: pdfBytes,
+          url: PDF_URL,
+          withCredentials: true,
+          disableStream: false,
+          disableAutoFetch: true,        // ambil byte seperlunya untuk halaman aktif
+          rangeChunkSize: 262144,        // 256 KB per potongan
           cMapUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/cmaps/",
           cMapPacked: true,
           standardFontDataUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/standard_fonts/",
           useSystemFonts: false,
-          disableAutoFetch: false,
-          disableStream: false,
           isEvalSupported: true,
           enableXfa: false,
           verbosity: 0
         });
+
+        task.onProgress = (p) => {
+          if (p && p.total) {
+            const pct = Math.min(100, Math.round((p.loaded / p.total) * 100));
+            loadingProgress.textContent = pct + '%';
+            loadingDetails.textContent = `${(p.loaded/1024/1024).toFixed(2)} MB / ${(p.total/1024/1024).toFixed(2)} MB`;
+          } else if (p && p.loaded) {
+            loadingProgress.textContent = (p.loaded/1024/1024).toFixed(2) + ' MB';
+            loadingDetails.textContent = 'Memuat…';
+          }
+        };
 
         pdfDoc = await task.promise;
         numPages = pdfDoc.numPages;
