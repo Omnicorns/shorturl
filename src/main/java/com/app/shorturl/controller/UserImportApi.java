@@ -11,8 +11,8 @@ import com.app.shorturl.response.CatalogResponse;
 import com.app.shorturl.service.CatalogAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.support.ResourceRegion;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +24,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Duration;
@@ -42,8 +44,8 @@ public class UserImportApi {
     // =====================================================================
     //  STORAGE PDF DI DISK (bukan baca BLOB dari DB tiap request)
     //  - PDF disimpan sebagai file {id}.pdf di folder storage.
-    //  - stream() melayani Range langsung dari disk (OS cache file panas
-    //    di RAM otomatis) -> tidak perlu tarik 10 MB dari DB tiap request.
+    //  - stream() melayani Range dengan membaca HANYA potongan yang diminta
+    //    dari disk (RandomAccessFile seek) -> tidak load seluruh file ke RAM.
     //  - Tetap dual-write ke DB sebagai backup/metadata => TANPA ubah tabel.
     //  - PDF lama yang masih di DB otomatis dipindah ke disk saat pertama
     //    dibuka (lazy migration), jadi tidak perlu script migrasi.
@@ -213,11 +215,10 @@ public class UserImportApi {
 
         // 2) Pastikan file ada di disk (migrasi dari DB sekali kalau perlu).
         Path p = ensureOnDisk(id);
-        FileSystemResource resource = new FileSystemResource(p);
 
         long len;
         try {
-            len = resource.contentLength();
+            len = Files.size(p);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Gagal baca ukuran file");
         }
@@ -233,21 +234,37 @@ public class UserImportApi {
         h.setETag(etag);
         h.add(HttpHeaders.ACCEPT_RANGES, "bytes");
 
-        // 3) Range request → kirim potongan (206). FileSystemResource + ResourceRegion
-        //    hanya membaca potongan yang diminta dari disk (tidak load seluruh file).
-        //    Content-Range & Content-Length diisi otomatis oleh Spring.
+        // 3) Range request → baca HANYA potongan yang diminta dari disk (seek),
+        //    lalu kirim 206. Tidak load seluruh file ke memori.
         List<HttpRange> ranges = headers.getRange();
         if (ranges != null && !ranges.isEmpty()) {
             HttpRange r = ranges.get(0);
             long start = r.getRangeStart(len);
             long end = r.getRangeEnd(len);
-            ResourceRegion region = new ResourceRegion(resource, start, end - start + 1);
-            return new ResponseEntity<>(region, h, HttpStatus.PARTIAL_CONTENT);
+            int count = (int) (end - start + 1);
+
+            byte[] slice = new byte[count];
+            try (RandomAccessFile raf = new RandomAccessFile(p.toFile(), "r")) {
+                raf.seek(start);
+                raf.readFully(slice);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Gagal baca potongan file");
+            }
+
+            h.setContentLength(count);
+            h.add(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + len);
+            return new ResponseEntity<>(new ByteArrayResource(slice), h, HttpStatus.PARTIAL_CONTENT);
         }
 
-        // 4) Full body (juga via region penuh supaya streaming dari disk).
-        ResourceRegion full = new ResourceRegion(resource, 0, len);
-        return new ResponseEntity<>(full, h, HttpStatus.OK);
+        // 4) Full body → streaming dari disk (tanpa load semua ke memori).
+        InputStream in;
+        try {
+            in = Files.newInputStream(p);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Gagal buka file");
+        }
+        h.setContentLength(len);
+        return new ResponseEntity<>(new InputStreamResource(in), h, HttpStatus.OK);
     }
 
     // ====== sesuai schema kamu (tanpa ubah tabel) ======
