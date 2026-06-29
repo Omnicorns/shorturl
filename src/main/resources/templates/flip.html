@@ -1103,21 +1103,23 @@
       }
     });
 
-    // Enhanced loading with streaming progress
+    // Enhanced loading
     (async function(){
       const startedAt = performance.now();
       try {
         loadingProgress.textContent = '0%';
         loadingDetails.textContent = 'Memuat dokumen…';
 
-        // Stream via URL + range request: halaman pertama tampil sebelum
-        // seluruh file selesai diunduh (server sudah mendukung Accept-Ranges/206).
+        // ====== TES: SATU UNDUHAN (disableRange) ======
+        // Sebelumnya pakai range request (banyak potongan kecil yang antri).
+        // Untuk PDF yang TIDAK linearized, itu butuh puluhan round-trip dan jadi lambat.
+        // disableRange:true => pdf.js mengambil file SEKALI sebagai satu stream.
         const task = pdfjsLib.getDocument({
           url: PDF_URL,
           withCredentials: true,
-          disableStream: false,
-          disableAutoFetch: true,        // ambil byte seperlunya untuk halaman aktif
-          rangeChunkSize: 262144,        // 256 KB per potongan
+          disableRange: true,       // ambil file sekali, bukan banyak potongan
+          disableStream: false,     // tetap proses sambil mengunduh
+          disableAutoFetch: false,
           cMapUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/cmaps/",
           cMapPacked: true,
           standardFontDataUrl: "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.394/standard_fonts/",
