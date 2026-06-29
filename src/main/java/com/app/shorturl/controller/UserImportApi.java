@@ -41,6 +41,64 @@ public class UserImportApi {
     private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;        // 50 MB / file (single & tiap file bulk)
     private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
 
+    // =====================================================================
+    //  CACHE BYTE PDF DI MEMORI
+    //  Tujuan: hindari baca ulang BLOB dari DB pada SETIAP Range request.
+    //  pdf.js (disableAutoFetch:true) mengirim banyak request kecil; tanpa
+    //  cache, isi PDF dibaca dari DB berkali-kali -> lambat.
+    //  Bounded by total bytes + LRU eviction supaya tidak menghabiskan heap.
+    //  Menyimpan byte + filename (filename dibutuhkan untuk Content-Disposition).
+    // =====================================================================
+    private static final long MAX_CACHE_BYTES = 256L * 1024 * 1024; // 256 MB total
+
+    private static final class CachedPdf {
+        final byte[] data;
+        final String filename;
+        CachedPdf(byte[] data, String filename) { this.data = data; this.filename = filename; }
+    }
+
+    private long cacheBytes = 0;
+    private final LinkedHashMap<Long, CachedPdf> pdfCache =
+            new LinkedHashMap<>(16, 0.75f, true); // access-order = LRU
+
+    private synchronized CachedPdf cacheGet(Long id) {
+        return pdfCache.get(id);
+    }
+
+    private synchronized void cachePut(Long id, CachedPdf entry) {
+        CachedPdf prev = pdfCache.put(id, entry);
+        if (prev != null) cacheBytes -= prev.data.length;
+        cacheBytes += entry.data.length;
+        Iterator<Map.Entry<Long, CachedPdf>> it = pdfCache.entrySet().iterator();
+        while (cacheBytes > MAX_CACHE_BYTES && it.hasNext()) {
+            Map.Entry<Long, CachedPdf> e = it.next();
+            cacheBytes -= e.getValue().data.length;
+            it.remove();
+        }
+    }
+
+    private synchronized void cacheEvict(Long id) {
+        CachedPdf prev = pdfCache.remove(id);
+        if (prev != null) cacheBytes -= prev.data.length;
+    }
+
+    /** Ambil isi PDF: dari cache kalau ada, kalau tidak baca DB sekali lalu simpan. */
+    private CachedPdf loadPdf(Long id) {
+        CachedPdf cached = cacheGet(id);
+        if (cached != null) return cached;
+
+        com.app.shorturl.projection.PdfDocContent doc = pdfDocRepository.findContentById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        byte[] data = Objects.requireNonNull(doc.getData(), "PDF kosong");
+        String filename = (doc.getFilename() != null && !doc.getFilename().isBlank())
+                ? doc.getFilename()
+                : (id + ".pdf");
+
+        CachedPdf entry = new CachedPdf(data, filename);
+        cachePut(id, entry);
+        return entry;
+    }
+
     private void validateSize(MultipartFile file) {
         if (file.getSize() >= MAX_FILE_SIZE) {
             throw new ResponseStatusException(
@@ -134,16 +192,11 @@ public class UserImportApi {
                     .build();
         }
 
-        // 2) Ambil HANYA isi PDF (tanpa hydrate coManagers/owner).
-        com.app.shorturl.projection.PdfDocContent doc = pdfDocRepository.findContentById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        byte[] data = Objects.requireNonNull(doc.getData(), "PDF kosong");
+        // 2) Ambil isi PDF dari CACHE (DB hanya dibaca sekali per dokumen).
+        CachedPdf pdf = loadPdf(id);
+        byte[] data = pdf.data;
         long len = data.length;
-
-        String filename = (doc.getFilename() != null && !doc.getFilename().isBlank())
-                ? doc.getFilename()
-                : (id + ".pdf");
+        String filename = pdf.filename;
 
         HttpHeaders h = new HttpHeaders();
         h.setContentType(MediaType.APPLICATION_PDF);
@@ -341,6 +394,9 @@ public class UserImportApi {
 
         doc = pdfDocRepository.save(doc);
 
+        // PENTING: buang cache lama supaya viewer ambil versi baru, bukan byte usang.
+        cacheEvict(id);
+
         return Map.of(
                 "id", doc.getId(),
                 "filename", doc.getFilename(),
@@ -360,6 +416,8 @@ public class UserImportApi {
             Authentication authentication) {
         try {
             catalogAccessService.deleteCatalog(id, authentication);
+            // Bersihkan cache supaya tidak menyimpan byte dokumen yang sudah dihapus.
+            cacheEvict(id);
             return ResponseEntity.ok(Map.of(
                     "id", id,
                     "status", "DELETED"
