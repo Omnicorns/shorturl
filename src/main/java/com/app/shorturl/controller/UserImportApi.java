@@ -10,7 +10,9 @@ import com.app.shorturl.repository.ShortUrlRepository;
 import com.app.shorturl.response.CatalogResponse;
 import com.app.shorturl.service.CatalogAccessService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.time.Duration;
 import java.util.*;
 
@@ -36,68 +39,80 @@ public class UserImportApi {
     private final ShortUrlRepository shortUrlRepository;
     private final CatalogAccessService catalogAccessService;
 
-    // Import CSV (multipart/form-data)
-
-    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;        // 50 MB / file (single & tiap file bulk)
-    private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
-
     // =====================================================================
-    //  CACHE BYTE PDF DI MEMORI
-    //  Tujuan: hindari baca ulang BLOB dari DB pada SETIAP Range request.
-    //  pdf.js (disableAutoFetch:true) mengirim banyak request kecil; tanpa
-    //  cache, isi PDF dibaca dari DB berkali-kali -> lambat.
-    //  Bounded by total bytes + LRU eviction supaya tidak menghabiskan heap.
-    //  Menyimpan byte + filename (filename dibutuhkan untuk Content-Disposition).
+    //  STORAGE PDF DI DISK (bukan baca BLOB dari DB tiap request)
+    //  - PDF disimpan sebagai file {id}.pdf di folder storage.
+    //  - stream() melayani Range langsung dari disk (OS cache file panas
+    //    di RAM otomatis) -> tidak perlu tarik 10 MB dari DB tiap request.
+    //  - Tetap dual-write ke DB sebagai backup/metadata => TANPA ubah tabel.
+    //  - PDF lama yang masih di DB otomatis dipindah ke disk saat pertama
+    //    dibuka (lazy migration), jadi tidak perlu script migrasi.
+    //  Set folder lewat application.properties:
+    //      app.pdf.storage-dir=/var/app/pdf-storage
     // =====================================================================
-    private static final long MAX_CACHE_BYTES = 256L * 1024 * 1024; // 256 MB total
+    @Value("${app.pdf.storage-dir:./pdf-storage}")
+    private String storageDir;
 
-    private static final class CachedPdf {
-        final byte[] data;
-        final String filename;
-        CachedPdf(byte[] data, String filename) { this.data = data; this.filename = filename; }
-    }
+    private Path pdfPath(Long id)  { return Paths.get(storageDir, id + ".pdf"); }
+    private Path namePath(Long id) { return Paths.get(storageDir, id + ".pdf.name"); }
 
-    private long cacheBytes = 0;
-    private final LinkedHashMap<Long, CachedPdf> pdfCache =
-            new LinkedHashMap<>(16, 0.75f, true); // access-order = LRU
+    /** Tulis byte PDF ke disk secara atomik (tmp -> move), plus simpan nama asli. */
+    private void writeToDisk(Long id, byte[] data, String filename) throws IOException {
+        Path dir = Paths.get(storageDir);
+        Files.createDirectories(dir);
 
-    private synchronized CachedPdf cacheGet(Long id) {
-        return pdfCache.get(id);
-    }
+        Path target = pdfPath(id);
+        Path tmp = Files.createTempFile(dir, "pdf-", ".tmp");
+        Files.write(tmp, data);
+        try {
+            Files.move(tmp, target,
+                    StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+        }
 
-    private synchronized void cachePut(Long id, CachedPdf entry) {
-        CachedPdf prev = pdfCache.put(id, entry);
-        if (prev != null) cacheBytes -= prev.data.length;
-        cacheBytes += entry.data.length;
-        Iterator<Map.Entry<Long, CachedPdf>> it = pdfCache.entrySet().iterator();
-        while (cacheBytes > MAX_CACHE_BYTES && it.hasNext()) {
-            Map.Entry<Long, CachedPdf> e = it.next();
-            cacheBytes -= e.getValue().data.length;
-            it.remove();
+        if (filename != null && !filename.isBlank()) {
+            Files.writeString(namePath(id), filename, StandardCharsets.UTF_8);
         }
     }
 
-    private synchronized void cacheEvict(Long id) {
-        CachedPdf prev = pdfCache.remove(id);
-        if (prev != null) cacheBytes -= prev.data.length;
-    }
-
-    /** Ambil isi PDF: dari cache kalau ada, kalau tidak baca DB sekali lalu simpan. */
-    private CachedPdf loadPdf(Long id) {
-        CachedPdf cached = cacheGet(id);
-        if (cached != null) return cached;
+    /** Pastikan file ada di disk; kalau belum, migrasikan dari DB sekali. */
+    private Path ensureOnDisk(Long id) {
+        Path p = pdfPath(id);
+        if (Files.exists(p)) return p;
 
         com.app.shorturl.projection.PdfDocContent doc = pdfDocRepository.findContentById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         byte[] data = Objects.requireNonNull(doc.getData(), "PDF kosong");
-        String filename = (doc.getFilename() != null && !doc.getFilename().isBlank())
-                ? doc.getFilename()
-                : (id + ".pdf");
-
-        CachedPdf entry = new CachedPdf(data, filename);
-        cachePut(id, entry);
-        return entry;
+        try {
+            writeToDisk(id, data, doc.getFilename());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Gagal menulis file PDF");
+        }
+        return p;
     }
+
+    /** Nama untuk Content-Disposition; best-effort dari sidecar, fallback {id}.pdf. */
+    private String readFilename(Long id) {
+        try {
+            Path np = namePath(id);
+            if (Files.exists(np)) {
+                String n = Files.readString(np, StandardCharsets.UTF_8).trim();
+                if (!n.isBlank()) return n;
+            }
+        } catch (IOException ignored) { }
+        return id + ".pdf";
+    }
+
+    private void deleteFromDisk(Long id) {
+        try { Files.deleteIfExists(pdfPath(id)); } catch (IOException ignored) { }
+        try { Files.deleteIfExists(namePath(id)); } catch (IOException ignored) { }
+    }
+
+    // Import CSV (multipart/form-data)
+
+    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;        // 50 MB / file (single & tiap file bulk)
+    private static final long MAX_BULK_TOTAL_SIZE = 50L * 1024 * 1024;  // 50 MB total untuk seluruh file bulk
 
     private void validateSize(MultipartFile file) {
         if (file.getSize() >= MAX_FILE_SIZE) {
@@ -152,16 +167,20 @@ public class UserImportApi {
 
         // FIX: hormati filename custom dari form. Sebelumnya selalu pakai nama asli.
         String finalName = resolveFilename(filename, file.getOriginalFilename());
+        byte[] bytes = file.getBytes();
 
         PdfDocs doc = new PdfDocs();
         doc.setFilename(finalName);
         doc.setContentType("application/pdf");
-        doc.setData(file.getBytes());
+        doc.setData(bytes);
 
         // INI WAJIB
         doc.setOwnerUsername(authentication.getName().toLowerCase());
 
         doc = pdfDocRepository.save(doc);
+
+        // Tulis juga ke disk supaya pembacaan cepat (stream Range dari file).
+        writeToDisk(doc.getId(), bytes, finalName);
 
         return Map.of(
                 "id", doc.getId(),
@@ -182,7 +201,7 @@ public class UserImportApi {
         // ETag ringan berbasis id saja (isi berubah => pakai id baru).
         String etag = "\"pdf-" + id + "\"";
 
-        // 1) Conditional GET: balas 304 TANPA menyentuh DB sama sekali.
+        // 1) Conditional GET: balas 304 TANPA menyentuh disk/DB sama sekali.
         List<String> ifNoneMatch = headers.getIfNoneMatch();
         if (ifNoneMatch != null && ifNoneMatch.contains(etag)) {
             return ResponseEntity
@@ -192,11 +211,18 @@ public class UserImportApi {
                     .build();
         }
 
-        // 2) Ambil isi PDF dari CACHE (DB hanya dibaca sekali per dokumen).
-        CachedPdf pdf = loadPdf(id);
-        byte[] data = pdf.data;
-        long len = data.length;
-        String filename = pdf.filename;
+        // 2) Pastikan file ada di disk (migrasi dari DB sekali kalau perlu).
+        Path p = ensureOnDisk(id);
+        FileSystemResource resource = new FileSystemResource(p);
+
+        long len;
+        try {
+            len = resource.contentLength();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Gagal baca ukuran file");
+        }
+
+        String filename = readFilename(id);
 
         HttpHeaders h = new HttpHeaders();
         h.setContentType(MediaType.APPLICATION_PDF);
@@ -205,26 +231,23 @@ public class UserImportApi {
                 .build());
         h.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic());
         h.setETag(etag);
-        // Beritahu pdf.js bahwa server mendukung range → bisa render halaman awal duluan.
         h.add(HttpHeaders.ACCEPT_RANGES, "bytes");
 
-        // 3) Range request → kirim potongan (206) supaya buka catalog terasa cepat.
+        // 3) Range request → kirim potongan (206). FileSystemResource + ResourceRegion
+        //    hanya membaca potongan yang diminta dari disk (tidak load seluruh file).
+        //    Content-Range & Content-Length diisi otomatis oleh Spring.
         List<HttpRange> ranges = headers.getRange();
         if (ranges != null && !ranges.isEmpty()) {
             HttpRange r = ranges.get(0);
             long start = r.getRangeStart(len);
             long end = r.getRangeEnd(len);
-            long count = end - start + 1;
-
-            byte[] slice = Arrays.copyOfRange(data, (int) start, (int) (end + 1));
-            h.setContentLength(count);
-            h.add(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + len);
-            return new ResponseEntity<>(new ByteArrayResource(slice), h, HttpStatus.PARTIAL_CONTENT);
+            ResourceRegion region = new ResourceRegion(resource, start, end - start + 1);
+            return new ResponseEntity<>(region, h, HttpStatus.PARTIAL_CONTENT);
         }
 
-        // 4) Full body.
-        h.setContentLength(len);
-        return new ResponseEntity<>(new ByteArrayResource(data), h, HttpStatus.OK);
+        // 4) Full body (juga via region penuh supaya streaming dari disk).
+        ResourceRegion full = new ResourceRegion(resource, 0, len);
+        return new ResponseEntity<>(full, h, HttpStatus.OK);
     }
 
     // ====== sesuai schema kamu (tanpa ubah tabel) ======
@@ -277,15 +300,20 @@ public class UserImportApi {
                             "Bukan PDF: " + fname);
                 }
 
+                byte[] bytes = file.getBytes();
+
                 PdfDocs doc = new PdfDocs();
                 doc.setFilename(fname);
                 doc.setContentType("application/pdf");
-                doc.setData(file.getBytes());
+                doc.setData(bytes);
                 if (authentication != null && authentication.getName() != null) {
                     doc.setOwnerUsername(authentication.getName().toLowerCase());
                 }
 
                 doc = pdfDocRepository.save(doc);
+
+                // Tulis ke disk juga
+                writeToDisk(doc.getId(), bytes, fname);
 
                 Map<String, Object> ok = new LinkedHashMap<>();
                 ok.put("index", i);
@@ -383,8 +411,10 @@ public class UserImportApi {
         PdfDocs doc = pdfDocRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dokumen tidak ditemukan"));
 
+        byte[] bytes = file.getBytes();
+
         // Update konten
-        doc.setData(file.getBytes());
+        doc.setData(bytes);
         doc.setContentType("application/pdf");
         // Pakai filename baru jika dikirim, kalau tidak pakai original filename dari upload
         String newName = (filename != null && !filename.isBlank())
@@ -394,8 +424,8 @@ public class UserImportApi {
 
         doc = pdfDocRepository.save(doc);
 
-        // PENTING: buang cache lama supaya viewer ambil versi baru, bukan byte usang.
-        cacheEvict(id);
+        // Timpa file di disk dengan versi baru.
+        writeToDisk(id, bytes, newName);
 
         return Map.of(
                 "id", doc.getId(),
@@ -416,8 +446,8 @@ public class UserImportApi {
             Authentication authentication) {
         try {
             catalogAccessService.deleteCatalog(id, authentication);
-            // Bersihkan cache supaya tidak menyimpan byte dokumen yang sudah dihapus.
-            cacheEvict(id);
+            // Hapus juga file di disk.
+            deleteFromDisk(id);
             return ResponseEntity.ok(Map.of(
                     "id", id,
                     "status", "DELETED"
