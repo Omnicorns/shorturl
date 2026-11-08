@@ -7,6 +7,7 @@ import com.app.shorturl.repository.PasswordResetTokenRepository;
 import com.app.shorturl.request.RegisterRequest;
 import com.app.shorturl.request.ResetPasswordRequest;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,13 +32,16 @@ public class AuthAccountService {
     private final AppUserRepository userRepository;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final String reservedAdminUsername;
 
     public AuthAccountService(AppUserRepository userRepository,
                               PasswordResetTokenRepository resetTokenRepository,
-                              PasswordEncoder passwordEncoder) {
+                              PasswordEncoder passwordEncoder,
+                              @Value("${app.admin.username:}") String reservedAdminUsername) {
         this.userRepository = userRepository;
         this.resetTokenRepository = resetTokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.reservedAdminUsername = reservedAdminUsername == null ? "" : reservedAdminUsername.trim();
     }
 
     @Transactional
@@ -62,6 +66,10 @@ public class AuthAccountService {
         }
         if (!password.equals(confirmPassword)) {
             throw new IllegalArgumentException("Konfirmasi password tidak sama.");
+        }
+        // Username akun emergency otomatis super-admin; jangan boleh "dibajak" lewat akun DB.
+        if (!reservedAdminUsername.isBlank() && reservedAdminUsername.equalsIgnoreCase(username)) {
+            throw new IllegalArgumentException("Username sudah digunakan.");
         }
         if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new IllegalArgumentException("Username sudah digunakan.");

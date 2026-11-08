@@ -20,6 +20,9 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, Long> {
 
     boolean existsByShortCode(String shortCode);
 
+    /** Dipakai migrasi kunci akses catalog (PdfAccessKeyMigration). */
+    List<ShortUrl> findByOriginalUrlContaining(String fragment);
+
     // ─── Super-admin / list-semua ───────────────────────────────────
     Page<ShortUrl> findAllByOrderByCreatedAtDesc(Pageable pageable);
 

@@ -55,6 +55,13 @@ public class UserImportApi {
     @Value("${app.pdf.storage-dir:./pdf-storage}")
     private String storageDir;
 
+    /**
+     * true = link lama /api/admin/users/pdf/{id} tanpa kunci masih bisa dibuka publik
+     * (TIDAK disarankan; id berurutan mudah ditebak). Default false.
+     */
+    @Value("${app.pdf.allow-legacy-id-links:false}")
+    private boolean allowLegacyIdLinks;
+
     private Path pdfPath(Long id)  { return Paths.get(storageDir, id + ".pdf"); }
     private Path namePath(Long id) { return Paths.get(storageDir, id + ".pdf.name"); }
 
@@ -187,8 +194,8 @@ public class UserImportApi {
         return Map.of(
                 "id", doc.getId(),
                 "filename", doc.getFilename(),
-                "url", "/api/v1/admin/pdf/" + doc.getId(),
-                "open_in_viewer", "/catalogue?id=" + doc.getId(),
+                "url", CatalogAccessService.streamUrl(doc.getId(), doc.getAccessKey()),
+                "open_in_viewer", CatalogAccessService.viewerUrl(doc.getId(), doc.getAccessKey()),
                 "ownerUsername", doc.getOwnerUsername(),
                 "coManagers", doc.getCoManagers()
         );
@@ -198,7 +205,20 @@ public class UserImportApi {
     @GetMapping(value="/pdf/{id}", produces=MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> stream(
             @PathVariable Long id,
-            @RequestHeader HttpHeaders headers) {
+            @RequestParam(name = "k", required = false) String accessKey,
+            @RequestHeader HttpHeaders headers,
+            Authentication authentication) {
+
+        // 0) Otorisasi DULU (sebelum 304/ETag) - boleh kalau:
+        //    - membawa kunci akses yang valid (link publik viewer), atau
+        //    - user login adalah owner / co-manager / super-admin.
+        //    Balas 404 (bukan 403) supaya keberadaan id tidak bocor.
+        boolean allowed = catalogAccessService.hasValidAccessKey(id, accessKey)
+                || catalogAccessService.canView(id, authentication)
+                || (allowLegacyIdLinks && pdfDocRepository.existsById(id));
+        if (!allowed) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
 
         // ETag ringan berbasis id saja (isi berubah => pakai id baru).
         String etag = "\"pdf-" + id + "\"";
@@ -209,7 +229,7 @@ public class UserImportApi {
             return ResponseEntity
                     .status(HttpStatus.NOT_MODIFIED)
                     .eTag(etag)
-                    .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic())
+                    .cacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate())
                     .build();
         }
 
@@ -230,8 +250,11 @@ public class UserImportApi {
         h.setContentDisposition(ContentDisposition.inline()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build());
-        h.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePublic());
+        // private: jangan disimpan di shared cache/proxy (dokumen bisa terbatas aksesnya).
+        h.setCacheControl(CacheControl.maxAge(Duration.ofDays(30)).cachePrivate());
         h.setETag(etag);
+        h.set("X-Content-Type-Options", "nosniff");
+        h.set("Referrer-Policy", "no-referrer");
         h.add(HttpHeaders.ACCEPT_RANGES, "bytes");
 
         // 3) Range request → baca HANYA potongan yang diminta dari disk (seek),
@@ -337,10 +360,10 @@ public class UserImportApi {
                 ok.put("filename", doc.getFilename());
                 ok.put("id", doc.getId());
 
-                ok.put("url", "/api/admin/users/pdf/" + doc.getId());
+                ok.put("url", CatalogAccessService.streamUrl(doc.getId(), doc.getAccessKey()));
                 ok.put("ownerUsername", doc.getOwnerUsername());
                 ok.put("coManagers", doc.getCoManagers());
-                ok.put("open_in_viewer", "/catalogue?id=" + doc.getId());
+                ok.put("open_in_viewer", CatalogAccessService.viewerUrl(doc.getId(), doc.getAccessKey()));
                 ok.put("status", "OK");
                 items.add(ok);
                 success++;
@@ -414,7 +437,8 @@ public class UserImportApi {
     public Map<String,Object> updatePdf(
             @PathVariable Long id,
             @RequestPart("file") MultipartFile file,
-            @RequestPart(name = "filename", required = false) String filename
+            @RequestPart(name = "filename", required = false) String filename,
+            Authentication authentication
     ) throws IOException {
 
         if (file == null || file.isEmpty()) {
@@ -427,6 +451,11 @@ public class UserImportApi {
 
         PdfDocs doc = pdfDocRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Dokumen tidak ditemukan"));
+
+        // Sebelumnya TIDAK ada cek kepemilikan: siapa pun bisa menimpa PDF orang lain.
+        if (!catalogAccessService.canEdit(doc, authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Anda bukan owner, co-manager, atau super admin.");
+        }
 
         byte[] bytes = file.getBytes();
 
@@ -447,8 +476,8 @@ public class UserImportApi {
         return Map.of(
                 "id", doc.getId(),
                 "filename", doc.getFilename(),
-                "url", "/pdf/" + doc.getId(),
-                "open_in_viewer", "/catalogue?id=" + doc.getId(),
+                "url", CatalogAccessService.streamUrl(doc.getId(), doc.getAccessKey()),
+                "open_in_viewer", CatalogAccessService.viewerUrl(doc.getId(), doc.getAccessKey()),
                 "status", "UPDATED"
         );
     }

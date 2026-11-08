@@ -2,9 +2,11 @@ package com.app.shorturl.controller;
 
 import com.app.shorturl.model.ClickLog;
 import com.app.shorturl.repository.ClickLogRepository;
+import com.app.shorturl.service.TrackingTokenService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.InetAddress;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Endpoint untuk update IP & geolocation dari sisi browser user.
@@ -29,6 +34,13 @@ import java.util.Optional;
  *
  * Catatan: data ini "best effort" dan bisa dimanipulasi oleh user. Cocok
  * untuk analytics, TIDAK cocok untuk audit/security.
+ *
+ * Pengamanan (supaya tidak bisa dipakai memanipulasi klik orang lain):
+ *  - trackId = token HMAC (id + shortCode), bukan ID mentah → tidak bisa ditebak.
+ *  - shortCode wajib & harus cocok dengan record.
+ *  - Hanya boleh update dalam jendela waktu singkat setelah klik dibuat.
+ *  - Hanya SEKALI per klik (client_geo_updated_at).
+ *  - Nilai divalidasi & dipotong sesuai panjang kolom.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -36,51 +48,65 @@ import java.util.Optional;
 @Slf4j
 public class IpTrackingController {
 
+    private static final Pattern IPV4 = Pattern.compile(
+            "^((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)$");
+    private static final Pattern IPV6 = Pattern.compile("^[0-9A-Fa-f:.]{2,45}$");
+    private static final Pattern COUNTRY_CODE = Pattern.compile("^[A-Za-z]{2,3}$");
+
     private final ClickLogRepository clickLogRepository;
+    private final TrackingTokenService trackingTokenService;
+
+    @Value("${app.tracking.update-window-seconds:600}")
+    private long updateWindowSeconds;
 
     @PostMapping("/track-ip")
     @Transactional
     public ResponseEntity<Void> trackIp(@RequestBody IpTrackRequest req) {
         try {
-            if (req == null || req.getTrackId() == null || req.getTrackId().isBlank()) {
+            if (req == null || req.getTrackId() == null || req.getTrackId().isBlank()
+                    || req.getShortCode() == null || req.getShortCode().isBlank()) {
                 return ResponseEntity.ok().build();
             }
 
-            Long id;
-            try {
-                id = Long.parseLong(req.getTrackId());
-            } catch (NumberFormatException e) {
-                log.debug("Invalid trackId format: {}", req.getTrackId());
+            Optional<Long> idOpt = trackingTokenService.verify(req.getTrackId().trim(), req.getShortCode().trim());
+            if (idOpt.isEmpty()) {
+                log.debug("Invalid track token");
                 return ResponseEntity.ok().build();
             }
 
-            Optional<ClickLog> opt = clickLogRepository.findById(id);
+            Optional<ClickLog> opt = clickLogRepository.findById(idOpt.get());
             if (opt.isEmpty()) {
-                log.debug("ClickLog id {} not found", id);
                 return ResponseEntity.ok().build();
             }
 
             ClickLog logEntry = opt.get();
 
-            // Validasi: shortCode di request harus cocok dengan record,
-            // mencegah user iseng update log orang lain.
-            if (req.getShortCode() != null
-                    && logEntry.getShortCode() != null
-                    && !req.getShortCode().equals(logEntry.getShortCode())) {
-                log.debug("shortCode mismatch for id {}", id);
+            // shortCode harus cocok (token juga sudah terikat ke shortCode).
+            if (logEntry.getShortCode() == null || !logEntry.getShortCode().equals(req.getShortCode().trim())) {
+                return ResponseEntity.ok().build();
+            }
+            // Sekali saja per klik.
+            if (logEntry.getClientGeoUpdatedAt() != null) {
+                return ResponseEntity.ok().build();
+            }
+            // Hanya dalam jendela waktu setelah klik dibuat.
+            LocalDateTime created = logEntry.getCreatedAt();
+            if (created == null || created.plusSeconds(Math.max(updateWindowSeconds, 1)).isBefore(LocalDateTime.now())) {
                 return ResponseEntity.ok().build();
             }
 
-            // Update IP dan geolocation hanya kalau data dari client masuk akal
             if (isValidPublicIp(req.getClientIp())) {
-                logEntry.setIpAddress(req.getClientIp());
+                logEntry.setIpAddress(req.getClientIp().trim());
             }
-            if (notBlank(req.getCountry()))     logEntry.setCountry(req.getCountry());
-            if (notBlank(req.getCountryCode())) logEntry.setCountryCode(req.getCountryCode());
-            if (notBlank(req.getRegion()))      logEntry.setRegion(req.getRegion());
-            if (notBlank(req.getCity()))        logEntry.setCity(req.getCity());
-            if (notBlank(req.getIsp()))         logEntry.setIsp(truncate(req.getIsp(), 80));
+            if (notBlank(req.getCountry()))     logEntry.setCountry(clean(req.getCountry(), 80));
+            if (notBlank(req.getCountryCode()) && COUNTRY_CODE.matcher(req.getCountryCode().trim()).matches()) {
+                logEntry.setCountryCode(req.getCountryCode().trim().toUpperCase());
+            }
+            if (notBlank(req.getRegion()))      logEntry.setRegion(clean(req.getRegion(), 80));
+            if (notBlank(req.getCity()))        logEntry.setCity(clean(req.getCity(), 80));
+            if (notBlank(req.getIsp()))         logEntry.setIsp(clean(req.getIsp(), 80));
 
+            logEntry.setClientGeoUpdatedAt(LocalDateTime.now());
             clickLogRepository.save(logEntry);
         } catch (Exception e) {
             log.warn("trackIp failed: {}", e.getMessage());
@@ -93,29 +119,43 @@ public class IpTrackingController {
         return s != null && !s.isBlank();
     }
 
+    /** Hanya IP literal publik; tidak pernah melakukan DNS lookup. */
     private boolean isValidPublicIp(String ip) {
-        if (ip == null || ip.isBlank()) return false;
-        // tolak IP private/loopback yang dikirim dari client (mungkin nyasar)
-        return !ip.startsWith("10.")
-                && !ip.startsWith("192.168.")
-                && !ip.startsWith("172.16.") && !ip.startsWith("172.17.")
-                && !ip.startsWith("172.18.") && !ip.startsWith("172.19.")
-                && !ip.startsWith("172.2")   && !ip.startsWith("172.30.")
-                && !ip.startsWith("172.31.")
-                && !ip.equals("127.0.0.1")
-                && !ip.equals("::1")
-                && !ip.startsWith("0:");
+        if (ip == null) return false;
+        String v = ip.trim();
+        boolean literal = IPV4.matcher(v).matches() || (v.contains(":") && IPV6.matcher(v).matches());
+        if (!literal) return false;
+        try {
+            InetAddress a = InetAddress.getByName(v); // aman: input sudah dipastikan literal IP
+            return !(a.isAnyLocalAddress() || a.isLoopbackAddress() || a.isLinkLocalAddress()
+                    || a.isSiteLocalAddress() || a.isMulticastAddress()
+                    || isUniqueLocalV6(a) || isCgnat(a));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-    private String truncate(String s, int max) {
+    private static boolean isUniqueLocalV6(InetAddress a) {
+        byte[] b = a.getAddress();
+        return b.length == 16 && (b[0] & 0xFE) == 0xFC; // fc00::/7
+    }
+
+    private static boolean isCgnat(InetAddress a) {
+        byte[] b = a.getAddress();
+        return b.length == 4 && (b[0] & 0xFF) == 100 && (b[1] & 0xC0) == 64; // 100.64.0.0/10
+    }
+
+    /** Buang karakter kontrol & potong sesuai panjang kolom. */
+    private String clean(String s, int max) {
         if (s == null) return null;
-        return s.length() > max ? s.substring(0, max) : s;
+        String v = s.replaceAll("\\p{Cntrl}", "").trim();
+        return v.length() > max ? v.substring(0, max) : v;
     }
 
     @Data
     public static class IpTrackRequest {
-        private String trackId;     // id ClickLog yang akan di-update
-        private String shortCode;   // untuk validasi
+        private String trackId;     // token bertanda tangan dari server (bukan ID mentah)
+        private String shortCode;   // wajib, untuk validasi
         private String clientIp;
         private String country;
         private String countryCode;

@@ -77,6 +77,10 @@ public class ClickLog {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    /** Kapan browser meng-update IP/geo (sekali saja per klik). */
+    @Column(name = "client_geo_updated_at")
+    private LocalDateTime clientGeoUpdatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();

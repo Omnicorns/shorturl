@@ -21,14 +21,19 @@ public class DatabaseOrFallbackUserDetailsService implements UserDetailsService 
     public DatabaseOrFallbackUserDetailsService(
             AppUserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            @Value("${app.admin.username:surl}") String fallbackUsername,
-            @Value("${app.admin.password:surl123}") String fallbackPassword) {
+            @Value("${app.admin.username:}") String fallbackUsername,
+            @Value("${app.admin.password:}") String fallbackPassword) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.fallbackUsername = normalize(fallbackUsername);
-        this.fallbackPasswordHash = looksLikeBCrypt(fallbackPassword)
-                ? fallbackPassword
-                : passwordEncoder.encode(fallbackPassword);
+        // Akun emergency hanya aktif kalau username DAN password di-set lewat env.
+        if (this.fallbackUsername.isBlank() || fallbackPassword == null || fallbackPassword.isBlank()) {
+            this.fallbackPasswordHash = null;
+        } else {
+            this.fallbackPasswordHash = looksLikeBCrypt(fallbackPassword)
+                    ? fallbackPassword
+                    : passwordEncoder.encode(fallbackPassword);
+        }
     }
 
     @Override
@@ -53,7 +58,7 @@ public class DatabaseOrFallbackUserDetailsService implements UserDetailsService 
     }
 
     private UserDetails loadFallbackAdmin(String identity) {
-        if (!fallbackUsername.equalsIgnoreCase(identity)) {
+        if (fallbackPasswordHash == null || !fallbackUsername.equalsIgnoreCase(identity)) {
             throw new UsernameNotFoundException("User not found");
         }
 

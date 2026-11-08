@@ -17,4 +17,5 @@ public interface CatalogListProjection {
     String getOwnerUsername();
     Long getAccessCount();
     LocalDateTime getLastAccessedAt();
+    String getAccessKey();
 }

@@ -1,6 +1,7 @@
 package com.app.shorturl.service;
 
 
+import com.app.shorturl.config.AccessControlHelper;
 import com.app.shorturl.model.PdfDocs;
 import com.app.shorturl.repository.PdfDocRepository;
 import com.app.shorturl.response.CatalogResponse;
@@ -22,36 +23,74 @@ import java.util.stream.Collectors;
 public class CatalogAccessService {
 
     private final PdfDocRepository pdfDocsRepository;
+    private final AccessControlHelper accessControl;
 
-
+    /**
+     * Sebelumnya username "admin"/"surl" di-hardcode sebagai super-admin, sehingga
+     * siapa pun yang punya akun bernama "admin" mendapat akses penuh. Sekarang
+     * mengikuti aturan terpusat di AccessControlHelper.
+     */
     public boolean isSuperAdmin(Authentication auth) {
-        if (auth == null) return false;
+        return accessControl.isSuperAdmin(auth);
+    }
 
-        String username = auth.getName();
-
-        boolean roleSuperAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
-
-        boolean emergencyAdmin = username != null && (
-                username.equalsIgnoreCase("admin")
-                        || username.equalsIgnoreCase("surl")
-        );
-
-        return roleSuperAdmin || emergencyAdmin;
+    private static boolean isAuthenticated(Authentication auth) {
+        return auth != null && auth.isAuthenticated()
+                && auth.getName() != null
+                && !"anonymousUser".equals(auth.getPrincipal());
     }
 
     public String currentUsername(Authentication auth) {
-        if (auth == null || auth.getName() == null) return "system";
+        if (!isAuthenticated(auth)) return "";
         return auth.getName().trim().toLowerCase();
     }
 
+    /** Owner atau super-admin: boleh hapus & ubah akses. */
     public boolean canManage(PdfDocs doc, Authentication auth) {
-        if (doc == null || auth == null) return false;
+        if (doc == null || !isAuthenticated(auth)) return false;
         if (isSuperAdmin(auth)) return true;
 
         String username = currentUsername(auth);
         return doc.getOwnerUsername() != null
                 && doc.getOwnerUsername().equalsIgnoreCase(username);
+    }
+
+    /** Owner, co-manager, atau super-admin: boleh melihat & mengganti isi PDF. */
+    public boolean canEdit(PdfDocs doc, Authentication auth) {
+        if (doc == null || !isAuthenticated(auth)) return false;
+        return isSuperAdmin(auth) || doc.isAccessibleBy(currentUsername(auth));
+    }
+
+    /** Dipakai endpoint stream PDF: user login yang punya akses ke catalog. */
+    @Transactional(readOnly = true)
+    public boolean canView(Long docId, Authentication auth) {
+        if (docId == null || !isAuthenticated(auth)) return false;
+        if (isSuperAdmin(auth)) return true;
+        return pdfDocsRepository.isVisibleForUser(docId, currentUsername(auth));
+    }
+
+    /** Cocokkan kunci akses publik secara constant-time. */
+    @Transactional(readOnly = true)
+    public boolean hasValidAccessKey(Long docId, String key) {
+        if (docId == null || key == null || key.isBlank()) return false;
+        return pdfDocsRepository.findAccessKeyById(docId)
+                .filter(k -> k != null && !k.isBlank())
+                .map(k -> java.security.MessageDigest.isEqual(
+                        k.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        key.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                .orElse(false);
+    }
+
+    public static String streamUrl(Long id, String accessKey) {
+        return "/api/admin/users/pdf/" + id + keyParam("?", accessKey);
+    }
+
+    public static String viewerUrl(Long id, String accessKey) {
+        return "/catalogue?id=" + id + keyParam("&", accessKey);
+    }
+
+    private static String keyParam(String sep, String accessKey) {
+        return (accessKey == null || accessKey.isBlank()) ? "" : sep + "k=" + accessKey;
     }
 
     public Page<PdfDocs> findVisibleCatalogs(String keyword,
@@ -95,8 +134,8 @@ public class CatalogAccessService {
                 .id(doc.getId())
                 .filename(doc.getFilename())
                 .contentType(doc.getContentType())
-                .url("/api/admin/users/pdf/" + doc.getId())
-                .open_in_viewer("/catalogue?id=" + doc.getId())
+                .url(streamUrl(doc.getId(), doc.getAccessKey()))
+                .open_in_viewer(viewerUrl(doc.getId(), doc.getAccessKey()))
                 .ownerUsername(doc.getOwnerUsername())
                 .coManagers(doc.getCoManagers())
                 .canManageAccess(canManage(doc, auth))
@@ -156,8 +195,8 @@ public class CatalogAccessService {
                     .id(p.getId())
                     .filename(p.getFilename())
                     .contentType(p.getContentType())
-                    .url("/api/admin/users/pdf/" + p.getId())
-                    .open_in_viewer("/catalogue?id=" + p.getId())
+                    .url(streamUrl(p.getId(), p.getAccessKey()))
+                    .open_in_viewer(viewerUrl(p.getId(), p.getAccessKey()))
                     .ownerUsername(p.getOwnerUsername())
                     .coManagers(coManagerMap.getOrDefault(p.getId(), new LinkedHashSet<>()))
                     .canManageAccess(canManage)
