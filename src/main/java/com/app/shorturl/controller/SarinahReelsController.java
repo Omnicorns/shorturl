@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.time.Instant;
 import java.util.regex.Matcher;
@@ -33,7 +33,7 @@ public class SarinahReelsController {
     private String rssAppFeedUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final JsonMapper mapper = JsonMapper.builder().build();
 
     private volatile String cachedJson = null;
     private volatile long cachedAt = 0L;
@@ -90,14 +90,14 @@ public class SarinahReelsController {
         for (JsonNode it : items) {
             if (count >= 3) break;
 
-            String url = it.path("url").asText("");
-            String title = it.path("title").asText("");
-            String summary = it.path("summary").asText("");
-            String image = it.path("image").asText("");
+            String url = it.path("url").asString("");
+            String title = it.path("title").asString("");
+            String summary = it.path("summary").asString("");
+            String image = it.path("image").asString("");
             if (image.isBlank()) {
-                image = it.path("banner_image").asText("");
+                image = it.path("banner_image").asString("");
             }
-            String datePublished = it.path("date_published").asText("");
+            String datePublished = it.path("date_published").asString("");
 
             // Cuma ambil yang link-nya benar-benar reel/post Instagram
             Matcher m = REEL_PATTERN.matcher(url);

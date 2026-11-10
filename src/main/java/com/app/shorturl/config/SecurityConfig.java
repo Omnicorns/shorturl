@@ -21,7 +21,7 @@ import org.springframework.security.web.authentication.logout.LogoutSuccessHandl
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import java.util.List;
 
@@ -186,7 +186,7 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .logoutRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher("/logout"))
                         .invalidateHttpSession(true)
                         .logoutSuccessUrl("/login?logout")
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN")
