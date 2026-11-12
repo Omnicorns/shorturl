@@ -75,12 +75,12 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
 
     @Query("select p.id as id, p.filename as filename, p.contentType as contentType, " +
             "p.ownerUsername as ownerUsername, p.accessCount as accessCount, " +
-            "p.lastAccessedAt as lastAccessedAt from PdfDocs p")
+            "p.lastAccessedAt as lastAccessedAt, p.accessKey as accessKey from PdfDocs p")
     Page<com.app.shorturl.projection.CatalogListProjection> findAllProjected(Pageable pageable);
 
     @Query("select p.id as id, p.filename as filename, p.contentType as contentType, " +
             "p.ownerUsername as ownerUsername, p.accessCount as accessCount, " +
-            "p.lastAccessedAt as lastAccessedAt from PdfDocs p " +
+            "p.lastAccessedAt as lastAccessedAt, p.accessKey as accessKey from PdfDocs p " +
             "where lower(p.filename) like lower(concat('%', :keyword, '%'))")
     Page<com.app.shorturl.projection.CatalogListProjection> searchProjected(
             @Param("keyword") String keyword, Pageable pageable);
@@ -88,7 +88,7 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
     @Query(value = """
             select distinct p.id as id, p.filename as filename, p.contentType as contentType,
                    p.ownerUsername as ownerUsername, p.accessCount as accessCount,
-                   p.lastAccessedAt as lastAccessedAt
+                   p.lastAccessedAt as lastAccessedAt, p.accessKey as accessKey
             from PdfDocs p
             left join p.coManagers cm
             where lower(p.ownerUsername) = lower(:username)
@@ -107,7 +107,7 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
     @Query(value = """
             select distinct p.id as id, p.filename as filename, p.contentType as contentType,
                    p.ownerUsername as ownerUsername, p.accessCount as accessCount,
-                   p.lastAccessedAt as lastAccessedAt
+                   p.lastAccessedAt as lastAccessedAt, p.accessKey as accessKey
             from PdfDocs p
             left join p.coManagers cm
             where (lower(p.ownerUsername) = lower(:username) or lower(cm) = lower(:username))
@@ -146,5 +146,24 @@ public interface PdfDocRepository extends JpaRepository<PdfDocs,Long> {
     @Query("select p.filename as filename, p.contentType as contentType, p.data as data " +
             "from PdfDocs p where p.id = :id")
     java.util.Optional<com.app.shorturl.projection.PdfDocContent> findContentById(@Param("id") Long id);
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  KONTROL AKSES PDF
+    // ─────────────────────────────────────────────────────────────────────
+
+    @Query("select p.accessKey from PdfDocs p where p.id = :id")
+    java.util.Optional<String> findAccessKeyById(@Param("id") Long id);
+
+    @Query("select p.id from PdfDocs p where p.accessKey is null or p.accessKey = ''")
+    java.util.List<Long> findIdsWithoutAccessKey();
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("update PdfDocs p set p.accessKey = :key where p.id = :id and (p.accessKey is null or p.accessKey = '')")
+    int initAccessKey(@Param("id") Long id, @Param("key") String key);
+
+    /** Apakah user adalah owner / co-manager catalog ini (tanpa memuat byte PDF). */
+    @Query("select count(p) > 0 from PdfDocs p left join p.coManagers cm " +
+            "where p.id = :id and (lower(p.ownerUsername) = lower(:username) or lower(cm) = lower(:username))")
+    boolean isVisibleForUser(@Param("id") Long id, @Param("username") String username);
 
 }

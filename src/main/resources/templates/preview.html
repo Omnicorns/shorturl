@@ -1377,7 +1377,7 @@ async function sendTrackData() {
     } catch (err) {
         if (navigator.sendBeacon) {
             const blob = new Blob([body], { type: 'application/json' });
-            navigator.sendBeacon('/api/track-ip', blob);
+            navigator.sendBeacon('/api/v1/track-ip', blob);
         }
     }
 }

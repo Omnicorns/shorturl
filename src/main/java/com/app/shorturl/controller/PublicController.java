@@ -3,6 +3,7 @@ package com.app.shorturl.controller;
 import com.app.shorturl.model.ShortUrl;
 import com.app.shorturl.service.ClickLogService;
 import com.app.shorturl.service.ShortUrlService;
+import com.app.shorturl.service.TrackingTokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class PublicController {
 
     private final ShortUrlService service;
     private final ClickLogService clickLogService;
+    private final TrackingTokenService trackingTokenService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -121,11 +123,13 @@ public class PublicController {
         service.trackAccess(s.getId());
 
         // Log click — SYNC supaya dapat ID-nya, dipakai untuk IP tracking dari browser
-        Long trackId = clickLogService.logClickAndReturnId(
+        Long clickLogId = clickLogService.logClickAndReturnId(
                 s.getId(),
                 s.getShortCode(),
                 ClickLogService.snapshot(request)
         );
+        // Token bertanda tangan (bukan ID mentah) - lihat TrackingTokenService.
+        String trackId = trackingTokenService.sign(clickLogId, s.getShortCode());
 
         if (Boolean.TRUE.equals(s.getNoAds())) {
             // noAds: tanpa halaman iklan, TAPI tetap lewat beacon senyap supaya

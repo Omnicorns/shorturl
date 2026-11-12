@@ -28,6 +28,13 @@ public class PdfDocs {
     @Column(name = "owner_username", length = 100)
     private String ownerUsername;
 
+    /**
+     * Kunci akses acak untuk link publik viewer (/catalogue?id=N&k=KEY).
+     * Mencegah orang menebak/enumerasi id berurutan untuk membuka PDF lain.
+     */
+    @Column(name = "access_key", length = 64)
+    private String accessKey;
+
     @Column(name = "access_count")
     private Long accessCount = 0L;
 
@@ -51,12 +58,23 @@ public class PdfDocs {
         if (coManagers == null) {
             coManagers = new HashSet<>();
         }
+        if (accessKey == null || accessKey.isBlank()) {
+            accessKey = newAccessKey();
+        }
         if (accessCount == null) {
             accessCount = 0L;
         }
         if (ownerUsername != null) {
             ownerUsername = ownerUsername.trim().toLowerCase();
         }
+    }
+
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    public static String newAccessKey() {
+        byte[] b = new byte[24];
+        RANDOM.nextBytes(b);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(b);
     }
 
     public boolean isAccessibleBy(String username) {

@@ -168,3 +168,24 @@ Ini bikin API bisa dipanggil oleh client eksternal (Postman, mobile, dll) tanpa 
 4. Pertimbangkan matikan Swagger UI: `springdoc.swagger-ui.enabled=false`
 5. Ganti Basic Auth ke JWT/OAuth2 untuk API production
 6. Pasang HTTPS + reverse proxy (nginx/Caddy)
+
+## Konfigurasi keamanan (wajib di production)
+
+Semua rahasia dibaca dari environment variable — **jangan** menulis password di `application.properties`.
+
+| Variable | Keterangan |
+|---|---|
+| `APP_ADMIN_USERNAME`, `APP_ADMIN_PASSWORD` | Akun emergency lokal (super-admin). Password boleh hash BCrypt. Kosong = akun emergency nonaktif. |
+| `LDAP_BIND_DN`, `LDAP_BIND_PASSWORD` | Service account AD untuk pencarian user. |
+| `LDAP_ADMIN_GROUPS` | CN group AD (CSV) yang boleh login ke dashboard. **Kosong = tidak ada user AD yang bisa login.** |
+| `LDAP_SUPERADMIN_GROUPS` | CN group AD (CSV) yang otomatis super-admin. |
+| `APP_TRACKING_SECRET` | Secret HMAC token tracking klik (string acak ≥ 32 karakter). |
+| `APP_PDF_ALLOW_LEGACY_ID_LINKS` | `false` (default): PDF hanya bisa dibuka publik dengan kunci `?k=`. |
+| `LDAP_URL`, `LDAP_DOMAIN`, `LDAP_BASE_DN` | Opsional, default sama seperti sebelumnya. |
+
+Catatan:
+- Pembuatan akun (`/register`) dan link reset password (`/forgot-password`) hanya untuk super-admin.
+  Link reset ditampilkan sekali ke super-admin, berlaku 30 menit, sekali pakai, dan tidak ditulis ke log.
+- Set `app.base-url` agar link reset & short URL memakai domain resmi.
+- Link catalog sekarang berbentuk `/catalogue?id=N&k=KUNCI`. Saat startup, short URL lama yang mengarah
+  ke `/catalogue?id=N` otomatis ditambah kuncinya (QR/short URL lama tetap berfungsi).

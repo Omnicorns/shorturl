@@ -26,7 +26,7 @@ import java.util.Set;
 @Component
 public class AccessControlHelper {
 
-    @Value("${app.admin.username:surl}")
+    @Value("${app.admin.username:}")
     private String localAdminUsername;
 
     @Value("${app.superadmins:}")
@@ -43,17 +43,27 @@ public class AccessControlHelper {
 
     /** Apakah user yang sedang login adalah super-admin? */
     public boolean isCurrentUserSuperAdmin() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) return false;
+        return isSuperAdmin(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    /**
+     * Satu-satunya sumber kebenaran untuk status super-admin.
+     * Dipakai juga oleh CatalogAccessService supaya aturannya tidak berbeda.
+     */
+    public boolean isSuperAdmin(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return false;
+        }
 
         // 1) Authority eksplisit
         for (GrantedAuthority ga : auth.getAuthorities()) {
-            if ("ROLE_SUPERADMIN".equals(ga.getAuthority())) return true;
+            String role = ga.getAuthority();
+            if ("ROLE_SUPERADMIN".equals(role) || "ROLE_SUPER_ADMIN".equals(role)) return true;
         }
 
         // 2) Username = local admin
         String name = auth.getName();
-        if (name != null && localAdminUsername != null
+        if (name != null && localAdminUsername != null && !localAdminUsername.isBlank()
                 && name.equalsIgnoreCase(localAdminUsername)) {
             return true;
         }
@@ -63,6 +73,15 @@ public class AccessControlHelper {
             for (String s : superAdminsCsv.split(",")) {
                 if (s != null && s.trim().equalsIgnoreCase(name)) return true;
             }
+        }
+        return false;
+    }
+
+    /** Apakah username tercantum di app.superadmins (TIDAK termasuk akun emergency lokal). */
+    public boolean isListedInSuperAdminProperty(String name) {
+        if (name == null || name.isBlank() || superAdminsCsv == null || superAdminsCsv.isBlank()) return false;
+        for (String s : superAdminsCsv.split(",")) {
+            if (s != null && s.trim().equalsIgnoreCase(name.trim())) return true;
         }
         return false;
     }

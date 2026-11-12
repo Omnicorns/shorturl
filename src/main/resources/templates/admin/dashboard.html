@@ -3256,7 +3256,13 @@
         const bulkDownloadBtn = $('bulkDownloadBtn');
         const checkAllHead = $('checkAllHead');
 
-        function buildViewerUrl(item) { return toAbsoluteUrl(item.open_in_viewer || ('/catalogue?id=' + item.id)); }
+        // id -> path viewer (sudah berisi kunci akses ?k=...) dari response server.
+        const CATALOG_VIEWER_PATHS = new Map();
+        function catalogViewerPath(id) { return CATALOG_VIEWER_PATHS.get(String(id)) || ('/catalogue?id=' + id); }
+        function buildViewerUrl(item) {
+            if (item.open_in_viewer) CATALOG_VIEWER_PATHS.set(String(item.id), item.open_in_viewer);
+            return toAbsoluteUrl(item.open_in_viewer || catalogViewerPath(item.id));
+        }
         function formatAccessTime(v) {
             if (!v) return '';
             try {
@@ -3637,7 +3643,7 @@
                     }
                     const safe = fname.replace(/[^\w\-]+/g, '_');
                     updProgress(done, total, safe);
-                   const viewerUrl = withQrMarker(toAbsoluteUrl('/catalogue?id=' + id));
+                   const viewerUrl = withQrMarker(toAbsoluteUrl(catalogViewerPath(id)));
                     let blob = null;
                     for (let attempt = 1; attempt <= 2; attempt++) {
                         try { blob = await generateQrBlob(viewerUrl); break; }
@@ -3900,10 +3906,10 @@
         });
 
         /* ═══ Create short URL for catalog ═══ */
-        async function createShortUrlForCatalog(catalogId, title) {
+        async function createShortUrlForCatalog(catalogId, title, viewerPath) {
             try {
                 const fd = new FormData();
-                fd.append('originalUrl', toAbsoluteUrl('/catalogue?id=' + catalogId));
+                fd.append('originalUrl', toAbsoluteUrl(viewerPath || catalogViewerPath(catalogId)));
                 if (title) fd.append('title', title);
                 const res = await fetch('/admin/create', { method: 'POST', headers: csrfHeaders(), body: fd });
                 return res.ok;
@@ -3946,7 +3952,7 @@
                 dlText.textContent = `${formatSize(f.size)} / ${formatSize(f.size)}`;
 
                 if (autoSU && data.id) {
-                    const ok = await createShortUrlForCatalog(data.id, data.filename || f.name);
+                    const ok = await createShortUrlForCatalog(data.id, data.filename || f.name, data.open_in_viewer);
                     toast(ok ? 'Catalog + Short URL ✓' : 'Catalog OK, short URL gagal', ok ? 'success' : 'warning');
                 } else {
                     toast('Catalog berhasil ✓', 'success');

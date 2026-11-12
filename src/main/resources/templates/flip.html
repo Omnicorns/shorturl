@@ -366,7 +366,9 @@
     let PDF_URL = params.get('pdf') || window.DEFAULT_PDF;
 
     const pdfId = params.get('id');
-    if (pdfId) PDF_URL = `/api/admin/users/pdf/${pdfId}`;
+    // Kunci akses catalog (?k=...) wajib ikut agar PDF bisa diambil tanpa login.
+    const pdfKey = params.get('k');
+    if (pdfId) PDF_URL = `/api/admin/users/pdf/${encodeURIComponent(pdfId)}` + (pdfKey ? `?k=${encodeURIComponent(pdfKey)}` : '');
 
     const catalogueId = params.get('catalogue');
     if (catalogueId) PDF_URL = `/api/pdf/catalogue/${catalogueId}`;
