@@ -117,6 +117,10 @@ public class AuthenticationAuditListener implements LogoutSuccessHandler {
         if (auth == null) return AuthLog.AuthSource.UNKNOWN;
         String principalClass = auth.getPrincipal() != null
                 ? auth.getPrincipal().getClass().getName() : "";
+        // Login SSO Keycloak: user berasal dari AD (LDAP federation) -> dicatat sebagai LDAP
+        if (principalClass.contains("Oidc") || principalClass.contains("OAuth2")) {
+            return AuthLog.AuthSource.LDAP;
+        }
         // User AD biasanya principal-nya berupa String (UPN) atau LdapUserDetails
         if (principalClass.toLowerCase().contains("ldap")
                 || principalClass.contains("ActiveDirectory")) {

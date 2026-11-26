@@ -88,9 +88,13 @@ public class PublicController {
         return "redirect:/#shortener";
     }
 
+    @Value("${app.sso.enabled:false}")
+    private boolean ssoEnabled;
+
     @GetMapping("/login")
-    public String login(HttpServletRequest request) {
+    public String login(HttpServletRequest request, Model model) {
         request.getSession(true);
+        model.addAttribute("ssoEnabled", ssoEnabled);
         return "login";
     }
 

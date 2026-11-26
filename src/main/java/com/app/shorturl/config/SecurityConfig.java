@@ -1,5 +1,12 @@
 package com.app.shorturl.config;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
+import org.springframework.security.oauth2.client.oidc.authentication.OidcAuthorizationCodeAuthenticationProvider;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import java.util.ArrayList;
+
 import com.app.shorturl.service.DatabaseOrFallbackUserDetailsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,10 +104,17 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             DaoAuthenticationProvider localAuthProvider,
             ActiveDirectoryLdapAuthenticationProvider activeDirectoryProvider,
-            AuthenticationEventPublisher eventPublisher
+            AuthenticationEventPublisher eventPublisher,
+            ObjectProvider<ClientRegistrationRepository> ssoRegistrations
     ) {
-        ProviderManager providerManager =
-                new ProviderManager(localAuthProvider, activeDirectoryProvider);
+        List<AuthenticationProvider> providers = new ArrayList<>(List.of(localAuthProvider, activeDirectoryProvider));
+        // SSO Keycloak (opsional): provider OIDC harus ada di manager yang sama karena
+        // web chain memakai AuthenticationManager ini secara eksplisit.
+        if (ssoRegistrations.getIfAvailable() != null) {
+            providers.add(new OidcAuthorizationCodeAuthenticationProvider(
+                    new RestClientAuthorizationCodeTokenResponseClient(), SsoConfig.oidcUserService()));
+        }
+        ProviderManager providerManager = new ProviderManager(providers);
 
         providerManager.setAuthenticationEventPublisher(eventPublisher);
         providerManager.setEraseCredentialsAfterAuthentication(true);
@@ -150,7 +164,8 @@ public class SecurityConfig {
     public SecurityFilterChain webFilterChain(
             HttpSecurity http,
             AuthenticationManager authenticationManager,
-            LogoutSuccessHandler logoutSuccessHandler
+            LogoutSuccessHandler logoutSuccessHandler,
+            ObjectProvider<ClientRegistrationRepository> ssoRegistrations
     ) throws Exception {
 
         // Buat repository + handler eksplisit
