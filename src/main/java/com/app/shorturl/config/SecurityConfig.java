@@ -211,6 +211,20 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin())
                 );
 
+        ClientRegistrationRepository sso = ssoRegistrations.getIfAvailable();
+        if (sso == null) {
+            log.info("SSO Keycloak TIDAK aktif (app.sso.enabled bukan true)");
+        } else {
+            log.info("SSO Keycloak AKTIF -> /oauth2/authorization/{}", SsoConfig.REGISTRATION_ID);
+            // Tombol "Masuk dengan SSO Sarinah" -> /oauth2/authorization/keycloak -> halaman login Keycloak
+            http.oauth2Login(oauth -> oauth
+                    .loginPage("/login")
+                    .clientRegistrationRepository(sso)
+                    .defaultSuccessUrl("/admin", true)
+                    .failureUrl("/login?ssoError")
+            );
+        }
+
         return http.build();
     }
 }

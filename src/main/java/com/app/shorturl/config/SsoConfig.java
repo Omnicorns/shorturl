@@ -40,6 +40,9 @@ public class SsoConfig {
             @Value("${app.sso.redirect-uri:{baseUrl}/login/oauth2/code/{registrationId}}") String redirectUri
     ) {
         String issuer = issuerUri.replaceAll("/+$", "");
+        org.slf4j.LoggerFactory.getLogger(SsoConfig.class).info(
+                "SSO Keycloak: issuer={}, client-id={}, redirect-uri={}, secret={}",
+                issuer, clientId, redirectUri, clientSecret == null || clientSecret.isBlank() ? "KOSONG!" : "terisi");
         String oidc = issuer + "/protocol/openid-connect";
         ClientRegistration registration = ClientRegistration.withRegistrationId(REGISTRATION_ID)
                 .clientName("SSO Sarinah")
