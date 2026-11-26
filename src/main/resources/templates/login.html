@@ -707,7 +707,7 @@
                 <span>Password berhasil diganti. Silakan login.</span>
             </div>
             <div th:if="${param.ssoError}" class="alert alert-error">
-                <span>Login SSO gagal. Coba lagi, atau masuk dengan username &amp; password di bawah.</span>
+                <span>Login SSO gagal<th:block th:if="${!#strings.isEmpty(param.ssoError)}"> (<code th:text="${param.ssoError}"></code>)</th:block>. Coba lagi, atau masuk dengan username &amp; password di bawah.</span>
             </div>
 
             <th:block th:if="${ssoEnabled}">

@@ -221,7 +221,14 @@ public class SecurityConfig {
                     .loginPage("/login")
                     .clientRegistrationRepository(sso)
                     .defaultSuccessUrl("/admin", true)
-                    .failureUrl("/login?ssoError")
+                    .failureHandler((request, response, ex) -> {
+                        // Catat penyebab asli agar mudah dicek (secret salah, issuer beda, sertifikat, dll.)
+                        String code = ex instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException oae
+                                ? oae.getError().getErrorCode() : ex.getClass().getSimpleName();
+                        log.warn("Login SSO gagal: [{}] {}", code, ex.getMessage(), ex);
+                        response.sendRedirect(request.getContextPath() + "/login?ssoError="
+                                + java.net.URLEncoder.encode(code, java.nio.charset.StandardCharsets.UTF_8));
+                    })
             );
         }
 
